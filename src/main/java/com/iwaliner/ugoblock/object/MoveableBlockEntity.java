@@ -31,8 +31,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AbstractChestBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -43,10 +45,11 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-public class MoveableBlockEntity extends Display.BlockDisplay implements MenuProvider {
+import javax.annotation.Nullable;
+
+public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuProvider*/ {
     public static final EntityDataAccessor<BlockPos> DATA_END_LOCATION_ID = SynchedEntityData.defineId(MoveableBlockEntity.class, EntityDataSerializers.BLOCK_POS);
     public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_CONTENTS_ID = SynchedEntityData.defineId(MoveableBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
   //  public static CompoundTag blockentityData= new CompoundTag();
@@ -98,7 +101,6 @@ public class MoveableBlockEntity extends Display.BlockDisplay implements MenuPro
         super.addAdditionalSaveData(tag);
         tag.put("end_location",NbtUtils.writeBlockPos(entityData.get(DATA_END_LOCATION_ID)));
         if(!entityData.get(DATA_BLOCKENTITY_CONTENTS_ID).isEmpty()) {
-         //   tag.put("BlockEntityTag", blockentityData);
             tag.put("BlockEntityTag",entityData.get(DATA_BLOCKENTITY_CONTENTS_ID));
         }
 
@@ -135,12 +137,12 @@ public class MoveableBlockEntity extends Display.BlockDisplay implements MenuPro
     public void tick() {
         super.tick();
         setBoundingBox(makeBoundingBox());
-        BlockPos endPos= entityData.get(DATA_END_LOCATION_ID);
-        int duration=entityData.get(DisplayMixin.getDataDuration());
-        int startTick=entityData.get(DisplayMixin.getDataStartTick());
+        BlockPos transition= getTransition();
+        int duration=getDuration();
+        int startTick=getStartTick();
 
         if(duration>0&&tickCount>=startTick&&tickCount<startTick+duration) {
-            Vec3 pos=new Vec3((double) position().x+(double) endPos.getX()/(double) duration,(double) position().y+(double) endPos.getY()/(double) duration,(double) position().z+(double) endPos.getZ()/(double) duration);
+            Vec3 pos=new Vec3((double) position().x+(double) transition.getX()/(double) duration,(double) position().y+(double) transition.getY()/(double) duration,(double) position().z+(double) transition.getZ()/(double) duration);
             setPos(pos);
             for(Entity entity : level().getEntities((Entity)null, getBoundingBoxForCulling().move(0.5D,0.5D,0.5D).inflate(0d,0.25d,0d), (o) -> {
                 return true;
@@ -148,18 +150,18 @@ public class MoveableBlockEntity extends Display.BlockDisplay implements MenuPro
                 if(entity.getType()!=EntityRegister.MoveableBlock.get()) {
                     if(entity instanceof Player) {
                         double y= 0D;
-                        if(endPos.getY()>0D){
+                        if(transition.getY()>0D){
                             y=1D;
-                        }else if(endPos.getY()<0D){
+                        }else if(transition.getY()<0D){
                             y=-1D;
                         }
-                           Vec3 entityPos = new Vec3((double) entity.position().x + (double) endPos.getX() / (double) duration, (double) entity.position().y+0.01D + (double) endPos.getY() / (double) duration, (double) entity.position().z +  (double) endPos.getZ() / (double) duration);
+                           Vec3 entityPos = new Vec3((double) entity.position().x + (double) transition.getX() / (double) duration, (double) entity.position().y+0.01D + (double) transition.getY() / (double) duration, (double) entity.position().z +  (double) transition.getZ() / (double) duration);
                            entity.setPos(entityPos);
                     }else {
                         int y= 0;
-                        if(endPos.getY()>0D){
+                        if(transition.getY()>0D){
                             y=1;
-                        }else if(endPos.getY()<0D){
+                        }else if(transition.getY()<0D){
                             y=-1;
                         }
                         if(tickCount==startTick+duration-1) {
@@ -168,18 +170,18 @@ public class MoveableBlockEntity extends Display.BlockDisplay implements MenuPro
                             if(tickCount==startTick&&y!=0){
                                 entity.setPos(entity.position().add(0D,(double) y*0.8D,0D));
                             }
-                            Vec3 speed = new Vec3((double) endPos.getX() / (double) duration,  ( (double) endPos.getY()) / (double) duration, (double) endPos.getZ() / (double) duration);
+                            Vec3 speed = new Vec3((double) transition.getX() / (double) duration,  ( (double) transition.getY()) / (double) duration, (double) transition.getZ() / (double) duration);
                             entity.setDeltaMovement(speed);
 
                         }
                     }
                 }
             }
-        }else if(duration>0&&tickCount>=startTick+duration+5){
+        }else if(duration>0&&tickCount>=startTick+duration+1){
             int y=0;
-            if(endPos.getY()>0D){
+            if(transition.getY()>0D){
                 y=1;
-            }else if(endPos.getY()<0D){
+            }else if(transition.getY()<0D){
                 y=-1;
             }
             makeBlock(y);
@@ -194,16 +196,16 @@ public class MoveableBlockEntity extends Display.BlockDisplay implements MenuPro
     }
     private void makeBlock(int y){
         if(level().getBlockState(blockPosition()).canBeReplaced()) {
-            BlockState movingState=entityData.get(BlockDisplayMixin.getData());
+            BlockState movingState=getState();
 
             level().setBlockAndUpdate(blockPosition().above(y),movingState);
-            if(!entityData.get(DATA_BLOCKENTITY_CONTENTS_ID).isEmpty()&&movingState.hasBlockEntity()){
-               CompoundTag compoundtag = entityData.get(DATA_BLOCKENTITY_CONTENTS_ID);
+            if(!getBlockEntityData().isEmpty()&&movingState.hasBlockEntity()){
+               CompoundTag compoundtag = getBlockEntityData();
                 if (compoundtag != null) {
                     BlockEntity blockentity = level().getBlockEntity(blockPosition());
 
                     if (blockentity != null) {
-                     blockentity.load(entityData.get(DATA_BLOCKENTITY_CONTENTS_ID));
+                     blockentity.load(getBlockEntityData());
 
                     }
                 }
@@ -216,6 +218,29 @@ public class MoveableBlockEntity extends Display.BlockDisplay implements MenuPro
         }
 
     }
+    private BlockState getState(){
+        return entityData.get(BlockDisplayMixin.getData());
+    }
+    private int getDuration(){
+        return entityData.get(DisplayMixin.getDataDuration());
+    }
+    private int getStartTick(){
+        return entityData.get(DisplayMixin.getDataStartTick());
+    }
+    private BlockPos getTransition(){
+        return entityData.get(DATA_END_LOCATION_ID);
+    }
+    private CompoundTag getBlockEntityData(){
+        return entityData.get(DATA_BLOCKENTITY_CONTENTS_ID);
+    }
+   /* @Nullable
+    public Display.BlockDisplay.BlockRenderState blockRenderState() {
+        if(getState().getBlock() instanceof AbstractChestBlock) {
+            return null;
+        }
+        return this.blockRenderState();
+    }*/
+
 
    /* @Override
     public @NotNull InteractionResult interact(Player player, InteractionHand hand) {
