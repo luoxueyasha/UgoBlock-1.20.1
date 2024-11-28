@@ -61,15 +61,40 @@ public class SlideControllerBlock extends BaseEntityBlock {
         return InteractionResult.SUCCESS;
     }
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
+
         if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
-            int startSecond = 0;
-            int durationSecond = 4;
-            BlockPos startPos=pos.above();
-            BlockPos endPos=blockEntity.getEndPos();
+            int startSecond;
+            int durationSecond;
+            BlockPos startPos;
+            BlockPos endPos;
+            List<BlockPos> posList=blockEntity.getPositionList();
+            if(state.getValue(POWERED)){ /**赤石信号がONになったとき*/
+            startSecond = 0;
+            durationSecond = 4;
+            startPos=pos.above();
+            endPos=blockEntity.getEndPos();
+            if(!blockEntity.isFirstTime()) {
+                List<BlockPos> posList0 = blockEntity.getPositionList();
+                for (int i = 0; i < posList0.size(); i++) {
+                    posList.set(i, new BlockPos(posList0.get(i).getX() + (blockEntity.getEndPos().getX() - startPos.getX()), posList0.get(i).getY() + (blockEntity.getEndPos().getY() - startPos.getY()), posList0.get(i).getZ() + (blockEntity.getEndPos().getZ() - startPos.getZ())));
+                }
+            }
+            }else{ /**赤石信号がOFFになったとき*/
+               startSecond = 0;
+                durationSecond = 4;
+                startPos=pos.above();
+                endPos=new BlockPos(startPos.getX()+(startPos.getX()-blockEntity.getEndPos().getX()),startPos.getY()+(startPos.getY()-blockEntity.getEndPos().getY()),startPos.getZ()+(startPos.getZ()-blockEntity.getEndPos().getZ()));
+                if(!blockEntity.isFirstTime()) {
+                    List<BlockPos> posList0 = blockEntity.getPositionList();
+                    for (int i = 0; i < posList0.size(); i++) {
+                        posList.set(i, new BlockPos(posList0.get(i).getX() + (startPos.getX() - blockEntity.getEndPos().getX()), posList0.get(i).getY() + (startPos.getY() - blockEntity.getEndPos().getY()), posList0.get(i).getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ())));
+                    }
+                }
+            }
             if(endPos==null){
                 endPos=startPos;
             }
-            List<BlockPos> posList=blockEntity.getPositionList();
+
             if(posList!=null) {
                 BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
                 for (BlockPos eachPos : posList) {
@@ -78,20 +103,15 @@ public class SlideControllerBlock extends BaseEntityBlock {
                 for (BlockPos eachPos : posList) {
                     destroyOldBlock(level, eachPos);
                 }
+                blockEntity.setFirstTime(false);
             }
-           /* makeMoveableBlock(level, pos.above(), startSecond, durationSecond, transitionPos);
-            makeMoveableBlock(level, pos.above().offset(0, 0, 1), startSecond, durationSecond, transitionPos);
-            destroyOldBlock(level, pos.above());
-            destroyOldBlock(level, pos.above().offset(0, 0, 1));
-        */}
+        }
     }
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
         if (!level.isClientSide) {
             if (flag != level.hasNeighborSignal(pos)) {
-                if(!flag) {
                     level.scheduleTick(pos, this, 1);
-                }
                     level.setBlock(pos, state.cycle(POWERED), 2);
 
             }
@@ -104,9 +124,6 @@ public class SlideControllerBlock extends BaseEntityBlock {
         BlockEntity blockEntity=level.getBlockEntity(startPos);
         BlockState state=level.getBlockState(startPos);
         MoveableBlockEntity moveableBlock;
-        /*if(*//*state.getFluidState().is(Fluids.WATER)&&*//*state.getBlock() instanceof SimpleWaterloggedBlock&&state.getValue(BlockStateProperties.WATERLOGGED)){
-           state= state.setValue(BlockStateProperties.WATERLOGGED,false);
-        }*/
         if(!state.isAir()) {
             if (blockEntity != null) {
 
@@ -154,8 +171,8 @@ public class SlideControllerBlock extends BaseEntityBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity livingEntity, ItemStack stack) {
         super.setPlacedBy(level, pos, state, livingEntity, stack);
         if(livingEntity instanceof Player){
-            ItemEntity itemEntity1=new ItemEntity(level,(double)pos.getX()+0.5D,(double)pos.getY()+1.5D,(double)pos.getZ()+0.5D,new ItemStack(ItemAndBlockRegister.shape_card.get()));
-            ItemEntity itemEntity2=new ItemEntity(level,(double)pos.getX()+0.5D,(double)pos.getY()+1.5D,(double)pos.getZ()+0.5D,new ItemStack(ItemAndBlockRegister.end_location_card.get()));
+            ItemEntity itemEntity1=new ItemEntity(level,(double)pos.getX()+0.5D,(double)pos.getY()+2.5D,(double)pos.getZ()+0.5D,new ItemStack(ItemAndBlockRegister.shape_card.get()));
+            ItemEntity itemEntity2=new ItemEntity(level,(double)pos.getX()+0.5D,(double)pos.getY()+2.5D,(double)pos.getZ()+0.5D,new ItemStack(ItemAndBlockRegister.end_location_card.get()));
             if(!level.isClientSide){
                 level.addFreshEntity(itemEntity1);
                 level.addFreshEntity(itemEntity2);

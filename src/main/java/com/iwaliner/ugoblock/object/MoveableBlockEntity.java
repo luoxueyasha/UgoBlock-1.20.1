@@ -169,7 +169,7 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                         }
                     }
                 }
-            } else if (duration > 0 && tickCount >= startTick + duration + 5) {
+            } else if (duration > 0 && tickCount >= startTick + duration + 1) {
                 int y = 0;
                 if (transition.getY() > 0D) {
                     y = 1;

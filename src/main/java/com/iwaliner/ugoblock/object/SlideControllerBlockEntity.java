@@ -25,11 +25,14 @@ import java.util.List;
 public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     private List<BlockPos> positionList;
     private BlockPos endPos;
+    private boolean firstTime;
     public SlideControllerBlockEntity(BlockEntityType<?> p_155076_, BlockPos p_155077_, BlockState p_155078_) {
         super(p_155076_, p_155077_, p_155078_);
+        firstTime=true;
     }
     public SlideControllerBlockEntity( BlockPos p_155077_, BlockState p_155078_) {
         super(BlockEntityRegister.SlideController.get(), p_155077_, p_155078_);
+        firstTime=true;
     }
 
     @Override
@@ -90,6 +93,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             }
         this.positionList = list;
         this.endPos = NbtUtils.readBlockPos(posTag.getCompound("endPos"));
+        this.firstTime=tag.getBoolean("firstTime");
     }
 
     protected void saveAdditional(CompoundTag tag) {
@@ -97,6 +101,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         if(endPos!=null) {
             tag.put("endPos", NbtUtils.writeBlockPos(endPos));
         }
+        tag.putBoolean("firstTime",firstTime);
         if(positionList!=null) {
             CompoundTag posTag = new CompoundTag();
             for (int i = 0; i < positionList.size(); i++) {
@@ -116,6 +121,12 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
 
     public List<BlockPos> getPositionList() {
         return positionList;
+    }
+    public boolean isFirstTime(){
+        return firstTime;
+    }
+    public void setFirstTime(boolean b){
+        firstTime=b;
     }
 
     public void setPositionList(List<BlockPos> positionList) {
