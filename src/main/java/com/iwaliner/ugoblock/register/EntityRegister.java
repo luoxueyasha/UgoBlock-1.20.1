@@ -12,7 +12,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class EntityRegister {
     public static final DeferredRegister<EntityType<?>> Entities = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, ModCoreUgoBlock.MODID);
-    public static final RegistryObject<EntityType<MoveableBlockEntity>> MoveableBlock=Entities.register("moveable_block", () -> EntityType.Builder.<MoveableBlockEntity>of(MoveableBlockEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(1).build(new ResourceLocation(ModCoreUgoBlock.MODID,"moveable_block").toString()));
+    public static final RegistryObject<EntityType<MoveableBlockEntity>> MoveableBlock=Entities.register("moving_block", () -> EntityType.Builder.<MoveableBlockEntity>of(MoveableBlockEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(1).build(new ResourceLocation(ModCoreUgoBlock.MODID,"moving_block").toString()));
     public static void register(IEventBus eventBus) {
         Entities.register(eventBus);
     }

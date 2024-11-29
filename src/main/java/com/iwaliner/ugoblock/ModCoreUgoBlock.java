@@ -101,6 +101,21 @@ public class ModCoreUgoBlock
                         }
                     }
                  }
+                if (tag!=null&&tag.contains("start_location")) {
+                    BlockPos startLocation= NbtUtils.readBlockPos(tag.getCompound("start_location"));
+                    int range=20;
+                    loopA: for(int i=-range;i<=range;i++){
+                        for(int j=-range;j<=range;j++){
+                            for(int k=-range;k<=range;k++){
+                                BlockPos offsetPos=hitPos.offset(i,j,k);
+                                if(offsetPos.getX()==startLocation.getX()&&offsetPos.getY()==startLocation.getY()&&offsetPos.getZ()==startLocation.getZ()){
+                                    this.renderGreenOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), event.getCamera().getEntity(), event.getCamera().getPosition().x, event.getCamera().getPosition().y, event.getCamera().getPosition().z, offsetPos);
+                                    break loopA;
+                                }
+                            }
+                        }
+                    }
+                }
             }else if (heldStack.getItem() == ItemAndBlockRegister.shape_card.get()) {
                 CompoundTag tag=heldStack.getTag();
                 List<BlockPos> list=new ArrayList<>();
@@ -133,14 +148,10 @@ public class ModCoreUgoBlock
     }
     private static void renderShape(PoseStack poseStack, VertexConsumer vertexConsumer,  double d1, double d2, double d3,float ff1,float ff2,float ff3,float ff4) {
         PoseStack.Pose posestack$pose = poseStack.last();
-       // VoxelShape voxelShape1=box(0D, 0D, 0D, 1D, 1D, 1D);
-        VoxelShape voxelShape2=box(0.125D, -0.02D, 0.125D, 0.875D, 1.02D, 0.875D);
-        VoxelShape voxelShape3=box(0.125D, 0.125D, -0.02D, 0.875D, 0.875D, 1.02D);
-        VoxelShape voxelShape4=box(-0.02D, 0.125D, 0.125D, 1.02D, 0.875D, 0.875D);
-        VoxelShape shapes= Shapes.or(/*voxelShape1,*/voxelShape2,voxelShape3,voxelShape4);
-
-
-
+        VoxelShape voxelShape2=box(0.125D, -0.01D, 0.125D, 0.875D, 1.01D, 0.875D);
+        VoxelShape voxelShape3=box(0.125D, 0.125D, -0.01D, 0.875D, 0.875D, 1.01D);
+        VoxelShape voxelShape4=box(-0.01D, 0.125D, 0.125D, 1.01D, 0.875D, 0.875D);
+        VoxelShape shapes= Shapes.or(voxelShape2,voxelShape3,voxelShape4);
         shapes.forAllEdges((d01, d02, d03, d04, d05, d06) -> {
             float f = (float)(d04 - d01);
             float f1 = (float)(d05 - d02);
@@ -160,6 +171,9 @@ public class ModCoreUgoBlock
     private void renderRedOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
         renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,1f,0f,0f,1f);
     }
+    private void renderGreenOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
+    renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,0f,1f,0f,1f);
+}
     @SubscribeEvent
     public void BreakSpeedEvent(PlayerEvent.BreakSpeed event) {
         Item item=event.getEntity().getMainHandItem().getItem();

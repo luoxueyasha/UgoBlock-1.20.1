@@ -119,6 +119,8 @@ public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer 
       /*  if (!(block instanceof AbstractChestBlock<?>)) {
             super.renderInner(blockDisplay, blockRenderState, poseStack, bufferSource, i0, f0);
         }else{*/
+       // poseStack.translate(0.1F,0.1F,0.1F);
+        poseStack.scale(0.9999F,0.9999F,0.9999F);
             super.renderInner(blockDisplay, blockRenderState, poseStack, bufferSource, i0, f0);
       //  }
     }

@@ -1,0 +1,11 @@
+{
+   "block.ugoblock.slide_controller": "スライド制御盤",
+   "item.ugoblock.shape_card": "シェイプカード",
+   "item.ugoblock.end_location_card": "終端カード",
+   "entity.urushi.moving_block": "動いている最中のブロック",
+   "info.ugoblock.shape_card": "右クリックしたあと別の場所を右クリックすることで範囲選択できる。繰り返すことで複雑な形状も記録することができる。左クリックすることで1ブロックごとに選択を解除。",
+   "info.ugoblock.shape_card_location": "記録されている座標：",
+   "info.ugoblock.shape_card_location_other": "など",
+   "info.ugoblock.end_location_card": "緑色の枠で表示されている場所が赤石入力をONにしたときの始端なので、終端にしたいブロックを右クリックで選択すると赤色で表示されるようになる。左クリックで選択解除。",
+   "info.ugoblock.end_location_card_location": "指定された終端の座標："
+}

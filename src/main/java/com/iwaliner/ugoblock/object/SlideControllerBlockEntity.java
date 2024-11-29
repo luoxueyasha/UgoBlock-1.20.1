@@ -25,14 +25,15 @@ import java.util.List;
 public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     private List<BlockPos> positionList;
     private BlockPos endPos;
-    private boolean firstTime;
+    private boolean isNotFirstTime;
+    private boolean isMoving;
+    private int moveTick;
+    private int tickCount;
     public SlideControllerBlockEntity(BlockEntityType<?> p_155076_, BlockPos p_155077_, BlockState p_155078_) {
         super(p_155076_, p_155077_, p_155078_);
-        firstTime=true;
     }
     public SlideControllerBlockEntity( BlockPos p_155077_, BlockState p_155078_) {
         super(BlockEntityRegister.SlideController.get(), p_155077_, p_155078_);
-        firstTime=true;
     }
 
     @Override
@@ -92,8 +93,13 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
                 list.add(NbtUtils.readBlockPos(posTag.getCompound(s)));
             }
         this.positionList = list;
-        this.endPos = NbtUtils.readBlockPos(posTag.getCompound("endPos"));
-        this.firstTime=tag.getBoolean("firstTime");
+        if(tag.contains("endPos")) {
+            this.endPos = NbtUtils.readBlockPos(tag.getCompound("endPos"));
+        }
+        this.isNotFirstTime=tag.getBoolean("isNotFirstTime");
+        this.isMoving=tag.getBoolean("isMoving");
+        this.moveTick=tag.getInt("moveTick");
+        this.tickCount=tag.getInt("tickCount");
     }
 
     protected void saveAdditional(CompoundTag tag) {
@@ -101,7 +107,10 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         if(endPos!=null) {
             tag.put("endPos", NbtUtils.writeBlockPos(endPos));
         }
-        tag.putBoolean("firstTime",firstTime);
+        tag.putBoolean("isNotFirstTime",isNotFirstTime);
+        tag.putBoolean("isMoving",isMoving);
+        tag.putInt("moveTick",moveTick);
+        tag.putInt("tickCount",tickCount);
         if(positionList!=null) {
             CompoundTag posTag = new CompoundTag();
             for (int i = 0; i < positionList.size(); i++) {
@@ -109,6 +118,27 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             }
             tag.put("positionList", posTag);
         }
+    }
+    public boolean isMoving(){
+        return isMoving;
+    }
+    public void setMoving(boolean b){
+        this.isMoving=b;
+    }
+    public int getMoveTick(){
+        return moveTick;
+    }
+    public void setMoveTick(int i){
+        this.moveTick=i;
+    }
+    public int getTickCount(){
+        return tickCount;
+    }
+    public void setTickCount(int i){
+        this.tickCount=i;
+    }
+    public void increaseTickCount(int i){
+        this.tickCount+=i;
     }
 
     public BlockPos getEndPos() {
@@ -122,11 +152,14 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     public List<BlockPos> getPositionList() {
         return positionList;
     }
-    public boolean isFirstTime(){
-        return firstTime;
+    public void clearPositionList(){
+        positionList.clear();
     }
-    public void setFirstTime(boolean b){
-        firstTime=b;
+    public boolean isNotFirstTime(){
+        return isNotFirstTime;
+    }
+    public void setNotFirstTime(boolean b){
+        isNotFirstTime=b;
     }
 
     public void setPositionList(List<BlockPos> positionList) {
@@ -138,6 +171,15 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
 
 
     public static void tick(Level level, BlockPos pos, BlockState bs, SlideControllerBlockEntity blockEntity) {
+        if(blockEntity.getMoveTick()>0){
+            if(blockEntity.isMoving()){
+                if(blockEntity.getTickCount()> blockEntity.getMoveTick()){
+                    blockEntity.setMoving(false);
+                    blockEntity.setTickCount(0);
+                }
+                blockEntity.increaseTickCount(1);
+            }
+        }
        }
 
 }

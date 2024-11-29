@@ -124,58 +124,30 @@ public class ShapeCardItem extends Item {
         return list;
     }
 
-    /*@Override
-    public InteractionResult useOn(UseOnContext context) {
-        Level level=context.getLevel();
-        BlockPos pos=context.getClickedPos();
-        BlockState state=level.getBlockState(pos);
-        ItemStack stack=context.getItemInHand();
-        List<BlockPos> list=new ArrayList<>();
-
-        if(stack.getItem() instanceof ShapeCardItem) {
-            CompoundTag tag =stack.getTag();
-            if(tag==null){
-                tag=new CompoundTag();
-            }
-
-            if(state.getBlock() instanceof SlideControllerBlock){
-
-            }else{
-                int ii=-1;
-                for(int i=0;i<1028;i++){
-                    if(!tag.contains("location_"+String.valueOf(i))){
-                        ii=i;
-                        break;
-                    }else{
-                        list.add(NbtUtils.readBlockPos(tag.getCompound("location_"+String.valueOf(i))));
-                    }
-                }
-                if(ii!=-1) {
-                    if(list.contains(pos)) {
-                        tag.put("location_" + String.valueOf(list.indexOf(pos)), NbtUtils.writeBlockPos(errorPos()));
-                    }else{
-                        tag.put("location_" + String.valueOf(ii), NbtUtils.writeBlockPos(pos));
-                    }
-                }
-                stack.setTag(tag);
-                return InteractionResult.SUCCESS;
-            }
-        }
-        return InteractionResult.FAIL;
-    }*/
     public static int getMaxSize(){
         return 1028;
     }
     public static BlockPos errorPos(){
         return new BlockPos(0,-999999999,0);
     }
-
+    public boolean isFoil(ItemStack stack) {
+        return stack.getTag()!=null&&stack.getTag().getBoolean("select");
+    }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
-        /*if(stack.getTag()!=null){
-            BlockPos pos=NbtUtils.readBlockPos(stack.getTag().getCompound("end_location"));
-            list.add(Component.literal("pos:").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())));
-        }*/
+        list.add(Component.translatable("info.ugoblock.shape_card"));
+        if(stack.getTag()!=null) {
+            int size=getPositionList(stack.getTag()).size();
+            for (int i = 0;size>5? i < 5 : i<size; i++) {
+                BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("location_" + String.valueOf(i)));
+                if (!pos.equals(errorPos())) {
+                    list.add(Component.translatable("info.ugoblock.shape_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]"));
+                }
+            }
+            if(size>5) {
+                list.add(Component.translatable("info.ugoblock.shape_card_location_other"));
+            }
+        }
     }
 }

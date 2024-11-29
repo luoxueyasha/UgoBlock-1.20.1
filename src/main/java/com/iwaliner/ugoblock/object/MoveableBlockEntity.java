@@ -146,9 +146,8 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                             } else if (transition.getY() < 0D) {
                                 y = -0.3D;
                             }
-                            Vec3 entityPos = new Vec3((double) entity.position().x + (double) transition.getX() / (double) duration, (double) entity.position().y +y + (double) transition.getY() / (double) duration, (double) entity.position().z + (double) transition.getZ() / (double) duration);
+                            Vec3 entityPos = new Vec3((double) entity.position().x + (double) transition.getX() / (double) duration, (double) entity.position().y /*+y*/ + (double) transition.getY() / (double) duration, (double) entity.position().z + (double) transition.getZ() / (double) duration);
                             entity.setPos(entityPos);
-                           // entity.addDeltaMovement(new Vec3(0D,y,0D));
                         } else {
                             double y = 0D;
                             if (transition.getY() > 0D) {
@@ -169,7 +168,7 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                         }
                     }
                 }
-            } else if (duration > 0 && tickCount >= startTick + duration + 1) {
+            } else if (duration > 0 && tickCount == startTick + duration + 1) {
                 int y = 0;
                 if (transition.getY() > 0D) {
                     y = 1;
@@ -183,9 +182,10 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                  //   entity.setPos(entity.position().add(0D, (double) y, 0D));
                 }
                 makeBlock();
+
+            }else if(duration > 0 && tickCount == startTick + duration + 2){
+                discard();
             }
-
-
     }
     private void makeBlock(){
         if(!level().isClientSide) {
@@ -205,16 +205,17 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                         }
                     }
                 }
-                discard();
+
             } else {
                 ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(entityData.get(BlockDisplayMixin.getData()).getBlock()));
                 if (!level().isClientSide) {
                     level().addFreshEntity(itemEntity);
                 }
-                discard();
+
             }
         }
     }
+
 
     private BlockState getState(){
         return entityData.get(BlockDisplayMixin.getData());

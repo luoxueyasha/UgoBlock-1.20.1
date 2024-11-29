@@ -64,9 +64,12 @@ public class EndLocationCardItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
-       if(stack.getTag()!=null){
-           BlockPos pos=NbtUtils.readBlockPos(stack.getTag().getCompound("end_location"));
-           list.add(Component.literal("pos:").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())));
-       }
+       list.add(Component.translatable("info.ugoblock.end_location_card"));
+        if(stack.getTag()!=null) {
+            BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("end_location"));
+            if (!pos.equals(ShapeCardItem.errorPos())) {
+                list.add(Component.translatable("info.ugoblock.end_location_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]"));
+            }
+        }
     }
 }
