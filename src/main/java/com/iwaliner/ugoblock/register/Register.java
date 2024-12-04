@@ -2,7 +2,9 @@ package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.object.*;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.inventory.MenuType;
@@ -33,6 +35,8 @@ public class Register {
     public static final RegistryObject<BlockEntityType<SlideControllerBlockEntity>> SlideController=BLOCK_ENTITIES.register("slide_controller", () -> BlockEntityType.Builder.of(SlideControllerBlockEntity::new, Register.slide_controller_block.get()).build(null));
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, ModCoreUgoBlock.MODID);
     public static final RegistryObject<MenuType<SlideControllerMenu>> SlideControllerMenu = MENUS.register("slide_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new SlideControllerMenu(windowId, inv);}));
+    public static final TagKey<Block> TAG_DISABLE_MOVING =TagKey.create(Registries.BLOCK, new ResourceLocation(ModCoreUgoBlock.MODID,"disable_moving"));
+    public static final TagKey<Block> TAG_DISABLE_ITEM_DROP =TagKey.create(Registries.BLOCK, new ResourceLocation(ModCoreUgoBlock.MODID,"disable_item_drop"));
 
 
     public static void register(IEventBus eventBus) {

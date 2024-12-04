@@ -34,7 +34,5 @@ public class ClientSetUp {
         /**コンテナにGUIを登録*/
         MenuScreens.register(Register.SlideControllerMenu.get(), SlideControllerScreen::new);
 
-        /**見た目が特殊なBlockEntityの見た目を登録*/
-      //  BlockEntityRenderers.register(Register.SlideController.get(), SlideControllerRenderer::new);
-    }
+         }
 }

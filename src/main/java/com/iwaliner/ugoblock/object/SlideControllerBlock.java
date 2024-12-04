@@ -74,12 +74,12 @@ public class SlideControllerBlock extends BaseEntityBlock {
     }
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
 
-        if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity/*&&blockEntity.getCoolTime()==0*/) {
+        if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity&&blockEntity.hasCards()) {
             List<BlockPos> posList=blockEntity.getPositionList();
             if(posList!=null) {
                 for (BlockPos eachPos : posList) {
                     if(!blockEntity.getBlockPos().equals(eachPos)) {
-                        destroyOldBlock(level, eachPos);
+                        destroyOldBlock(level, eachPos); /**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*/
                     }
                 }
                 blockEntity.setNotFirstTime(true);
@@ -90,59 +90,25 @@ public class SlideControllerBlock extends BaseEntityBlock {
         boolean flag = state.getValue(POWERED);
 
             if (flag != level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
-                   if(!blockEntity.isMoving()&&blockEntity.getEndPos()!=null) { /**動いている最中は赤石入力の変化を無視する*/
-                       int startSecond= Mth.floor((double) blockEntity.getStartTime()/20D);
-                       int durationSecond = Mth.floor((double) blockEntity.getDuration()/20D);
+                   if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
+                       int startSecond= Mth.floor((double) blockEntity.getStartTime()/20D); /**赤石入力がされてからブロックが移動をはじめるまでの待機時間*/
+                       int durationSecond = Mth.floor((double) blockEntity.getDuration()/20D);/**移動に要する時間*/
                        if(blockEntity.getEndPos()!=null&&durationSecond>0) {
-                           ModCoreUgoBlock.logger.info("AA");
-                           BlockPos startPos;
-                           BlockPos endPos;
+                           BlockPos startPos=pos.relative(state.getValue(FACING));
+                           BlockPos endPos=blockEntity.getEndPos();
                            List<BlockPos> posList=blockEntity.getPositionList();
-                           if(!state.getValue(POWERED)){
-                               ModCoreUgoBlock.logger.info("BB");
-                              startPos=pos.relative(state.getValue(FACING));
-                               endPos=blockEntity.getEndPos();
-                               if(blockEntity.isNotFirstTime()) {
-                                   List<BlockPos> posList0 = blockEntity.getPositionList();
-                                   for (int i = 0; i < posList0.size(); i++) {
-                                       posList.set(i, new BlockPos(posList0.get(i).getX() + (blockEntity.getEndPos().getX() - startPos.getX()), posList0.get(i).getY() + (blockEntity.getEndPos().getY() - startPos.getY()), posList0.get(i).getZ() + (blockEntity.getEndPos().getZ() - startPos.getZ())));
-                                   }
-                               }
-                           }else{
-                               ModCoreUgoBlock.logger.info("CC");
-                               startPos=pos.relative(state.getValue(FACING));
-                               endPos=new BlockPos(startPos.getX()+(startPos.getX()-blockEntity.getEndPos().getX()),startPos.getY()+(startPos.getY()-blockEntity.getEndPos().getY()),startPos.getZ()+(startPos.getZ()-blockEntity.getEndPos().getZ()));
-                               if(blockEntity.isNotFirstTime()) {
-                                   List<BlockPos> posList0 = blockEntity.getPositionList();
-                                   for (int i = 0; i < posList0.size(); i++) {
-                                       posList.set(i, new BlockPos(posList0.get(i).getX() + (startPos.getX() - blockEntity.getEndPos().getX()), posList0.get(i).getY() + (startPos.getY() - blockEntity.getEndPos().getY()), posList0.get(i).getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ())));
-                                   }
-                               }
-                           }
-                           if(endPos==null){
-                               ModCoreUgoBlock.logger.info("DD");
-                               endPos=startPos;
-                           }
-
                            if(posList!=null) {
-                               ModCoreUgoBlock.logger.info("EE");
-                               blockEntity.setPositionList(posList);
-                              // blockEntity.setMoveTick(startSecond*20+durationSecond*20);
-                               blockEntity.setMoving(true);
+                                blockEntity.setMoving(true);
+                                /**↓移動の変位。座標ではないことに注意。*/
                                BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
                                for (BlockPos eachPos : posList) {
                                    if(!blockEntity.getBlockPos().equals(eachPos)) {
+                                       /**ブロックをエンティティ化*/
                                        makeMoveableBlock(level, eachPos, startSecond, durationSecond, transitionPos);
-                                       ModCoreUgoBlock.logger.info("transition:["+transitionPos.getX()+","+transitionPos.getY()+","+transitionPos.getZ()+"]");
-                                       ModCoreUgoBlock.logger.info("start:["+startPos.getX()+","+startPos.getY()+","+startPos.getZ()+"]");
-                                       ModCoreUgoBlock.logger.info("each:["+eachPos.getX()+","+eachPos.getY()+","+eachPos.getZ()+"]");
-                                       ModCoreUgoBlock.logger.info("end:["+endPos.getX()+","+eachPos.getY()+","+eachPos.getZ()+"]");
-                                   }
+                                     }
                                }
-
                            }
                        }
-
                            level.setBlock(pos, state.cycle(POWERED), 2);
                            level.scheduleTick(pos, this, 2);
 
@@ -152,33 +118,29 @@ public class SlideControllerBlock extends BaseEntityBlock {
 
 
     }
-    public static void makeMoveableBlock(Level level,BlockPos startPos,int start,int duration,BlockPos traisitionPos){
+    public static void makeMoveableBlock(Level level,BlockPos startPos,int start,int duration,BlockPos transitionPos){
         BlockEntity blockEntity=level.getBlockEntity(startPos);
         BlockState state=level.getBlockState(startPos);
         MoveableBlockEntity moveableBlock;
-        if(!state.isAir()) {
+        if(!state.isAir()&&!state.is(Register.TAG_DISABLE_MOVING)) {
             if (blockEntity != null) {
-                moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20, duration * 20, traisitionPos, blockEntity);
+                moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20, duration * 20, transitionPos, blockEntity);
                 if(blockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity&&!slideControllerBlockEntity.getPositionList().isEmpty()&&!slideControllerBlockEntity.getEndPos().equals(ShapeCardItem.errorPos())){
 
                     List<BlockPos> newPos=new ArrayList<>();
                     for(int i=0;i< ((SlideControllerBlockEntity) blockEntity).getPositionList().size();i++){
-                        newPos.add(slideControllerBlockEntity.getPositionList().get(i).offset(traisitionPos.getX(),traisitionPos.getY(),traisitionPos.getZ()));
-                    //    newPos.add(new BlockPos(slideControllerBlockEntity.getPositionList().get(i).getX()+traisitionPos.getX(),slideControllerBlockEntity.getPositionList().get(i).getY()+traisitionPos.getY(),slideControllerBlockEntity.getPositionList().get(i).getZ()+traisitionPos.getZ()));
+                        newPos.add(slideControllerBlockEntity.getPositionList().get(i).offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ()));
                     }
-                    //slideControllerBlockEntity.clearPositionList();
                     slideControllerBlockEntity.setPositionList(newPos);
-                    BlockPos newEndPos=slideControllerBlockEntity.getEndPos().offset(traisitionPos.getX(),traisitionPos.getY(),traisitionPos.getZ());
-                    //BlockPos newEndPos=new BlockPos(slideControllerBlockEntity.getEndPos().getX()+traisitionPos.getX(),slideControllerBlockEntity.getEndPos().getY()+traisitionPos.getY(),slideControllerBlockEntity.getEndPos().getZ()+traisitionPos.getZ());
+                    BlockPos newEndPos=slideControllerBlockEntity.getEndPos().offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ());
                     slideControllerBlockEntity.setEndPos(newEndPos);
 
-                    moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20+1, duration * 20, traisitionPos, slideControllerBlockEntity);
+                    moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20+1, duration * 20, transitionPos, slideControllerBlockEntity);
 
                 }
             } else {
-                moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20+1, duration * 20, traisitionPos, null);
+                moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20+1, duration * 20, transitionPos, null);
             }
-            //moveableBlock.setPos(moveableBlock.position().add(0.1F,0.1F,0.1F));
             if (!level.isClientSide) {
                 level.addFreshEntity(moveableBlock);
             }
@@ -186,8 +148,10 @@ public class SlideControllerBlock extends BaseEntityBlock {
 
     }
     public static void destroyOldBlock(Level level,BlockPos pos){
-        level.removeBlockEntity(pos);
-        level.setBlock(pos,Blocks.AIR.defaultBlockState(),82);
+        if(!level.getBlockState(pos).is(Register.TAG_DISABLE_MOVING)) {
+            level.removeBlockEntity(pos);
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 82);
+        }
     }
 
     public RenderShape getRenderShape(BlockState p_49090_) {

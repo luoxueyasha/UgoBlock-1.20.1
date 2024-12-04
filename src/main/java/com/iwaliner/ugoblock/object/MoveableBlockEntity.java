@@ -147,16 +147,11 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
                 for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MoveableBlockEntity);
                 })) {
-
-                  //  if (entity.getType() != EntityRegister.MoveableBlock.get()) {
-                        if (entity instanceof Player) {
-                            double y = 0D;
+                       if (entity instanceof Player) { /**移動中のブロックに乗っているプレイヤーが動けなくなるのはまずいので、他エンティティと処理を分けてる*/
                             double endY=0D;
                             if (transition.getY() > 0D) {
-                                y = 1.0D;
                                 endY=0.3D;
                             } else if (transition.getY() < 0D) {
-                                y =1D;
                             }
                             List<MoveableBlockEntity> colliedEntityList=level().getEntitiesOfClass(MoveableBlockEntity.class,entity.getBoundingBox().inflate(0D,0.1D,0D));
                             int collidedAmount=colliedEntityList.size();
@@ -167,64 +162,28 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
                             if(tickCount==startTick+duration-1){
                                 entity.setPos(entity.position().add(0D,endY,0D));
                             }
-                        } else {
-                            double y = 0D;
-                            if (transition.getY() > 0D) {
-                                y = 1D;
-                            } else if (transition.getY() < 0D) {
-                                y = 1D;
-                            }
-                           /* if (tickCount == startTick + duration - 1) {
-                                entity.setDeltaMovement(Vec3.ZERO);
-                            } else {*/
-                                if (tickCount == startTick && y != 0) {
-                               //     entity.setPos(entity.position().add(0D, (double) y , 0D));
-                                }
-                             //   List<MoveableBlockEntity> colliedEntityList=level().getEntitiesOfClass(MoveableBlockEntity.class,entity.getBoundingBox().inflate(0D,0.3D,0D));
-                             //   int collidedAmount=colliedEntityList.size();
-                             //   if(collidedAmount!=0) {
-                                    Vec3 entityPos = new Vec3((double) entity.position().x, this.position().y+1D, entity.position().z);
+                        } else { /**プレイヤーは上のテレポートによる移動でかくつかなかったが、他のエンティティはこれではかくついてしまうので、エンティティに速度を持たせて移動させてる。ただし身動きがとれなくなる。*/
+                               Vec3 entityPos = new Vec3((double) entity.position().x, this.position().y+1D, entity.position().z);
                                     entity.setPos(entityPos);
-                          //      }
-                               // Vec3 speed = new Vec3((double) transition.getX() / (double) duration, /*1.05D**/(((double) transition.getY()) / (double) duration), (double) transition.getZ() / (double) duration);
-
                                 Vec3 speed = new Vec3((double) transition.getX() / (double) duration, 0D, (double) transition.getZ() / (double) duration);
                                 entity.setDeltaMovement(speed);
                                 entity.setOnGround(true);
-
-                       //     }
                         }
-               //     }
                 }
             } else if (duration > 0 && tickCount == startTick + duration +0) {
-                int y = 0;
-                if (transition.getY() > 0D) {
-                    y = 1;
-                } else if (transition.getY() < 0D) {
-                    y = -1;
-                }
-
-                for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.5d, 0d), (o) -> {
-                    return !(o instanceof MoveableBlockEntity);
-                })) {
-                 //   entity.setPos(entity.position().add(0D, (double) y, 0D));
-                }
                 makeBlock();
-
             }else if(duration > 0 && tickCount == startTick + duration + 1){
                 discard();
             }
     }
-    public boolean shouldFixFighting(){
+    public boolean shouldFixFighting(){ /**このエンティティとブロックが完全に重なりZ-fightingを起こす可能性があるかどうか*/
         return (getDuration()>0&&tickCount>getStartTick()+getDuration()-0)||tickCount<2;
     }
-    private void makeBlock(){
+    private void makeBlock(){ /**移動し終わってブロック化する*/
         if(!level().isClientSide) {
             BlockPos pos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
+            BlockState movingState = getState();
             if (level().getBlockState(pos).canBeReplaced()) {
-                BlockState movingState = getState();
-
-                //level().setBlock(pos, movingState,3);
                 level().setBlock(pos, movingState,82);
                 if (!getBlockEntityData().isEmpty() && movingState.hasBlockEntity()) {
                     CompoundTag compoundtag = getBlockEntityData();
@@ -233,15 +192,17 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
 
                         if (blockentity != null) {
                             blockentity.load(getBlockEntityData());
-
                         }
                     }
                 }
-
-            } else {
-                ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(entityData.get(BlockDisplayMixin.getData()).getBlock()));
-                if (!level().isClientSide) {
+            } else { /**移動してきた場所が他のブロックで埋まっていた場合。アイテム化する。*/
+                if (!level().isClientSide&&!movingState.is(Register.TAG_DISABLE_ITEM_DROP)) { /**通常*/
+                    ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(movingState.getBlock()));
                     level().addFreshEntity(itemEntity);
+                }else if(!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)){ /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
+                    ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(level().getBlockState(pos).getBlock()));
+                    level().addFreshEntity(itemEntity);
+                    level().setBlock(pos,movingState,82);
                 }
                 discard();
             }
@@ -267,39 +228,4 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
     private CompoundTag getBlockEntityData(){
         return entityData.get(DATA_BLOCKENTITY_CONTENTS_ID);
     }
-   /* @Nullable
-    public Display.BlockDisplay.BlockRenderState blockRenderState() {
-        if(getState().getBlock() instanceof AbstractChestBlock) {
-            return null;
-        }
-        return this.blockRenderState();
-    }*/
-
-
-   /* @Override
-    public @NotNull InteractionResult interact(Player player, InteractionHand hand) {
-        BlockState state=this.entityData.get(BlockDisplayMixin.getData());
-        if(state.getBlock() instanceof BarrelBlock) {
-            this.gameEvent(GameEvent.ENTITY_INTERACT, player);
-            player.openMenu(this);
-            level().addParticle(ParticleTypes.FLAME, position().x, position().y+2D, position().z, 0.0D, 0.0D, 0.0D);
-
-            return InteractionResult.SUCCESS;
-        }
-        return super.interact(player, hand);
-    }*/
-
-
-   /* @Nullable
-    @Override
-    public AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
-        BlockState state=this.entityData.get(BlockDisplayMixin.getData());
-        if(state.hasBlockEntity()&&state.getBlock() instanceof BaseEntityBlock baseEntityBlock) {
-            BlockEntity blockEntity = baseEntityBlock.newBlockEntity(blockPosition(),state);
-            if(blockEntity instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
-                return ChestMenu.threeRows(i, inventory, baseContainerBlockEntity);
-            }
-        }
-        return null;
-    }*/
 }
