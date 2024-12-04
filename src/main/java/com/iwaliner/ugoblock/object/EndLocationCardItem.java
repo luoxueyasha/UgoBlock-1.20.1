@@ -60,6 +60,11 @@ public class EndLocationCardItem extends Item {
     public static BlockPos getEndPos(CompoundTag tag){
         return NbtUtils.readBlockPos(tag.getCompound("end_location"));
     }
+    public static void setEndPos(ItemStack stack,BlockPos pos){
+        if(stack.getTag()!=null) {
+            stack.getTag().put("end_location", NbtUtils.writeBlockPos(pos));
+        }
+    }
 
 
     @Override

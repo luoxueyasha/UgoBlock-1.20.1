@@ -9,10 +9,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(Display.class)
 public interface DisplayMixin {
-    @Accessor("DATA_TRANSLATION_ID")
-    public static EntityDataAccessor<Vector3f> getDataTranslation() {
-        throw new AssertionError();
-    }
 
     @Accessor("DATA_INTERPOLATION_DURATION_ID")
     public static EntityDataAccessor<Integer> getDataDuration() {

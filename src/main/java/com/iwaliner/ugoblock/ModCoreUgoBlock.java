@@ -1,16 +1,13 @@
 package com.iwaliner.ugoblock;
 
 import com.iwaliner.ugoblock.object.ShapeCardItem;
-import com.iwaliner.ugoblock.register.BlockEntityRegister;
-import com.iwaliner.ugoblock.register.EntityRegister;
-import com.iwaliner.ugoblock.register.ItemAndBlockRegister;
+import com.iwaliner.ugoblock.register.Register;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -22,24 +19,22 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.network.NetworkEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,22 +47,20 @@ import static net.minecraft.world.phys.shapes.Shapes.box;
 public class ModCoreUgoBlock
 {
      public static final String MODID = "ugoblock";
-
+    public static Logger logger = LogManager.getLogger("ugoblock");
     public ModCoreUgoBlock() {
         IEventBus  modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        EntityRegister.register(modEventBus);
-        ItemAndBlockRegister.register(modEventBus);
-        BlockEntityRegister.register(modEventBus);
-        MinecraftForge.EVENT_BUS.register(this);
+        Register.register(modEventBus);
+       MinecraftForge.EVENT_BUS.register(this);
         modEventBus.addListener(this::CreativeTabEvent);
     }
     @SubscribeEvent
-    public void CreativeTabEvent(BuildCreativeModeTabContentsEvent event)
-    {
+    public void CreativeTabEvent(BuildCreativeModeTabContentsEvent event){
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
-            event.accept(ItemAndBlockRegister.slide_controller_blockitem.get());
+            event.accept(Register.slide_controller_blockitem.get());
         }
     }
+
     @SubscribeEvent
     public void RenderLineEvent(RenderHighlightEvent.Block event) {
         PoseStack poseStack = event.getPoseStack();
@@ -84,7 +77,7 @@ public class ModCoreUgoBlock
             BlockState hitState = level.getBlockState(hitPos);
 
 
-            if (heldStack.getItem() == ItemAndBlockRegister.end_location_card.get()) {
+            if (heldStack.getItem() == Register.end_location_card.get()) {
                 CompoundTag tag=heldStack.getTag();
                 if (tag!=null&&tag.contains("end_location")) {
                     BlockPos endLocation= NbtUtils.readBlockPos(tag.getCompound("end_location"));
@@ -116,17 +109,21 @@ public class ModCoreUgoBlock
                         }
                     }
                 }
-            }else if (heldStack.getItem() == ItemAndBlockRegister.shape_card.get()) {
+            }else if (heldStack.getItem() == Register.shape_card.get()) {
                 CompoundTag tag=heldStack.getTag();
                 List<BlockPos> list=new ArrayList<>();
                 if(tag!=null){
+                    if(!tag.contains("positionList")){
+                        tag.put("positionList",new CompoundTag());
+                    }
+                    CompoundTag posTag=tag.getCompound("positionList");
                 int ii=-1;
                 for(int i=0;i<1028;i++) {
-                    if(!tag.contains("location_"+String.valueOf(i))){
+                    if(!posTag.contains("location_"+String.valueOf(i))){
                         ii=i-1;
                         break;
                     }else{
-                        list.add(NbtUtils.readBlockPos(tag.getCompound("location_"+String.valueOf(i))));
+                        list.add(NbtUtils.readBlockPos(posTag.getCompound("location_"+String.valueOf(i))));
                     }
                 }
                 if (ii!=-1) {
@@ -177,7 +174,7 @@ public class ModCoreUgoBlock
     @SubscribeEvent
     public void BreakSpeedEvent(PlayerEvent.BreakSpeed event) {
         Item item=event.getEntity().getMainHandItem().getItem();
-        if(item==ItemAndBlockRegister.end_location_card.get()||item==ItemAndBlockRegister.shape_card.get()){
+        if(item== Register.end_location_card.get()||item== Register.shape_card.get()){
             event.setNewSpeed(10000f);
         }
     }

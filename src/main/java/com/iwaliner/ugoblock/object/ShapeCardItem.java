@@ -26,17 +26,67 @@ public class ShapeCardItem extends Item {
     public boolean onBlockStartBreak(ItemStack stack, BlockPos pos, Player player) {
         if(stack.getItem() instanceof ShapeCardItem) {
             List<BlockPos> list=new ArrayList<>();
+            Level level=player.level();
+            BlockState state=level.getBlockState(pos);
             CompoundTag tag = stack.getTag();
             if (tag == null) {
                 tag = new CompoundTag();
             }
-            for (int i = 0; i < getMaxSize(); i++) {
-                if (tag.contains("location_" + String.valueOf(i))) {
-                    list.add(NbtUtils.readBlockPos(tag.getCompound("location_" + String.valueOf(i))));
-                }
+            if(!tag.contains("positionList")){
+                tag.put("positionList",new CompoundTag());
             }
-            if (list.contains(pos)) {
-                tag.put("location_" + String.valueOf(list.indexOf(pos)), NbtUtils.writeBlockPos(errorPos()));
+            CompoundTag posTag=tag.getCompound("positionList");
+            /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
+            if(!tag.contains("select")){
+                tag.putBoolean("select",false);
+            }
+            tag.putBoolean("select",!tag.getBoolean("select"));
+            if(!(state.getBlock() instanceof SlideControllerBlock)) {
+                int ii = -1;
+                for (int i = 0; i < getMaxSize(); i++) {
+                    if (!posTag.contains("location_" + String.valueOf(i))) {
+                        ii = i;
+                        break;
+                    } else {
+                        list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+                    }
+                }
+                if (ii != -1) {
+                    if (tag.getBoolean("select")) {
+                        /**範囲選択の始点を登録*/
+                        tag.put("edge_A", NbtUtils.writeBlockPos(pos));
+
+                        stack.setTag(tag);
+                    } else {
+                        /**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*/
+                        BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
+                        List<BlockPos> removeList = new ArrayList<>();
+                        List<BlockPos> newList = new ArrayList<>();
+                        for (int i = 0; i <= Math.abs(edgeA.getX() - pos.getX()); i++) {
+                            for (int j = 0; j <= Math.abs(edgeA.getY() - pos.getY()); j++) {
+                                for (int k = 0; k <= Math.abs(edgeA.getZ() - pos.getZ()); k++) {
+                                    BlockPos pos2 = pos.offset(edgeA.getX() - pos.getX() >= 0 ? i : -i, edgeA.getY() - pos.getY() >= 0 ? j : -j, edgeA.getZ() - pos.getZ() >= 0 ? k : -k);
+                                    if (list.contains(pos2)) {
+                                        removeList.add(pos2);
+                                    }
+                                }
+                            }
+                        }
+                        for (int i = 0; i < list.size(); i++) {
+                            if (!removeList.contains(list.get(i))) {
+                                newList.add(list.get(i));
+                            }
+                        }
+                        CompoundTag newTag = new CompoundTag();
+                        for (int i = 0; i < newList.size(); i++) {
+                            newTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(newList.get(i)));
+                        }
+                        tag.put("positionList",newTag);
+                        stack.setTag(tag);
+                    }
+                } else {
+                    stack.setTag(tag);
+                }
             }
         }
         return true;
@@ -55,22 +105,24 @@ public class ShapeCardItem extends Item {
             if(tag==null){
                 tag=new CompoundTag();
             }
+            if(!tag.contains("positionList")){
+                tag.put("positionList",new CompoundTag());
+            }
+            CompoundTag posTag=tag.getCompound("positionList");
             /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
             if(!tag.contains("select")){
                 tag.putBoolean("select",false);
             }
             tag.putBoolean("select",!tag.getBoolean("select"));
 
-            if(state.getBlock() instanceof SlideControllerBlock){
-
-            }else{
+            if(!(state.getBlock() instanceof SlideControllerBlock)){
                 int ii=-1;
                 for(int i=0;i<getMaxSize();i++){
-                    if(!tag.contains("location_"+String.valueOf(i))){
+                    if(!posTag.contains("location_"+String.valueOf(i))){
                         ii=i;
                         break;
                     }else{
-                        list.add(NbtUtils.readBlockPos(tag.getCompound("location_"+String.valueOf(i))));
+                        list.add(NbtUtils.readBlockPos(posTag.getCompound("location_"+String.valueOf(i))));
                     }
                 }
                 if(ii!=-1) {
@@ -86,13 +138,13 @@ public class ShapeCardItem extends Item {
                                     BlockPos pos2=pos.offset(edgeA.getX()-pos.getX()>=0? i: -i,edgeA.getY()-pos.getY()>=0? j: -j,edgeA.getZ()-pos.getZ()>=0? k: -k);
                                     int ii2=-1;
                                     for(int i0=0;i0<getMaxSize();i0++){
-                                        if(!tag.contains("location_"+String.valueOf(i0))){
+                                        if(!posTag.contains("location_"+String.valueOf(i0))){
                                             ii2=i0;
                                             break;
                                         }
                                     }
                                     if(ii2!=-1&&!level.getBlockState(pos2).isAir()&&!list.contains(pos2)) {
-                                        tag.put("location_" + String.valueOf(ii2), NbtUtils.writeBlockPos(pos2));
+                                        posTag.put("location_" + String.valueOf(ii2), NbtUtils.writeBlockPos(pos2));
                                     }
                                 }
                             }
@@ -113,16 +165,34 @@ public class ShapeCardItem extends Item {
         return InteractionResult.FAIL;
     }
     public static List<BlockPos> getPositionList(CompoundTag tag){
+
         List<BlockPos> list=new ArrayList<>();
         if(tag!=null) {
+            if(!tag.contains("positionList")){
+                tag.put("positionList",new CompoundTag());
+            }
+            CompoundTag posTag=tag.getCompound("positionList");
             for (int i = 0; i < getMaxSize(); i++) {
-                if (tag.contains("location_" + String.valueOf(i))) {
-                    list.add(NbtUtils.readBlockPos(tag.getCompound("location_" + String.valueOf(i))));
+                if (posTag.contains("location_" + String.valueOf(i))) {
+                    list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
                 }
             }
         }
         return list;
     }
+    public static void setPositionList(ItemStack stack,List<BlockPos> list){
+        CompoundTag tag=stack.getTag();
+        if(tag!=null) {
+            if(!tag.contains("positionList")){
+                tag.put("positionList",new CompoundTag());
+            }
+            CompoundTag posTag=tag.getCompound("positionList");
+            for (int i = 0; i < list.size(); i++) {
+                posTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(list.get(i)));
+            }
+        }
+    }
+
 
     public static int getMaxSize(){
         return 1028;
@@ -140,7 +210,7 @@ public class ShapeCardItem extends Item {
         if(stack.getTag()!=null) {
             int size=getPositionList(stack.getTag()).size();
             for (int i = 0;size>5? i < 5 : i<size; i++) {
-                BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("location_" + String.valueOf(i)));
+                BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("positionList").getCompound("location_" + String.valueOf(i)));
                 if (!pos.equals(errorPos())) {
                     list.add(Component.translatable("info.ugoblock.shape_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]"));
                 }

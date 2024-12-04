@@ -3,7 +3,7 @@ package com.iwaliner.ugoblock.object;
 
 import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
-import com.iwaliner.ugoblock.register.EntityRegister;
+import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -29,7 +29,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuProvider*/ {
+import java.util.List;
+
+public class MoveableBlockEntity extends Display.BlockDisplay {
     /**移動量を座標で指定。変位なので始点座標でも終点座標でもない。*/
     public static final EntityDataAccessor<BlockPos> DATA_TRANSITION_LOCATION_ID = SynchedEntityData.defineId(MoveableBlockEntity.class, EntityDataSerializers.BLOCK_POS);
    /**始点座標*/
@@ -38,11 +40,12 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
     public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_CONTENTS_ID = SynchedEntityData.defineId(MoveableBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     public MoveableBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
-        super(EntityRegister.MoveableBlock.get(), p_270442_);
-
+        super(Register.MoveableBlock.get(), p_270442_);
+        this.noPhysics = false;
+        this.noCulling = false;
     }
     public MoveableBlockEntity(Level level,BlockPos startPos, BlockState state, int startTick, int duration, BlockPos endPos, BlockEntity blockEntity) {
-        super(EntityRegister.MoveableBlock.get(), level);
+        super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX(),startPos.getY(),startPos.getZ());
         this.entityData.set(BlockDisplayMixin.getData(),state);
         this.entityData.set(DATA_TRANSITION_LOCATION_ID,endPos);
@@ -52,6 +55,13 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
         if(blockEntity!=null) {
             this.entityData.set(DATA_BLOCKENTITY_CONTENTS_ID,blockEntity.saveWithoutMetadata());
         }
+        this.noPhysics = false;
+        this.noCulling = false;
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double d) {
+        return true;
     }
 
     @Override
@@ -120,7 +130,6 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
         return aabb;
 
     }
-
     @Override
     public void tick() {
         if(getState().isAir()){
@@ -138,37 +147,56 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                 for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MoveableBlockEntity);
                 })) {
-                    if (entity.getType() != EntityRegister.MoveableBlock.get()) {
+
+                  //  if (entity.getType() != EntityRegister.MoveableBlock.get()) {
                         if (entity instanceof Player) {
                             double y = 0D;
+                            double endY=0D;
                             if (transition.getY() > 0D) {
-                                y = 0.3D;
+                                y = 1.0D;
+                                endY=0.3D;
                             } else if (transition.getY() < 0D) {
-                                y = -0.3D;
+                                y =1D;
                             }
-                            Vec3 entityPos = new Vec3((double) entity.position().x + (double) transition.getX() / (double) duration, (double) entity.position().y /*+y*/ + (double) transition.getY() / (double) duration, (double) entity.position().z + (double) transition.getZ() / (double) duration);
-                            entity.setPos(entityPos);
+                            List<MoveableBlockEntity> colliedEntityList=level().getEntitiesOfClass(MoveableBlockEntity.class,entity.getBoundingBox().inflate(0D,0.1D,0D));
+                            int collidedAmount=colliedEntityList.size();
+                            if(collidedAmount!=0) {
+                                Vec3 entityPos = new Vec3((double) entity.position().x + ((double) transition.getX() / (double) duration) / (double) collidedAmount, this.position().y+1D, (double) entity.position().z + ((double) transition.getZ() / (double) duration) / (double) collidedAmount);
+                                entity.setPos(entityPos);
+                            }
+                            if(tickCount==startTick+duration-1){
+                                entity.setPos(entity.position().add(0D,endY,0D));
+                            }
                         } else {
                             double y = 0D;
                             if (transition.getY() > 0D) {
-                                y = 0.08D;
+                                y = 1D;
                             } else if (transition.getY() < 0D) {
-                                y = -0.08D;
+                                y = 1D;
                             }
-                            if (tickCount == startTick + duration - 1) {
+                           /* if (tickCount == startTick + duration - 1) {
                                 entity.setDeltaMovement(Vec3.ZERO);
-                            } else {
+                            } else {*/
                                 if (tickCount == startTick && y != 0) {
-                                    entity.setPos(entity.position().add(0D, 0.0D/*+(double) y * 0.8D*/, 0D));
+                               //     entity.setPos(entity.position().add(0D, (double) y , 0D));
                                 }
-                                Vec3 speed = new Vec3((double) transition.getX() / (double) duration, 1.2D*(((double) transition.getY()) / (double) duration), (double) transition.getZ() / (double) duration);
-                                entity.setDeltaMovement(speed);
+                             //   List<MoveableBlockEntity> colliedEntityList=level().getEntitiesOfClass(MoveableBlockEntity.class,entity.getBoundingBox().inflate(0D,0.3D,0D));
+                             //   int collidedAmount=colliedEntityList.size();
+                             //   if(collidedAmount!=0) {
+                                    Vec3 entityPos = new Vec3((double) entity.position().x, this.position().y+1D, entity.position().z);
+                                    entity.setPos(entityPos);
+                          //      }
+                               // Vec3 speed = new Vec3((double) transition.getX() / (double) duration, /*1.05D**/(((double) transition.getY()) / (double) duration), (double) transition.getZ() / (double) duration);
 
-                            }
+                                Vec3 speed = new Vec3((double) transition.getX() / (double) duration, 0D, (double) transition.getZ() / (double) duration);
+                                entity.setDeltaMovement(speed);
+                                entity.setOnGround(true);
+
+                       //     }
                         }
-                    }
+               //     }
                 }
-            } else if (duration > 0 && tickCount == startTick + duration + 1) {
+            } else if (duration > 0 && tickCount == startTick + duration +0) {
                 int y = 0;
                 if (transition.getY() > 0D) {
                     y = 1;
@@ -183,9 +211,12 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                 }
                 makeBlock();
 
-            }else if(duration > 0 && tickCount == startTick + duration + 2){
+            }else if(duration > 0 && tickCount == startTick + duration + 1){
                 discard();
             }
+    }
+    public boolean shouldFixFighting(){
+        return (getDuration()>0&&tickCount>getStartTick()+getDuration()-0)||tickCount<2;
     }
     private void makeBlock(){
         if(!level().isClientSide) {
@@ -193,7 +224,8 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
             if (level().getBlockState(pos).canBeReplaced()) {
                 BlockState movingState = getState();
 
-                level().setBlockAndUpdate(pos, movingState);
+                //level().setBlock(pos, movingState,3);
+                level().setBlock(pos, movingState,82);
                 if (!getBlockEntityData().isEmpty() && movingState.hasBlockEntity()) {
                     CompoundTag compoundtag = getBlockEntityData();
                     if (compoundtag != null) {
@@ -211,7 +243,7 @@ public class MoveableBlockEntity extends Display.BlockDisplay /*implements MenuP
                 if (!level().isClientSide) {
                     level().addFreshEntity(itemEntity);
                 }
-
+                discard();
             }
         }
     }
