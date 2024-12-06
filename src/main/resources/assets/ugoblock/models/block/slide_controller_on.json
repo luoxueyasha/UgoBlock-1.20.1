@@ -1,10 +1,10 @@
 {
 	"parent": "block/block",
 	"textures": {
-		"0": "ugoblock:block/slide_controller_top_powered",
+		"0": "ugoblock:block/slide_controller_top",
 		"1": "ugoblock:block/slide_controller_bottom_powered",
 		"2": "ugoblock:block/slide_controller_side_powered",
-		"particle": "ugoblock:block/slide_controller_top_powered"
+		"particle": "ugoblock:block/slide_controller_side_powered"
 	},
 	"elements": [
 		{

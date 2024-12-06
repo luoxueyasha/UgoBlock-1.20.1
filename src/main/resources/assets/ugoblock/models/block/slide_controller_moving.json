@@ -2,9 +2,9 @@
 	"parent": "block/block",
 	"textures": {
 		"0": "ugoblock:block/slide_controller_top",
-		"1": "ugoblock:block/slide_controller_bottom",
-		"2": "ugoblock:block/slide_controller_side",
-		"particle": "ugoblock:block/slide_controller_side"
+		"1": "ugoblock:block/slide_controller_bottom_moving",
+		"2": "ugoblock:block/slide_controller_side_moving",
+		"particle": "ugoblock:block/slide_controller_side_moving"
 	},
 	"elements": [
 		{

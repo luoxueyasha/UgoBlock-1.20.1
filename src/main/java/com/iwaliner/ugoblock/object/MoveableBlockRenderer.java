@@ -130,7 +130,7 @@ public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer 
              //   int i=15;
             //    ModCoreUgoBlock.logger.info("色;"+i);
             //    i*=2;
-                int i=15728640;
+                int i=blockDisplay.getTeamColor();
                 float ff = blockDisplay.calculateInterpolationProgress(ff2);
                 this.shadowRadius = blockDisplay.renderState().shadowRadius().get(ff);
                 this.shadowStrength = blockDisplay.renderState().shadowStrength().get(ff);

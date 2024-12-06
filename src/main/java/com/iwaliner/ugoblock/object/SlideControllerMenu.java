@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class SlideControllerMenu extends AbstractContainerMenu {
     public final Container container;
     private final ContainerData startTickData;
-    private final ContainerData durationData;
+    private final ContainerData speedData;
 
 
 
@@ -27,14 +27,14 @@ public class SlideControllerMenu extends AbstractContainerMenu {
         this( s, inventory, new SimpleContainer(2), new SimpleContainerData(1), new SimpleContainerData(1));
     }
 
-    public SlideControllerMenu(int s, Inventory inventory,Container c,ContainerData startTickData,ContainerData durationData) {
+    public SlideControllerMenu(int s, Inventory inventory,Container c,ContainerData startTickData,ContainerData speedData) {
         super(Register.SlideControllerMenu.get(), s);
         checkContainerSize(c, 2);
         checkContainerDataCount(startTickData, 1);
-        checkContainerDataCount(durationData, 1);
+        checkContainerDataCount(speedData, 1);
         this.container=c;
         this.startTickData=startTickData;
-        this.durationData=durationData;
+        this.speedData=speedData;
         container.startOpen(inventory.player);
         this.addSlot(new ShapeCardSlot(c, 0, 18, 41));
         this.addSlot(new EndLocationCardSlot(c,  1, 36, 41));
@@ -48,7 +48,7 @@ public class SlideControllerMenu extends AbstractContainerMenu {
             this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
         }
         this.addDataSlots(startTickData);
-        this.addDataSlots(durationData);
+        this.addDataSlots(speedData);
     }
 
     public ItemStack quickMoveStack(Player player, int i) {
@@ -91,24 +91,34 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     public int getStartTime(){
          return Mth.floor((double) startTickData.get(0)/20D);
     }
-    public int getDuration(){
+    /*public int getDuration(){
             return Mth.floor((double)durationData.get(0)/20D);
-    }
+    }*/
 
     public void setStartTime(int startTime) {
          startTickData.set(0,startTime*20);
 
     }
-    public void setDuration(int duration) {
+   /* public void setDuration(int duration) {
         durationData.set(0,duration*20);
+    }*/
+
+    public int getSpeed(){
+        return Math.round((float) speedData.get(0)/10F);
+    }
+    public void setSpeed(double speed){
+        speedData.set(0,Mth.floor(speed*10D));
     }
     public void addStartTime(int startTime) {
         startTickData.set(0,startTickData.get(0)+startTime*20);
     }
-    public void addDuration(int duration) {
+    /*public void addDuration(int duration) {
         durationData.set(0,durationData.get(0)+duration*20);
+    }*/
+    public void addSpeed(double speed) {
+        speedData.set(0,speedData.get(0)+Mth.floor(speed*10D));
     }
-    public boolean clickMenuButton(Player player, int variable) {
+    /*public boolean clickMenuButton(Player player, int variable) {
         Level level=player.level();
         BlockPos playerPos=player.blockPosition();
 
@@ -149,6 +159,63 @@ public class SlideControllerMenu extends AbstractContainerMenu {
             return true;
         }else if(variable==7){
             addDuration(5);
+            return true;
+        }
+        return false;
+    }*/
+    public boolean clickMenuButton(Player player, int variable) {
+        Level level=player.level();
+        BlockPos playerPos=player.blockPosition();
+
+        int startTime=getStartTime();
+        int speed=getSpeed();
+        if(variable==0){
+            if(startTime<5){
+                setStartTime(0);
+            }else{
+                addStartTime(-5);
+            }
+            return true;
+        }else if(variable==1){
+            if(startTime>0){
+                addStartTime(-1);
+            }
+            return true;
+        }else if(variable==2){
+            if(startTime<30) {
+                addStartTime(1);
+            }
+            return true;
+        }else if(variable==3){
+            if(startTime<25) {
+                addStartTime(5);
+            }else{
+                setStartTime(30);
+            }
+            return true;
+        }else if(variable==4){
+            if(speed<=5){
+                setSpeed(1);
+            }else{
+                addSpeed(-5);
+            }
+            return true;
+        }else if(variable==5){
+            if(speed>1){
+                addSpeed(-1);
+            }
+            return true;
+        }else if(variable==6){
+            if(speed<50){
+                addSpeed(1);
+            }
+            return true;
+        }else if(variable==7){
+            if(speed<=45){
+                addSpeed(5);
+            }else{
+                setSpeed(50);
+            }
             return true;
         }
         return false;

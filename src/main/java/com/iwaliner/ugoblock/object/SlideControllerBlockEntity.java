@@ -34,7 +34,8 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     private boolean isMoving;
     private int tickCount;
     private int startTime;
-    private int duration=20;
+   // private int duration=20;
+    private int speedx10=10;
     protected NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
     protected final ContainerData startTickDataAccess = new ContainerData() {
@@ -60,7 +61,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             return 1;
         }
     };
-    protected final ContainerData durationDataAccess = new ContainerData() {
+    /*protected final ContainerData durationDataAccess = new ContainerData() {
         public int get(int i) {
             switch(i) {
                 case 0:
@@ -82,6 +83,29 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         public int getCount() {
             return 1;
         }
+    };*/
+    protected final ContainerData speedDataAccess = new ContainerData() {
+        public int get(int i) {
+            switch(i) {
+                case 0:
+                    return getSpeedx10();
+
+                default:
+                    return 0;
+            }
+        }
+
+        public void set(int i, int j) {
+            switch(i) {
+                case 0:
+                    SlideControllerBlockEntity.this.speedx10=j;
+            }
+
+        }
+
+        public int getCount() {
+            return 1;
+        }
     };
     public SlideControllerBlockEntity( BlockPos p_155077_, BlockState p_155078_) {
         super(Register.SlideController.get(), p_155077_, p_155078_);
@@ -93,7 +117,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     }
     @Override
     protected AbstractContainerMenu createMenu(int i, Inventory inventory) {
-        return new SlideControllerMenu(i,inventory,this,startTickDataAccess,durationDataAccess);
+        return new SlideControllerMenu(i,inventory,this,startTickDataAccess,speedDataAccess);
     }
 
     @Override
@@ -165,10 +189,15 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         this.isMoving=tag.getBoolean("isMoving");
         this.tickCount=tag.getInt("tickCount");
         this.startTime=tag.getInt("startTime");
-        if(tag.contains("duration")) {
-            this.duration = tag.getInt("duration");
+//        if(tag.contains("duration")) {
+//            this.duration = tag.getInt("duration");
+//        }else{
+//            this.duration = 20;
+//        }
+        if(tag.contains("speedx10")) {
+            this.speedx10 = tag.getInt("speedx10");
         }else{
-            this.duration = 20;
+            this.speedx10 = 10;
         }
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items);
@@ -181,7 +210,8 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         tag.putBoolean("isMoving",isMoving);
        tag.putInt("tickCount",tickCount);
         tag.putInt("startTime",startTime);
-        tag.putInt("duration",duration);
+        //tag.putInt("duration",duration);
+        tag.putInt("speedx10",speedx10);
         ContainerHelper.saveAllItems(tag, this.items);
     }
 
@@ -211,7 +241,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         this.isMoving=b;
     }
     public int getMoveTick(){
-        return startTime+duration;
+        return startTime+getDuration();
     }
     public int getTickCount(){
         return tickCount;
@@ -267,44 +297,60 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     public void setStartTime(int startTime) {
         this.startTime = startTime;
     }
+    public int getSpeedx10(){
+        return  speedx10;
+    }
+    public void setSpeedx10(int speed){
+        speedx10=speed;
+    }
 
     public int getDuration() {
-        return duration;
+        double distance=this.getDistance();
+        double d=(distance/((double) speedx10/10D))*20D;
+        return Math.round((float) d);
+    }
+    public double getDistance(){
+        BlockPos startPos=this.getStartPos();
+        BlockPos endPos=this.getEndPos();
+        return Mth.sqrt((float)Mth.square(startPos.getX()-endPos.getX())+(float)Mth.square(startPos.getY()-endPos.getY())+(float)Mth.square(startPos.getZ()-endPos.getZ()));
     }
 
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
     public boolean hasCards(){
         return getItem(0).getItem()==Register.shape_card.get()&&getItem(1).getItem()==Register.end_location_card.get()&&getItem(0).getTag()!=null&&getItem(1).getTag()!=null&&getItem(0).getTag().contains("positionList")&&getItem(1).getTag().contains("end_location");
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, SlideControllerBlockEntity blockEntity) {
-        if(blockEntity.getMoveTick()>0){
-            if(blockEntity.isMoving()){
-                if(blockEntity.getTickCount()> blockEntity.getMoveTick()){
-                    blockEntity.setMoving(false);
-                    blockEntity.setTickCount(0);
-                }else if(blockEntity.getTickCount()== blockEntity.getMoveTick()&&state.getBlock() instanceof SlideControllerBlock&&blockEntity.hasCards()){
-                     BlockPos startPos=blockEntity.getStartPos();
-                   List<BlockPos> posList=blockEntity.getPositionList();
-                    BlockPos endPos=new BlockPos(startPos.getX()+(startPos.getX()-blockEntity.getEndPos().getX()),startPos.getY()+(startPos.getY()-blockEntity.getEndPos().getY()),startPos.getZ()+(startPos.getZ()-blockEntity.getEndPos().getZ()));
-                    if(blockEntity.isNotFirstTime()) {
-                        List<BlockPos> posList0 = blockEntity.getPositionList();
-                        for (int i = 0; i < posList0.size(); i++) {
-                            posList.set(i, new BlockPos(posList0.get(i).getX() + (startPos.getX() - blockEntity.getEndPos().getX()), posList0.get(i).getY() + (startPos.getY() - blockEntity.getEndPos().getY()), posList0.get(i).getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ())));
+        if(state.getBlock() instanceof SlideControllerBlock) {
+            if(blockEntity.isMoving()&&!state.getValue(SlideControllerBlock.MOVING)){
+                level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,true),2);
+            }else if(!blockEntity.isMoving()&&state.getValue(SlideControllerBlock.MOVING)){
+                level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,false),2);
+            }
+            if (blockEntity.getMoveTick() > 0) {
+                if (blockEntity.isMoving()) {
+                    if (blockEntity.getTickCount() > blockEntity.getMoveTick()) {
+                        blockEntity.setMoving(false);
+                        blockEntity.setTickCount(0);
+                    } else if (blockEntity.getTickCount() == blockEntity.getMoveTick() && blockEntity.hasCards()) {
+                        BlockPos startPos = blockEntity.getStartPos();
+                        List<BlockPos> posList = blockEntity.getPositionList();
+                        BlockPos endPos = new BlockPos(startPos.getX() + (startPos.getX() - blockEntity.getEndPos().getX()), startPos.getY() + (startPos.getY() - blockEntity.getEndPos().getY()), startPos.getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ()));
+                        if (blockEntity.isNotFirstTime()) {
+                            List<BlockPos> posList0 = blockEntity.getPositionList();
+                            for (int i = 0; i < posList0.size(); i++) {
+                                posList.set(i, new BlockPos(posList0.get(i).getX() + (startPos.getX() - blockEntity.getEndPos().getX()), posList0.get(i).getY() + (startPos.getY() - blockEntity.getEndPos().getY()), posList0.get(i).getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ())));
+                            }
                         }
+                        blockEntity.setPositionList(posList);
+                        blockEntity.setEndPos(endPos);
                     }
-                    blockEntity.setPositionList(posList);
-                    blockEntity.setEndPos(endPos);
+                    blockEntity.increaseTickCount(1);
                 }
-                blockEntity.increaseTickCount(1);
+
             }
 
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
         }
-
-       level.sendBlockUpdated(pos,state,state, Block.UPDATE_ALL);
-
 
        }
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -323,4 +369,22 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             return stack.getItem()==Register.shape_card.get();
         }
     }
+   /* public double getDistance(){
+        BlockPos startPos=this.getStartPos();
+        BlockPos endPos=this.getEndPos();
+        return Mth.sqrt((float)Mth.square(startPos.getX()-endPos.getX())+(float)Mth.square(startPos.getY()-endPos.getY())+(float)Mth.square(startPos.getZ()-endPos.getZ()));
+    }
+    public double getSpeed(){ *//**単位はブロック毎秒で、小数第一位まで。*//*
+        double distance=this.getDistance();
+        int duration=this.getDuration();
+        double d=distance/((double) duration/20D);
+        return  ((double)Math.round(d * 10))/10;
+    }
+    public void setSpeed(double speed){
+        double distance=this.getDistance();
+        double d=(distance/speed)*20D;
+        setDuration(Math.round((float) d));
+    }*/
+
+
 }

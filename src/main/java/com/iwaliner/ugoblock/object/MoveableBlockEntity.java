@@ -14,20 +14,28 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 
 import java.util.List;
 
@@ -77,9 +85,9 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
         if (p_277476_.equals(BlockDisplayMixin.getData())) {
             this.updateRenderState = true;
             this.setBoundingBox(this.makeBoundingBox());
+
         }
     }
-
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
@@ -109,34 +117,39 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
     }
 
     @Override
-    public boolean canCollideWith(Entity p_20303_) {
+    public boolean canCollideWith(Entity entity) {
         return true;
     }
     public boolean canBeCollidedWith() {
         return true;
     }
 
-    @Override
-    public @NotNull AABB getBoundingBoxForCulling() {
-        return super.makeBoundingBox();
+
+    public boolean isPickable() {
+        return true;
     }
 
     @Override
     protected @NotNull AABB makeBoundingBox() {
         super.makeBoundingBox();
-     BlockState state=entityData.get(BlockDisplayMixin.getData());
-     VoxelShape shape=state.getCollisionShape(level(),this.blockPosition(), CollisionContext.of(this));
+     BlockState state=getState();
+     VoxelShape shape=state.getCollisionShape(level(),this.blockPosition());
      AABB aabb=new AABB(position().x+shape.min(Direction.Axis.X),position().y+shape.min(Direction.Axis.Y),position().z+shape.min(Direction.Axis.Z),position().x+shape.max(Direction.Axis.X),position().y+shape.max(Direction.Axis.Y),position().z+shape.max(Direction.Axis.Z));
         return aabb;
-
+    }
+    @Override
+    public @NotNull AABB getBoundingBoxForCulling() {
+        return makeBoundingBox();
     }
     @Override
     public void tick() {
+        setLeftRotation(new Quaternionf(0f,0f,0f,1f));
         if(getState().isAir()){
             discard();
         }
         super.tick();
         setBoundingBox(makeBoundingBox());
+        refreshDimensions();
         BlockPos transition= getTransition();
         int duration=getDuration();
         int startTick=getStartTick();
@@ -184,7 +197,13 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
             BlockPos pos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
             BlockState movingState = getState();
             if (level().getBlockState(pos).canBeReplaced()) {
-                level().setBlock(pos, movingState,82);
+               if(movingState.getBlock()==Blocks.OBSERVER){
+                    level().setBlock(pos, movingState,82);
+                    level().scheduleTick(pos, movingState.getBlock(), 2);
+                  }else {
+                   level().setBlock(pos, movingState, 82);
+                   level().scheduleTick(pos, movingState.getBlock(), 2);
+               }
                 if (!getBlockEntityData().isEmpty() && movingState.hasBlockEntity()) {
                     CompoundTag compoundtag = getBlockEntityData();
                     if (compoundtag != null) {
@@ -210,8 +229,11 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
     }
 
 
-    private BlockState getState(){
+    public BlockState getState(){
         return entityData.get(BlockDisplayMixin.getData());
+    }
+    public void setState(BlockState state){
+         entityData.set(BlockDisplayMixin.getData(),state);
     }
     private int getDuration(){
         return entityData.get(DisplayMixin.getDataDuration());
@@ -227,5 +249,37 @@ public class MoveableBlockEntity extends Display.BlockDisplay {
     }
     private CompoundTag getBlockEntityData(){
         return entityData.get(DATA_BLOCKENTITY_CONTENTS_ID);
+    }
+    private Quaternionf getLeftRotation(){
+        return entityData.get(DisplayMixin.getDataLeftRotation());
+    }
+
+    private Quaternionf getRightRotation(){
+        return entityData.get(DisplayMixin.getDataRightRotation());
+    }
+    private void setLeftRotation(Quaternionf quaternionf){
+        entityData.set(DisplayMixin.getDataLeftRotation(),quaternionf);
+    }
+    private void setRightRotation(Quaternionf quaternionf){
+        entityData.set(DisplayMixin.getDataRightRotation(),quaternionf);
+    }
+
+    @Override
+    public boolean mayInteract(Level level, BlockPos poa) {
+        return true;
+    }
+
+    @Override
+    public InteractionResult interactAt(Player player, Vec3 vec3, InteractionHand hand) {
+        BlockState state=getState();
+        if(state.getBlock() instanceof FenceGateBlock||state.getBlock() instanceof TrapDoorBlock){
+             level().playSound(player, blockPosition(), state.getValue(BlockStateProperties.OPEN) ? SoundEvents.FENCE_GATE_OPEN : SoundEvents.FENCE_GATE_CLOSE, SoundSource.BLOCKS, 1.0F, level().getRandom().nextFloat() * 0.1F + 0.9F);
+            setState(state.cycle(BlockStateProperties.OPEN));
+
+            return InteractionResult.SUCCESS;
+        }
+
+
+        return super.interactAt(player, vec3, hand);
     }
 }

@@ -128,12 +128,14 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
         p_282928_.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
     protected void renderLabels(GuiGraphics guiGraphics, int i, int j) {
-        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_start_time"), 110, 17, 9145227);
-        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_duration"), 110, 48, 9145227);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_start_time"), 110, 17, 8587492);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_speed"), 110, 48, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getStartTime())), 110, 30, 16777215);
-              guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDuration())), 110, 61, 16777215);
+            //  guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDuration())), 110, 61, 16777215);
+        guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getSpeed())), 110, 61, 16777215);
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 16766976, false);
+        guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 16766976, false);
 
-        super.renderLabels(guiGraphics,i,j);
     }
 
 
