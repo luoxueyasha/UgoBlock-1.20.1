@@ -1,6 +1,5 @@
 package com.iwaliner.ugoblock.object;
 
-import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -10,11 +9,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.blockentity.BrightnessCombiner;
-import net.minecraft.client.renderer.blockentity.ChestRenderer;
-import net.minecraft.client.renderer.entity.DisplayRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Display;
@@ -26,13 +21,9 @@ import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
 import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraftforge.client.model.data.ModelData;
 
-import java.util.Objects;
-
-public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer {
+public class MovingBlockRenderer extends AbstractMovingBlockRenderer {
     private final ModelPart lid;
     private final ModelPart bottom;
     private final ModelPart lock;
@@ -43,7 +34,7 @@ public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer 
     private final ModelPart doubleRightBottom;
     private final ModelPart doubleRightLock;
     private final BlockRenderDispatcher blockRenderer;
-    public MoveableBlockRenderer(EntityRendererProvider.Context context) {
+    public MovingBlockRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.blockRenderer = context.getBlockRenderDispatcher();
 
@@ -62,7 +53,7 @@ public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer 
     }
 
     @Override
-    public void render(Display.BlockDisplay blockDisplay, float ff1, float ff2, PoseStack poseStack, MultiBufferSource bufferSource, int i0) {
+    public void render(MovingBlockEntity blockDisplay, float ff1, float ff2, PoseStack poseStack, MultiBufferSource bufferSource, int i0) {
      if(blockDisplay.blockRenderState()!=null&&(blockDisplay.blockRenderState().blockState())!=null) {
          BlockState state = blockDisplay.blockRenderState().blockState();
          Block block = state.getBlock();
@@ -89,7 +80,6 @@ public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer 
              poseStack.popPose();
              return;
          }
-         //   super.render(blockDisplay, ff1, ff2, poseStack, bufferSource, i0);
 
         if (blockDisplay.blockRenderState()!=null&&(blockDisplay.blockRenderState().blockState())!=null&&blockDisplay.blockRenderState().blockState().getBlock() instanceof AbstractChestBlock<?> abstractchestblock) {
 
@@ -161,22 +151,18 @@ public class MoveableBlockRenderer extends DisplayRenderer.BlockDisplayRenderer 
 
 
     @Override
-    public void renderInner(Display.BlockDisplay blockDisplay, Display.BlockDisplay.BlockRenderState blockRenderState, PoseStack poseStack, MultiBufferSource bufferSource, int i0, float f0) {
-        BlockState state=blockDisplay.blockRenderState().blockState();
+    public void renderInner(MovingBlockEntity movingBlock, Display.BlockDisplay.BlockRenderState blockRenderState, PoseStack poseStack, MultiBufferSource bufferSource, int i0, float f0) {
+        BlockState state=movingBlock.blockRenderState().blockState();
         Block block=state.getBlock();
-      /*  if (!(block instanceof AbstractChestBlock<?>)) {
-            super.renderInner(blockDisplay, blockRenderState, poseStack, bufferSource, i0, f0);
-        }else{*/
-        if(blockDisplay instanceof MoveableBlockEntity moveableBlock) {
-            if(moveableBlock.shouldFixFighting()) {
+         if(movingBlock.shouldFixFighting()) {
                 poseStack.translate(0.005F, 0.005F, 0.005F);
                 poseStack.scale(0.99F, 0.99F, 0.99F);
-            }
+
         }
 
 
-        super.renderInner(blockDisplay, blockRenderState, poseStack, bufferSource, i0, f0);
-      //  }
+        super.renderInner(movingBlock, blockRenderState, poseStack, bufferSource, i0, f0);
+
     }
     private void render(PoseStack p_112370_, VertexConsumer p_112371_, ModelPart p_112372_, ModelPart p_112373_, ModelPart p_112374_, float p_112375_, int p_112376_, int p_112377_) {
         p_112372_.xRot = -(p_112375_ * ((float)Math.PI / 2F));
