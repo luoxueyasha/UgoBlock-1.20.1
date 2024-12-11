@@ -39,6 +39,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MovingBlockEntity extends Display.BlockDisplay {
     /**移動量を座標で指定。変位なので始点座標でも終点座標でもない。*/
@@ -53,6 +54,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public static final EntityDataAccessor<CompoundTag> DATA_COMPOUND_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     List<BlockPos> posList=new ArrayList<>();
     List<BlockState> stateList=new ArrayList<>();
+    int minX=0;
+    int minY=0;
+    int minZ=0;
+    int maxX=0;
+    int maxY=0;
+    int maxZ=0;
 
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
@@ -77,6 +84,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
         this.noPhysics = false;
         this.noCulling = false;
+
     }
     public MovingBlockEntity(Level level, BlockPos originPos, BlockPos visualPos, BlockState state, int startTick, int duration, BlockPos endPos, BlockEntity blockEntity,trigonometricFunctionType type) {
         super(Register.MoveableBlock.get(), level);
@@ -95,11 +103,29 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.noPhysics = false;
         this.noCulling = false;
     }
+    /*public boolean shouldRenderAtSqrDistance(double p_31574_) {
+        double d0 = this.getBoundingBox().getSize() * 4.0D;
+        if (Double.isNaN(d0) || d0 == 0.0D) {
+            d0 = 4.0D;
+        }
 
-    @Override
+        d0 *= 64.0D;
+        return p_31574_ < d0 * d0;
+    }*/
+    public boolean shouldRenderAtSqrDistance(double p_31769_) {
+        double d0 = 64D/*16.0D*/;
+        d0 *= 64.0D * getViewScale();
+        return p_31769_ < d0 * d0;
+    }
+    /*@Override
     public boolean shouldRenderAtSqrDistance(double d) {
         return true;
     }
+
+    @Override
+    public boolean shouldRender(double p_20296_, double p_20297_, double p_20298_) {
+        return true;
+    }*/
 
     @Override
     protected void defineSynchedData() {
@@ -175,8 +201,11 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public boolean canCollideWith(Entity entity) {
         return true;
     }
+
+
+    /**trueにすると、当たり判定内に入ったときにはじき出される*/
     public boolean canBeCollidedWith() {
-        return true;
+        return false;
     }
 
 
@@ -187,12 +216,33 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     @Override
     protected @NotNull AABB makeBoundingBox() {
         super.makeBoundingBox();
-     BlockState state=getState();
-     VoxelShape shape=state.getCollisionShape(level(),this.blockPosition());
-     double [] d0=shouldRotate()? new double[]{getDisplacementVisualDuringRotation().x, getDisplacementVisualDuringRotation().y, getDisplacementVisualDuringRotation().z} : new double[]{0D, 0D, 0D};
-     AABB aabb=new AABB(position().x+shape.min(Direction.Axis.X)+d0[0],position().y+shape.min(Direction.Axis.Y)+d0[1],position().z+shape.min(Direction.Axis.Z)+d0[2],position().x+shape.max(Direction.Axis.X)+d0[0],position().y+shape.max(Direction.Axis.Y)+d0[1],position().z+shape.max(Direction.Axis.Z)+d0[2]);
-
+       if(minX==0&&minY==0&&minZ==0&&maxX==0&&maxY==0&&maxZ==0){
+           makeBoundingBoxFirst();
+       }
+        AABB aabb=new AABB(position().x+minX,position().y+minY,position().z+minZ,position().x+maxX+1D,position().y+maxY+1D,position().z+maxZ+1D);
         return aabb;
+    }
+    private  void makeBoundingBoxFirst() {
+         for(BlockPos eachPos : getPosList()){
+             if(minX>eachPos.getX()){
+                 minX=eachPos.getX();
+             }
+             if(maxX<eachPos.getX()){
+                 maxX=eachPos.getX();
+             }
+             if(minY>eachPos.getY()){
+                 minY=eachPos.getY();
+             }
+             if(maxY<eachPos.getY()){
+                 maxY=eachPos.getY();
+             }
+             if(minZ>eachPos.getZ()){
+                 minZ=eachPos.getZ();
+             }
+             if(maxZ<eachPos.getZ()){
+                 maxZ=eachPos.getZ();
+             }
+         }
     }
     @Override
     public @NotNull AABB getBoundingBoxForCulling() {
@@ -200,12 +250,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
     @Override
     public void tick() {
-        if(getState().isAir()){
+        /*if(getState().isAir()){
             discard();
-        }
+        }*/
         super.tick();
         setBoundingBox(makeBoundingBox());
-        refreshDimensions();
+        //refreshDimensions();
         BlockPos transition= getTransition();
         int duration=getDuration();
         int startTick=getStartTick();
@@ -217,30 +267,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
-                    if (entity instanceof Player) { /**移動中のブロックに乗っているプレイヤーが動けなくなるのはまずいので、他エンティティと処理を分けてる*/
-                        double endY = 0D;
-                        if (transition.getY() > 0D) {
-                            endY = 0.2D;
-                        } else if (transition.getY() < 0D) {
-                        }
-                        List<MovingBlockEntity> colliedEntityList = level().getEntitiesOfClass(MovingBlockEntity.class, entity.getBoundingBox().inflate(0D, 0.1D, 0D));
-                        int collidedAmount = colliedEntityList.size();
-                        if (collidedAmount != 0) {
-                            Vec3 entityPos = new Vec3((double) entity.position().x + ((double) transition.getX() / (double) duration) / (double) collidedAmount, entity.position().y+0.1D+ ((double) transition.getY() / (double) (duration)) / (double) collidedAmount, (double) entity.position().z + ((double) transition.getZ() / (double) duration) / (double) collidedAmount);
-                            entity.setPos(entityPos);
-                        }
-                        if (tickCount == startTick + duration - 1) {
-                          //  entity.setPos(entity.position().add(0D, endY, 0D));
-                        }
-                    } else { /**プレイヤーは上のテレポートによる移動でかくつかなかったが、他のエンティティはこれではかくついてしまうので、エンティティに速度を持たせて移動させてる。ただし身動きがとれなくなる。*/
-                        Vec3 entityPos = new Vec3((double) entity.position().x, entity.position().y, entity.position().z);
-                        entity.setPos(entityPos);
                         entity.fallDistance=0f;
                         Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
                         entity.setDeltaMovement(speed);
                         entity.setOnGround(true);
-                    }
                 }
+
             } else if (duration > 0 && tickCount == startTick + duration + 0) {
                 makeBlock();
             } else if (duration > 0 && tickCount == startTick + duration + 1) {
@@ -290,6 +322,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 }
             }
             setCompoundTag(new CompoundTag());
+           /* minX=0D;
+            minY=0D;
+            minZ=0D;
+            maxX=0D;
+            maxY=0D;
+            maxZ=0D;*/
         }
     }
 
@@ -420,14 +458,14 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
 
     public List<BlockPos> getPosList() {
-        if(posList.isEmpty()){
+        if(posList==null||posList.isEmpty()){
             posList=getPosListFirst();
         }
             return posList;
 
     }
     public List<BlockState> getStateList() {
-        if(stateList.isEmpty()){
+        if(stateList==null||stateList.isEmpty()){
             stateList=getStateListFirst();
         }
         return stateList;
@@ -448,6 +486,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         }
         return stateList;
     }
+
 
     @Override
     public boolean mayInteract(Level level, BlockPos poa) {

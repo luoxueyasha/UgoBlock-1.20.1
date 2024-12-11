@@ -117,7 +117,7 @@ public class ModCoreUgoBlock
                     }
                     CompoundTag posTag=tag.getCompound("positionList");
                 int ii=-1;
-                for(int i=0;i<1028;i++) {
+                for(int i=0;i<ShapeCardItem.getMaxSize();i++) {
                     if(!posTag.contains("location_"+String.valueOf(i))){
                         ii=i-1;
                         break;
@@ -126,7 +126,7 @@ public class ModCoreUgoBlock
                     }
                 }
                 if (ii!=-1) {
-                    int range=20;
+                    int range=5;
                   loopA:  for(int i=-range;i<=range;i++) {
                         for (int j = -range; j <= range; j++) {
                             for (int k = -range; k <= range; k++) {

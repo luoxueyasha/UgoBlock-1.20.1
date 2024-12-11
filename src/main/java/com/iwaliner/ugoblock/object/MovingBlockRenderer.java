@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.ChestType;
 
 public class MovingBlockRenderer extends AbstractMovingBlockRenderer {
-    private final ModelPart lid;
+    /*private final ModelPart lid;
     private final ModelPart bottom;
     private final ModelPart lock;
     private final ModelPart doubleLeftLid;
@@ -33,10 +33,10 @@ public class MovingBlockRenderer extends AbstractMovingBlockRenderer {
     private final ModelPart doubleRightLid;
     private final ModelPart doubleRightBottom;
     private final ModelPart doubleRightLock;
-    private final BlockRenderDispatcher blockRenderer;
+    private final BlockRenderDispatcher blockRenderer;*/
     public MovingBlockRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.blockRenderer = context.getBlockRenderDispatcher();
+        /*this.blockRenderer = context.getBlockRenderDispatcher();
 
         ModelPart modelpart = context.bakeLayer(ModelLayers.CHEST);
         this.bottom = modelpart.getChild("bottom");
@@ -49,10 +49,10 @@ public class MovingBlockRenderer extends AbstractMovingBlockRenderer {
         ModelPart modelpart2 = context.bakeLayer(ModelLayers.DOUBLE_CHEST_RIGHT);
         this.doubleRightBottom = modelpart2.getChild("bottom");
         this.doubleRightLid = modelpart2.getChild("lid");
-        this.doubleRightLock = modelpart2.getChild("lock");
+        this.doubleRightLock = modelpart2.getChild("lock");*/
     }
 
-    @Override
+    /*@Override
     public void render(MovingBlockEntity blockDisplay, float ff1, float ff2, PoseStack poseStack, MultiBufferSource bufferSource, int i0) {
      if(blockDisplay.blockRenderState()!=null&&(blockDisplay.blockRenderState().blockState())!=null) {
          BlockState state = blockDisplay.blockRenderState().blockState();
@@ -173,7 +173,7 @@ public class MovingBlockRenderer extends AbstractMovingBlockRenderer {
     }
     protected Material getMaterial(BlockEntity blockEntity, ChestType chestType) {
         return Sheets.chooseMaterial(blockEntity, chestType, false);
-    }
+    }*/
   }
 
 

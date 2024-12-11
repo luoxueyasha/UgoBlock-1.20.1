@@ -34,7 +34,6 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     private boolean isMoving;
     private int tickCount;
     private int startTime;
-   // private int duration=20;
     private int speedx10=10;
     protected NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
@@ -61,29 +60,6 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             return 1;
         }
     };
-    /*protected final ContainerData durationDataAccess = new ContainerData() {
-        public int get(int i) {
-            switch(i) {
-                case 0:
-                    return SlideControllerBlockEntity.this.getDuration();
-
-                default:
-                    return 0;
-            }
-        }
-
-        public void set(int i, int j) {
-            switch(i) {
-                case 0:
-                    SlideControllerBlockEntity.this.duration = j;
-            }
-
-        }
-
-        public int getCount() {
-            return 1;
-        }
-    };*/
     protected final ContainerData speedDataAccess = new ContainerData() {
         public int get(int i) {
             switch(i) {
@@ -189,11 +165,6 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         this.isMoving=tag.getBoolean("isMoving");
         this.tickCount=tag.getInt("tickCount");
         this.startTime=tag.getInt("startTime");
-//        if(tag.contains("duration")) {
-//            this.duration = tag.getInt("duration");
-//        }else{
-//            this.duration = 20;
-//        }
         if(tag.contains("speedx10")) {
             this.speedx10 = tag.getInt("speedx10");
         }else{
@@ -356,10 +327,6 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        super.onDataPacket(net, pkt);
-    }
 
     @Override
     public boolean canPlaceItem(int i, ItemStack stack) {
@@ -369,22 +336,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             return stack.getItem()==Register.shape_card.get();
         }
     }
-   /* public double getDistance(){
-        BlockPos startPos=this.getStartPos();
-        BlockPos endPos=this.getEndPos();
-        return Mth.sqrt((float)Mth.square(startPos.getX()-endPos.getX())+(float)Mth.square(startPos.getY()-endPos.getY())+(float)Mth.square(startPos.getZ()-endPos.getZ()));
-    }
-    public double getSpeed(){ *//**単位はブロック毎秒で、小数第一位まで。*//*
-        double distance=this.getDistance();
-        int duration=this.getDuration();
-        double d=distance/((double) duration/20D);
-        return  ((double)Math.round(d * 10))/10;
-    }
-    public void setSpeed(double speed){
-        double distance=this.getDistance();
-        double d=(distance/speed)*20D;
-        setDuration(Math.round((float) d));
-    }*/
+
 
 
 }

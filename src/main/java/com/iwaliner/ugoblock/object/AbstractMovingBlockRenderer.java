@@ -43,16 +43,6 @@ import java.util.List;
                     poseStack.popPose();
                 }
             }
-           /* poseStack.translate(movingBlock.getDisplacementVisual().x,movingBlock.getDisplacementVisual().y,movingBlock.getDisplacementVisual().z);
-            this.blockRenderer.renderSingleBlock(renderState.blockState(), poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
-           poseStack.pushPose();
-            poseStack.translate(0D,0D,1D);
-            this.blockRenderer.renderSingleBlock(Blocks.DIAMOND_BLOCK.defaultBlockState(), poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
-            poseStack.popPose();
-            poseStack.pushPose();
-            poseStack.translate(0D,0D,2D);
-            this.blockRenderer.renderSingleBlock(Blocks.GOLD_BLOCK.defaultBlockState(), poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
-            poseStack.popPose();*/
         }
     }
 
