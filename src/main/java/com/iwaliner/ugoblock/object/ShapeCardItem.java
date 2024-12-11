@@ -195,7 +195,7 @@ public class ShapeCardItem extends Item {
 
 
     public static int getMaxSize(){
-        return 1028;
+        return 25000;
     }
     public static BlockPos errorPos(){
         return new BlockPos(0,-999999999,0);

@@ -2,6 +2,7 @@ package com.iwaliner.ugoblock.object;
 
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -10,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -17,14 +19,17 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
+public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
     private boolean isNotFirstTime;
     private boolean isMoving;
     private int tickCount;
@@ -37,7 +42,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         public int get(int i) {
             switch(i) {
                 case 0:
-                    return RotationControllerBlockEntity.this.getStartTime();
+                    return SlideControllerBlockEntity.this.getStartTime();
 
                 default:
                     return 0;
@@ -47,7 +52,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         public void set(int i, int j) {
             switch(i) {
                 case 0:
-                    RotationControllerBlockEntity.this.startTime = j;
+                    SlideControllerBlockEntity.this.startTime = j;
             }
 
         }
@@ -56,7 +61,29 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
             return 1;
         }
     };
+    /*protected final ContainerData durationDataAccess = new ContainerData() {
+        public int get(int i) {
+            switch(i) {
+                case 0:
+                    return SlideControllerBlockEntity.this.getDuration();
 
+                default:
+                    return 0;
+            }
+        }
+
+        public void set(int i, int j) {
+            switch(i) {
+                case 0:
+                    SlideControllerBlockEntity.this.duration = j;
+            }
+
+        }
+
+        public int getCount() {
+            return 1;
+        }
+    };*/
     protected final ContainerData speedDataAccess = new ContainerData() {
         public int get(int i) {
             switch(i) {
@@ -71,7 +98,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         public void set(int i, int j) {
             switch(i) {
                 case 0:
-                    RotationControllerBlockEntity.this.speedx10=j;
+                    SlideControllerBlockEntity.this.speedx10=j;
             }
 
         }
@@ -80,17 +107,17 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
             return 1;
         }
     };
-    public RotationControllerBlockEntity(BlockPos p_155077_, BlockState p_155078_) {
-        super(Register.RotationController.get(), p_155077_, p_155078_);
+    public SlideControllerBlockEntity( BlockPos p_155077_, BlockState p_155078_) {
+        super(Register.SlideController.get(), p_155077_, p_155078_);
     }
 
     @Override
     protected Component getDefaultName() {
-        return Component.translatable("container.ugoblock.rotation_controller");
+        return Component.translatable("container.ugoblock.slide_controller");
     }
     @Override
     protected AbstractContainerMenu createMenu(int i, Inventory inventory) {
-        return null;
+        return new SlideControllerMenu(i,inventory,this,startTickDataAccess,speedDataAccess);
     }
 
     @Override
@@ -291,16 +318,8 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     public boolean hasCards(){
         return getItem(0).getItem()==Register.shape_card.get()&&getItem(1).getItem()==Register.end_location_card.get()&&getItem(0).getTag()!=null&&getItem(1).getTag()!=null&&getItem(0).getTag().contains("positionList")&&getItem(1).getTag().contains("end_location");
     }
-    private boolean isCounterClockwise(){
-        return getBlockState().getBlock() instanceof RotationControllerBlock&&getBlockState().getValue(RotationControllerBlock.COUNTER_CLOCKWISE);
-    }
-    private void setTurnDirection(boolean isCounterClockwise) {
-        if (getBlockState().getBlock() instanceof RotationControllerBlock) {
-            level.setBlock(getBlockPos(), getBlockState().setValue(RotationControllerBlock.COUNTER_CLOCKWISE, isCounterClockwise), 2);
-        }
-    }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, RotationControllerBlockEntity blockEntity) {
+    public static void tick(Level level, BlockPos pos, BlockState state, SlideControllerBlockEntity blockEntity) {
         if(state.getBlock() instanceof SlideControllerBlock) {
             if(blockEntity.isMoving()&&!state.getValue(SlideControllerBlock.MOVING)){
                 level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,true),2);

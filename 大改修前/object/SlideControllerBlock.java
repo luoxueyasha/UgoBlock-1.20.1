@@ -3,7 +3,6 @@ package com.iwaliner.ugoblock.object;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerLevel;
@@ -102,12 +101,13 @@ public class SlideControllerBlock extends BaseEntityBlock {
                                 blockEntity.setMoving(true);
                                 /**↓移動の変位。座標ではないことに注意。*/
                                BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
-                               //for (BlockPos eachPos : posList) {
-                                 //  if(!blockEntity.getBlockPos().equals(eachPos)) {
+                               for (BlockPos eachPos : posList) {
+                                   if(!blockEntity.getBlockPos().equals(eachPos)) {
                                        /**ブロックをエンティティ化*/
-                                        makeMoveableBlock(level,pos, startPos, start, duration, transitionPos);
-                                //  }
-                             //  }
+                                     //  makeMoveableBlock(level, eachPos, startSecond, durationSecond, transitionPos);
+                                       makeMoveableBlock(level, eachPos, start, duration, transitionPos);
+                                   }
+                               }
                            }
                        }
                            level.setBlock(pos, state.cycle(POWERED), 2);
@@ -148,44 +148,31 @@ public class SlideControllerBlock extends BaseEntityBlock {
         }
 
     }*/
-    public static void makeMoveableBlock(Level level,BlockPos controllerPos,BlockPos startPos,int start,int duration,BlockPos transitionPos){
-        if(level.getBlockEntity(controllerPos) instanceof SlideControllerBlockEntity slideControllerBlockEntity&&slideControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&slideControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
-            BlockEntity blockEntity = level.getBlockEntity(startPos);
-            BlockState state = level.getBlockState(startPos);
-            MovingBlockEntity moveableBlock;
-            CompoundTag entityTag=new CompoundTag();
-            List<BlockPos> posList=slideControllerBlockEntity.getPositionList();
-            CompoundTag posTag=new CompoundTag();
-            CompoundTag stateTag=new CompoundTag();
-            for(int i=0; i<posList.size();i++){
-                BlockState eachState=level.getBlockState(posList.get(i));
-                posTag.put("location_"+ String.valueOf(i), NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX()-startPos.getX(),posList.get(i).getY()-startPos.getY(),posList.get(i).getZ()-startPos.getZ())));
-                stateTag.put("state_" + String.valueOf(i), NbtUtils.writeBlockState(eachState));
-            }
-            entityTag.put("positionList",posTag);
-            entityTag.put("stateList",stateTag);
-            if (!state.isAir() && !state.is(Register.TAG_DISABLE_MOVING)) {
-                if (blockEntity != null) {
-                    moveableBlock = new MovingBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED) ? state.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(startPos).isEmpty() ? state : Blocks.AIR.defaultBlockState(), start, duration, transitionPos, blockEntity,entityTag);
-                    if (blockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && !slideControllerBlockEntity2.getEndPos().equals(ShapeCardItem.errorPos())) {
+    public static void makeMoveableBlock(Level level,BlockPos startPos,int start,int duration,BlockPos transitionPos){
+        BlockEntity blockEntity=level.getBlockEntity(startPos);
+        BlockState state=level.getBlockState(startPos);
+        MovingBlockEntity moveableBlock;
+        if(!state.isAir()&&!state.is(Register.TAG_DISABLE_MOVING)) {
+            if (blockEntity != null) {
+                moveableBlock = new MovingBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start, duration, transitionPos, blockEntity);
+                if(blockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity&&!slideControllerBlockEntity.getPositionList().isEmpty()&&!slideControllerBlockEntity.getEndPos().equals(ShapeCardItem.errorPos())){
 
-                        List<BlockPos> newPos = new ArrayList<>();
-                        for (int i = 0; i < ((SlideControllerBlockEntity) blockEntity).getPositionList().size(); i++) {
-                            newPos.add(slideControllerBlockEntity2.getPositionList().get(i).offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ()));
-                        }
-                        slideControllerBlockEntity2.setPositionList(newPos);
-                        BlockPos newEndPos = slideControllerBlockEntity2.getEndPos().offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ());
-                        slideControllerBlockEntity2.setEndPos(newEndPos);
-
-                        moveableBlock = new MovingBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED) ? state.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(startPos).isEmpty() ? state : Blocks.AIR.defaultBlockState(), start + 1, duration, transitionPos, slideControllerBlockEntity2,entityTag);
-
+                    List<BlockPos> newPos=new ArrayList<>();
+                    for(int i=0;i< ((SlideControllerBlockEntity) blockEntity).getPositionList().size();i++){
+                        newPos.add(slideControllerBlockEntity.getPositionList().get(i).offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ()));
                     }
-                } else {
-                    moveableBlock = new MovingBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED) ? state.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(startPos).isEmpty() ? state : Blocks.AIR.defaultBlockState(), start + 1, duration, transitionPos, null,entityTag);
+                    slideControllerBlockEntity.setPositionList(newPos);
+                    BlockPos newEndPos=slideControllerBlockEntity.getEndPos().offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ());
+                    slideControllerBlockEntity.setEndPos(newEndPos);
+
+                    moveableBlock = new MovingBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start+1, duration, transitionPos, slideControllerBlockEntity);
+
                 }
-                if (!level.isClientSide) {
-                    level.addFreshEntity(moveableBlock);
-                }
+            } else {
+                moveableBlock = new MovingBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start+1, duration, transitionPos, null);
+            }
+            if (!level.isClientSide) {
+                level.addFreshEntity(moveableBlock);
             }
         }
 

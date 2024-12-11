@@ -6,7 +6,6 @@ import com.iwaliner.ugoblock.mixin.DisplayMixin;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
@@ -37,7 +36,6 @@ import org.joml.AxisAngle4d;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MovingBlockEntity extends Display.BlockDisplay {
@@ -50,16 +48,13 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public static final EntityDataAccessor<Vector3f> DATA_VISUAL_POSITION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.VECTOR3);
     public static final EntityDataAccessor<Boolean> DATA_ROTATABLE_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Byte> DATA_TRIGNOMETRIC_FUNCTION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BYTE);
-    public static final EntityDataAccessor<CompoundTag> DATA_COMPOUND_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
-    List<BlockPos> posList=new ArrayList<>();
-    List<BlockState> stateList=new ArrayList<>();
 
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
         this.noPhysics = false;
         this.noCulling = false;
     }
-    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, BlockPos endPos, BlockEntity blockEntity,CompoundTag tag) {
+    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, BlockPos endPos, BlockEntity blockEntity) {
         super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX(),startPos.getY(),startPos.getZ());
         this.entityData.set(BlockDisplayMixin.getData(),state);
@@ -73,7 +68,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             this.entityData.set(DATA_BLOCKENTITY_CONTENTS_ID,blockEntity.saveWithoutMetadata());
         }
         this.entityData.set(DATA_ROTATABLE_ID,false);
-        this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
 
         this.noPhysics = false;
         this.noCulling = false;
@@ -110,7 +104,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_VISUAL_POSITION_ID,new Vector3f());
         this.entityData.define(DATA_ROTATABLE_ID,false);
         this.entityData.define(DATA_TRIGNOMETRIC_FUNCTION_ID,trigonometricFunctionType.NONE.getID());
-        this.entityData.define(DATA_COMPOUND_TAG_ID,new CompoundTag());
     }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
@@ -145,9 +138,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("trigonometric_function_type")) {
             this.entityData.set(DATA_TRIGNOMETRIC_FUNCTION_ID,tag.getByte("trigonometric_function_type"));
         }
-        if (tag.contains("compoundTag")) {
-            this.entityData.set(DATA_COMPOUND_TAG_ID,tag.getCompound("compoundTag"));
-        }
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -163,7 +153,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.putFloat("visual_position_z",(float)getVisualPos().z);
         tag.putBoolean("rotatable",entityData.get(DATA_ROTATABLE_ID));
         tag.putByte("trigonometric_function_type",entityData.get(DATA_TRIGNOMETRIC_FUNCTION_ID));
-        tag.put("compoundTag",entityData.get(DATA_COMPOUND_TAG_ID));
 
     }
 
@@ -255,41 +244,37 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
     private void makeBlock(){ /**移動し終わってブロック化する*/
         if(!level().isClientSide) {
-            BlockPos originPos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
-            for (int i=0;i<getPosList().size();i++) {
-                BlockPos pos=originPos.offset(getPosList().get(i).getX(),getPosList().get(i).getY(),getPosList().get(i).getZ());
-                BlockState movingState = getStateList().get(i);
-                if (level().getBlockState(pos).canBeReplaced()) {
-                    if (movingState.getBlock() == Blocks.OBSERVER) {
-                        level().setBlock(pos, movingState, 82);
-                        level().scheduleTick(pos, movingState.getBlock(), 2);
-                    } else {
-                        level().setBlock(pos, movingState, 82);
-                        level().scheduleTick(pos, movingState.getBlock(), 2);
-                    }
-                    if (!getBlockEntityData().isEmpty() && movingState.hasBlockEntity()) {
-                        CompoundTag compoundtag = getBlockEntityData();
-                        if (compoundtag != null) {
-                            BlockEntity blockentity = level().getBlockEntity(pos);
+            BlockPos pos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
+            BlockState movingState = getState();
+            if (level().getBlockState(pos).canBeReplaced()) {
+               if(movingState.getBlock()==Blocks.OBSERVER){
+                    level().setBlock(pos, movingState,82);
+                    level().scheduleTick(pos, movingState.getBlock(), 2);
+                  }else {
+                   level().setBlock(pos, movingState, 82);
+                   level().scheduleTick(pos, movingState.getBlock(), 2);
+               }
+                if (!getBlockEntityData().isEmpty() && movingState.hasBlockEntity()) {
+                    CompoundTag compoundtag = getBlockEntityData();
+                    if (compoundtag != null) {
+                        BlockEntity blockentity = level().getBlockEntity(pos);
 
-                            if (blockentity != null) {
-                                blockentity.load(getBlockEntityData());
-                            }
+                        if (blockentity != null) {
+                            blockentity.load(getBlockEntityData());
                         }
                     }
-                } else { /**移動してきた場所が他のブロックで埋まっていた場合。アイテム化する。*/
-                    if (!level().isClientSide && !movingState.is(Register.TAG_DISABLE_ITEM_DROP)) { /**通常*/
-                        ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(movingState.getBlock()));
-                        level().addFreshEntity(itemEntity);
-                    } else if (!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)) { /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
-                        ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(level().getBlockState(pos).getBlock()));
-                        level().addFreshEntity(itemEntity);
-                        level().setBlock(pos, movingState, 82);
-                    }
-                    discard();
                 }
+            } else { /**移動してきた場所が他のブロックで埋まっていた場合。アイテム化する。*/
+                if (!level().isClientSide&&!movingState.is(Register.TAG_DISABLE_ITEM_DROP)) { /**通常*/
+                    ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(movingState.getBlock()));
+                    level().addFreshEntity(itemEntity);
+                }else if(!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)){ /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
+                    ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(level().getBlockState(pos).getBlock()));
+                    level().addFreshEntity(itemEntity);
+                    level().setBlock(pos,movingState,82);
+                }
+                discard();
             }
-            setCompoundTag(new CompoundTag());
         }
     }
 
@@ -397,56 +382,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
     private void setTrigonometricFunctionType(trigonometricFunctionType type){
         entityData.set(DATA_TRIGNOMETRIC_FUNCTION_ID,type.getID());
-    }
-    private CompoundTag getCompoundTag(){
-        return entityData.get(DATA_COMPOUND_TAG_ID);
-    }
-    private void setCompoundTag(CompoundTag tag){
-        entityData.set(DATA_COMPOUND_TAG_ID,tag);
-    }
-    public List<BlockPos> getPosListFirst(){
-        CompoundTag entityTag=getCompoundTag();
-        if(!entityTag.contains("positionList")){
-            entityTag.put("positionList",new CompoundTag());
-        }
-        CompoundTag posTag=entityTag.getCompound("positionList");
-        List<BlockPos> posList=new ArrayList<>();
-        for(int i=0; i< posTag.size();i++){
-            if (posTag.contains("location_" + String.valueOf(i))) {
-                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
-            }
-        }
-        return posList;
-    }
-
-    public List<BlockPos> getPosList() {
-        if(posList.isEmpty()){
-            posList=getPosListFirst();
-        }
-            return posList;
-
-    }
-    public List<BlockState> getStateList() {
-        if(stateList.isEmpty()){
-            stateList=getStateListFirst();
-        }
-        return stateList;
-
-    }
-
-    public List<BlockState> getStateListFirst(){
-        CompoundTag entityTag=getCompoundTag();
-        if(!entityTag.contains("stateList")){
-            entityTag.put("stateList",new CompoundTag());
-        }
-        CompoundTag stateTag=entityTag.getCompound("stateList");
-        List<BlockState> stateList=new ArrayList<>();
-        for(int i=0; i<getPosList().size();i++){
-            if (stateTag.contains("state_" + String.valueOf(i))) {
-                stateList.add(NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK),stateTag.getCompound("state_" + String.valueOf(i))));
-            }
-        }
-        return stateList;
     }
 
     @Override
