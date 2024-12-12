@@ -1,5 +1,7 @@
-package com.iwaliner.ugoblock.object;
+package com.iwaliner.ugoblock.object.slide_controller;
 
+import com.iwaliner.ugoblock.object.EndLocationCardSlot;
+import com.iwaliner.ugoblock.object.ShapeCardSlot;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -91,17 +93,13 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     public int getStartTime(){
          return Mth.floor((double) startTickData.get(0)/20D);
     }
-    /*public int getDuration(){
-            return Mth.floor((double)durationData.get(0)/20D);
-    }*/
+
 
     public void setStartTime(int startTime) {
          startTickData.set(0,startTime*20);
 
     }
-   /* public void setDuration(int duration) {
-        durationData.set(0,duration*20);
-    }*/
+
 
     public int getSpeed(){
         return Math.round((float) speedData.get(0)/10F);
@@ -112,57 +110,10 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     public void addStartTime(int startTime) {
         startTickData.set(0,startTickData.get(0)+startTime*20);
     }
-    /*public void addDuration(int duration) {
-        durationData.set(0,durationData.get(0)+duration*20);
-    }*/
+
     public void addSpeed(double speed) {
         speedData.set(0,speedData.get(0)+Mth.floor(speed*10D));
     }
-    /*public boolean clickMenuButton(Player player, int variable) {
-        Level level=player.level();
-        BlockPos playerPos=player.blockPosition();
-
-        int startTime=getStartTime();
-        int duration=getDuration();
-        if(variable==0){
-            if(startTime<5){
-                setStartTime(0);
-            }else{
-                addStartTime(-5);
-            }
-            return true;
-        }else if(variable==1){
-            if(startTime>0){
-                addStartTime(-1);
-            }
-            return true;
-        }else if(variable==2){
-                addStartTime(1);
-            return true;
-        }else if(variable==3){
-            addStartTime(5);
-            return true;
-        }else if(variable==4){
-            if(duration<6){
-                setDuration(1);
-            }else{
-                addDuration(-5);
-            }
-            return true;
-        }else if(variable==5){
-            if(duration>1){
-                addDuration(-1);
-            }
-            return true;
-        }else if(variable==6){
-            addDuration(1);
-            return true;
-        }else if(variable==7){
-            addDuration(5);
-            return true;
-        }
-        return false;
-    }*/
     public boolean clickMenuButton(Player player, int variable) {
         Level level=player.level();
         BlockPos playerPos=player.blockPosition();

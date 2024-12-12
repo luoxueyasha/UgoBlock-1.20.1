@@ -1,5 +1,7 @@
 package com.iwaliner.ugoblock.object;
 
+import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -14,7 +16,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EndLocationCardItem extends Item {
@@ -52,7 +53,7 @@ public class EndLocationCardItem extends Item {
             }
 
             if (tag.contains("end_location")) {
-                tag.put("end_location" , NbtUtils.writeBlockPos(ShapeCardItem.errorPos()));
+                tag.put("end_location" , NbtUtils.writeBlockPos(Utils.errorPos()));
             }
         }
         return true;
@@ -72,7 +73,7 @@ public class EndLocationCardItem extends Item {
        list.add(Component.translatable("info.ugoblock.end_location_card"));
         if(stack.getTag()!=null) {
             BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("end_location"));
-            if (!pos.equals(ShapeCardItem.errorPos())) {
+            if (!pos.equals(Utils.errorPos())) {
                 list.add(Component.translatable("info.ugoblock.end_location_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]"));
             }
         }

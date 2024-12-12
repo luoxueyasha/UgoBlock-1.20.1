@@ -1,11 +1,11 @@
-package com.iwaliner.ugoblock.object;
+package com.iwaliner.ugoblock.object.moving_block;
 
 
+import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -31,29 +31,26 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.NotNull;
 import org.joml.AxisAngle4d;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class MovingBlockEntity extends Display.BlockDisplay {
     /**移動量を座標で指定。変位なので始点座標でも終点座標でもない。*/
     public static final EntityDataAccessor<BlockPos> DATA_TRANSITION_POSITION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BLOCK_POS);
    /**始点座標*/
     public static final EntityDataAccessor<BlockPos> DATA_START_LOCATION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BLOCK_POS);
-   /**動いているブロックがブロックエンティティを所持していた場合、ここにブロックエンティティのデータが格納される。所持していなかった場合は空のNBTタグが格納される。*/
-    public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_CONTENTS_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
-    public static final EntityDataAccessor<Vector3f> DATA_VISUAL_POSITION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.VECTOR3);
     public static final EntityDataAccessor<Boolean> DATA_ROTATABLE_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Byte> DATA_TRIGNOMETRIC_FUNCTION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BYTE);
     public static final EntityDataAccessor<CompoundTag> DATA_COMPOUND_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<Integer> DATA_DEGREE_ANGLE_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.INT);
     List<BlockPos> posList=new ArrayList<>();
     List<BlockState> stateList=new ArrayList<>();
+    List<CompoundTag> blockEntityDataList =new ArrayList<>();
     int minX=0;
     int minY=0;
     int minZ=0;
@@ -61,24 +58,22 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     int maxY=0;
     int maxZ=0;
 
+
+
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
         this.noPhysics = false;
         this.noCulling = false;
     }
-    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, BlockPos endPos, BlockEntity blockEntity,CompoundTag tag) {
+    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, BlockPos endPos,CompoundTag tag) {
         super(Register.MoveableBlock.get(), level);
-        this.setPos(startPos.getX(),startPos.getY(),startPos.getZ());
+        this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
         this.entityData.set(BlockDisplayMixin.getData(),state);
         this.entityData.set(DATA_TRANSITION_POSITION_ID,endPos);
         this.entityData.set(DATA_START_LOCATION_ID,startPos);
         this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
         this.entityData.set(DisplayMixin.getDataDuration(),duration);
         this.entityData.set(DATA_TRIGNOMETRIC_FUNCTION_ID,trigonometricFunctionType.NONE.getID());
-        this.entityData.set(DATA_VISUAL_POSITION_ID,new Vector3f((float) startPos.getX(),(float)startPos.getY(),(float)startPos.getZ()));
-        if(blockEntity!=null) {
-            this.entityData.set(DATA_BLOCKENTITY_CONTENTS_ID,blockEntity.saveWithoutMetadata());
-        }
         this.entityData.set(DATA_ROTATABLE_ID,false);
         this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
 
@@ -86,23 +81,22 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.noCulling = false;
 
     }
-    public MovingBlockEntity(Level level, BlockPos originPos, BlockPos visualPos, BlockState state, int startTick, int duration, BlockPos endPos, BlockEntity blockEntity,trigonometricFunctionType type) {
+    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration,trigonometricFunctionType type,int degree,CompoundTag tag) {
         super(Register.MoveableBlock.get(), level);
-        this.setPos(originPos.getCenter());
+        this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
         this.entityData.set(BlockDisplayMixin.getData(),state);
-        this.entityData.set(DATA_TRANSITION_POSITION_ID,endPos);
-        this.entityData.set(DATA_START_LOCATION_ID,visualPos);
+        this.entityData.set(DATA_START_LOCATION_ID,startPos);
         this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
         this.entityData.set(DisplayMixin.getDataDuration(),duration);
         this.entityData.set(DATA_TRIGNOMETRIC_FUNCTION_ID,type.getID());
-        this.entityData.set(DATA_VISUAL_POSITION_ID,new Vector3f((float) visualPos.getX(),(float)visualPos.getY(),(float)visualPos.getZ()));
-        if(blockEntity!=null) {
-            this.entityData.set(DATA_BLOCKENTITY_CONTENTS_ID,blockEntity.saveWithoutMetadata());
-        }
         this.entityData.set(DATA_ROTATABLE_ID,true);
+        this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
+        this.entityData.set(DATA_DEGREE_ANGLE_ID,degree);
         this.noPhysics = false;
         this.noCulling = false;
+
     }
+
     /*public boolean shouldRenderAtSqrDistance(double p_31574_) {
         double d0 = this.getBoundingBox().getSize() * 4.0D;
         if (Double.isNaN(d0) || d0 == 0.0D) {
@@ -132,11 +126,10 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         super.defineSynchedData();
         this.entityData.define(DATA_TRANSITION_POSITION_ID, BlockPos.ZERO);
         this.entityData.define(DATA_START_LOCATION_ID, BlockPos.ZERO);
-        this.entityData.define(DATA_BLOCKENTITY_CONTENTS_ID, new CompoundTag());
-        this.entityData.define(DATA_VISUAL_POSITION_ID,new Vector3f());
         this.entityData.define(DATA_ROTATABLE_ID,false);
         this.entityData.define(DATA_TRIGNOMETRIC_FUNCTION_ID,trigonometricFunctionType.NONE.getID());
         this.entityData.define(DATA_COMPOUND_TAG_ID,new CompoundTag());
+        this.entityData.define(DATA_DEGREE_ANGLE_ID,0);
     }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
@@ -156,14 +149,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("start_location")) {
             this.entityData.set(DATA_START_LOCATION_ID, NbtUtils.readBlockPos(tag.getCompound("start_location")));
         }
-      if (tag.contains("BlockEntityTag")) {
-            this.entityData.set(DATA_BLOCKENTITY_CONTENTS_ID,tag.getCompound("BlockEntityTag"));
-        }
         if (tag.contains("tickCount")) {
             this.tickCount=tag.getInt("tickCount");
-        }
-        if (tag.contains("visual_position_x")&&tag.contains("visual_position_y")&&tag.contains("visual_position_z")) {
-            this.entityData.set(DATA_VISUAL_POSITION_ID, new Vector3f(tag.getFloat("visual_position_x"),tag.getFloat("visual_position_y"),tag.getFloat("visual_position_z")));
         }
         if (tag.contains("rotatable")) {
             this.entityData.set(DATA_ROTATABLE_ID,tag.getBoolean("rotatable"));
@@ -174,6 +161,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("compoundTag")) {
             this.entityData.set(DATA_COMPOUND_TAG_ID,tag.getCompound("compoundTag"));
         }
+        if (tag.contains("degreeAngle")) {
+            this.entityData.set(DATA_DEGREE_ANGLE_ID,tag.getInt("degreeAngle"));
+        }
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -181,16 +171,10 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.put("transition",NbtUtils.writeBlockPos(entityData.get(DATA_TRANSITION_POSITION_ID)));
         tag.put("start_location",NbtUtils.writeBlockPos(entityData.get(DATA_START_LOCATION_ID)));
         tag.putInt("tickCount",tickCount);
-         if(!entityData.get(DATA_BLOCKENTITY_CONTENTS_ID).isEmpty()) {
-            tag.put("BlockEntityTag",entityData.get(DATA_BLOCKENTITY_CONTENTS_ID));
-        }
-         tag.putFloat("visual_position_x", (float) getVisualPos().x);
-        tag.putFloat("visual_position_y",(float)getVisualPos().y);
-        tag.putFloat("visual_position_z",(float)getVisualPos().z);
         tag.putBoolean("rotatable",entityData.get(DATA_ROTATABLE_ID));
         tag.putByte("trigonometric_function_type",entityData.get(DATA_TRIGNOMETRIC_FUNCTION_ID));
         tag.put("compoundTag",entityData.get(DATA_COMPOUND_TAG_ID));
-
+        tag.putInt("degreeAngle",entityData.get(DATA_DEGREE_ANGLE_ID));
     }
 
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -219,7 +203,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
        if(minX==0&&minY==0&&minZ==0&&maxX==0&&maxY==0&&maxZ==0){
            makeBoundingBoxFirst();
        }
-        AABB aabb=new AABB(position().x+minX,position().y+minY,position().z+minZ,position().x+maxX+1D,position().y+maxY+1D,position().z+maxZ+1D);
+        AABB aabb=new AABB(position().x-0.5D+minX,position().y-0.5D+minY,position().z-0.5D+minZ,position().x-0.5D+maxX+1D,position().y-0.5D+maxY+1D,position().z-0.5D+maxZ+1D);
         return aabb;
     }
     private  void makeBoundingBoxFirst() {
@@ -250,20 +234,16 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
     @Override
     public void tick() {
-        /*if(getState().isAir()){
-            discard();
-        }*/
         super.tick();
         setBoundingBox(makeBoundingBox());
-        //refreshDimensions();
         BlockPos transition= getTransition();
         int duration=getDuration();
         int startTick=getStartTick();
         if(!shouldRotate()) {
             if (duration > 0 && tickCount >= startTick && tickCount < startTick + duration) {
-                Vec3 pos = new Vec3((double) getVisualPos().x + (double) transition.getX() / (double) duration, (double) getVisualPos().y + (double) transition.getY() / (double) duration, (double) getVisualPos().z + (double) transition.getZ() / (double) duration);
-                setVisualPos(pos);
-                setActualPos(pos);
+                Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
+               setActualPos(pos);
+
                 for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
@@ -274,6 +254,13 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 }
 
             } else if (duration > 0 && tickCount == startTick + duration + 0) {
+                for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                    return !(o instanceof MovingBlockEntity);
+                })) {
+                    entity.fallDistance=0f;
+                    entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,0D,entity.getDeltaMovement().z));
+                    entity.setOnGround(true);
+                }
                 makeBlock();
             } else if (duration > 0 && tickCount == startTick + duration + 1) {
                 discard();
@@ -283,7 +270,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         }
     }
     public boolean shouldFixFighting(){ /**このエンティティとブロックが完全に重なりZ-fightingを起こす可能性があるかどうか*/
-        return (getDuration()>0&&tickCount>getStartTick()+getDuration()-0)||tickCount<2;
+        return (getDuration()>0&&tickCount>getStartTick()+getDuration()-0)||tickCount<5;
     }
     private void makeBlock(){ /**移動し終わってブロック化する*/
         if(!level().isClientSide) {
@@ -291,6 +278,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             for (int i=0;i<getPosList().size();i++) {
                 BlockPos pos=originPos.offset(getPosList().get(i).getX(),getPosList().get(i).getY(),getPosList().get(i).getZ());
                 BlockState movingState = getStateList().get(i);
+                CompoundTag movingBlockEntityData = getBlockEntityDataList().get(i);
                 if (level().getBlockState(pos).canBeReplaced()) {
                     if (movingState.getBlock() == Blocks.OBSERVER) {
                         level().setBlock(pos, movingState, 82);
@@ -299,13 +287,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                         level().setBlock(pos, movingState, 82);
                         level().scheduleTick(pos, movingState.getBlock(), 2);
                     }
-                    if (!getBlockEntityData().isEmpty() && movingState.hasBlockEntity()) {
-                        CompoundTag compoundtag = getBlockEntityData();
-                        if (compoundtag != null) {
+                    if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
+                        if (movingBlockEntityData != null) {
                             BlockEntity blockentity = level().getBlockEntity(pos);
 
                             if (blockentity != null) {
-                                blockentity.load(getBlockEntityData());
+                                blockentity.load(movingBlockEntityData);
                             }
                         }
                     }
@@ -322,51 +309,25 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 }
             }
             setCompoundTag(new CompoundTag());
-           /* minX=0D;
-            minY=0D;
-            minZ=0D;
-            maxX=0D;
-            maxY=0D;
-            maxZ=0D;*/
         }
     }
 
-    public void setVisualPos(Vector3f visualPos){
-        entityData.set(DATA_VISUAL_POSITION_ID,visualPos);
-    }
-    public void setActualPos(Vector3f vector3f){
-        setPos(vector3f.x,vector3f.y,vector3f.z);
-    }
-    public Vec3 getVisualPos(){
-        return new Vec3(entityData.get(DATA_VISUAL_POSITION_ID).x,entityData.get(DATA_VISUAL_POSITION_ID).y,entityData.get(DATA_VISUAL_POSITION_ID).z);
-    }
-    public void setVisualPos(Vec3 visualPos){
-        entityData.set(DATA_VISUAL_POSITION_ID,visualPos.toVector3f());
-    }
+
     public Vec3 getActualPos(){
         return position();
     }
     public void setActualPos(Vec3 vec3){
         setPos(vec3.x,vec3.y,vec3.z);
     }
-    public BlockPos getVisualBlockPos(){
-        return new BlockPos(Mth.floor(entityData.get(DATA_VISUAL_POSITION_ID).x),Mth.floor(entityData.get(DATA_VISUAL_POSITION_ID).y),Mth.floor(entityData.get(DATA_VISUAL_POSITION_ID).z));
-    }
-    public void setVisualBlockPos(BlockPos visualPos){
-        entityData.set(DATA_VISUAL_POSITION_ID,visualPos.getCenter().toVector3f());
-    }
+
     public BlockPos getActualBlockPos(){
         return new BlockPos(Mth.floor(getActualPos().x),Mth.floor(getActualPos().y),Mth.floor(getActualPos().z));
     }
     public void setActualBlockPos(BlockPos blockPos){
         setPos(blockPos.getCenter());
     }
-    public Vec3 getDisplacementVisual(){
-        return new Vec3(getVisualPos().x-getActualPos().x,getVisualPos().y-getActualPos().y,getVisualPos().z-getActualPos().z);
-    }
-    public float getVisualDistance(){
-        return Mth.sqrt((float) (Mth.square(getDisplacementVisual().x+0.5D)+Mth.square(getDisplacementVisual().y+0.5D)+Mth.square(getDisplacementVisual().z+0.5D)));
-    }
+
+
     public Vec3 getDisplacementVisualDuringRotation(){
 
         int time=tickCount-getStartTick();
@@ -374,20 +335,20 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             time=getStartTick()+getDuration();
         }
         float[] rotationPos;
-        float firstAngle;
+        /*float firstAngle;
         switch (getTrigonometricFunctionType()){
             case Y_COUNTERCLOCKWISE ->firstAngle= (float) Math.atan2(getDisplacementVisual().x+0.5D,getDisplacementVisual().z+0.5D);
             default-> firstAngle= 0f;
-        }
+        }*/
         float finalAngle=getLeftRotation().angle();
-        float radian=firstAngle+time*(finalAngle)/(float)getDuration();
+        float radian=/*firstAngle+*/time*(finalAngle)/(float)getDuration();
         switch (getTrigonometricFunctionType()){
             case Y_COUNTERCLOCKWISE -> rotationPos= new float[]{(float) Math.sin(radian), 0f, (float) Math.cos(radian)};
             default-> rotationPos= new float[]{0f, 0f, 0f};
         }
 
 
-        return new Vec3(rotationPos[0]*getVisualDistance()-0.5D,rotationPos[1]*getVisualDistance()-0.5D,rotationPos[2]*getVisualDistance()-0.5D);
+        return new Vec3(rotationPos[0]-0.5D,rotationPos[1]-0.5D,rotationPos[2]-0.5D);
     }
     public BlockState getState(){
         return entityData.get(BlockDisplayMixin.getData());
@@ -404,9 +365,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     private BlockPos getStartLocation(){
         return entityData.get(DATA_START_LOCATION_ID);
     }
-    private CompoundTag getBlockEntityData(){
-        return entityData.get(DATA_BLOCKENTITY_CONTENTS_ID);
-    }
+
     private Quaternionf getLeftRotation(){
         return entityData.get(DisplayMixin.getDataLeftRotation());
     }
@@ -414,13 +373,13 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     private Quaternionf getRightRotation(){
         return entityData.get(DisplayMixin.getDataRightRotation());
     }
-    private void setLeftRotation(Quaternionf quaternionf){
+    public void setLeftRotation(Quaternionf quaternionf){
         entityData.set(DisplayMixin.getDataLeftRotation(),quaternionf);
     }
-    private void setRightRotation(Quaternionf quaternionf){
+    public void setRightRotation(Quaternionf quaternionf){
         entityData.set(DisplayMixin.getDataRightRotation(),quaternionf);
     }
-    private void setDuration(int duration){
+    public void setDuration(int duration){
         entityData.set(DisplayMixin.getDataDuration(),duration);
     }
     private int getDuration(){
@@ -436,12 +395,22 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     private void setTrigonometricFunctionType(trigonometricFunctionType type){
         entityData.set(DATA_TRIGNOMETRIC_FUNCTION_ID,type.getID());
     }
-    private CompoundTag getCompoundTag(){
+    public CompoundTag getCompoundTag(){
         return entityData.get(DATA_COMPOUND_TAG_ID);
     }
     private void setCompoundTag(CompoundTag tag){
         entityData.set(DATA_COMPOUND_TAG_ID,tag);
     }
+    private float getRadianAngle(){
+        return Mth.PI*(float) getDegreeAngle()/180f;
+    }
+    public void setDegreeAngle(int degreeAngle){
+        entityData.set(DATA_DEGREE_ANGLE_ID,degreeAngle);
+    }
+    public int getDegreeAngle(){
+        return entityData.get(DATA_DEGREE_ANGLE_ID);
+    }
+
     public List<BlockPos> getPosListFirst(){
         CompoundTag entityTag=getCompoundTag();
         if(!entityTag.contains("positionList")){
@@ -487,6 +456,32 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         return stateList;
     }
 
+    public List<CompoundTag> getBlockEntityDataList() {
+        if(blockEntityDataList ==null|| blockEntityDataList.isEmpty()){
+            blockEntityDataList =getBlockEntityDataListFirst();
+        }
+        return blockEntityDataList;
+
+    }
+
+    public List<CompoundTag> getBlockEntityDataListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("blockEntityList")){
+            entityTag.put("blockEntityList",new CompoundTag());
+        }
+        CompoundTag blockEntityTag=entityTag.getCompound("blockEntityList");
+        List<CompoundTag> blockEntityList=new ArrayList<>();
+        for(int i=0; i<getPosList().size();i++){
+            if (blockEntityTag.contains("blockEntity_" + String.valueOf(i))) {
+                blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
+            }
+        }
+        return blockEntityList;
+    }
+
+    private boolean shouldRender(BlockState state){
+        return state==null||(state.getShape(null,null)!= Shapes.block())||!Utils.isBlockSolid(state);
+    }
 
     @Override
     public boolean mayInteract(Level level, BlockPos poa) {
@@ -507,35 +502,19 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
 
     private  void rotate(){
-       /*// setYRot(tickCount*0.1f);
-        int durationRotation=200;
-        float rotationDegree=90f;
-        float degreePerTick=(rotationDegree/(float) durationRotation)*Mth.PI/180f;
-        int tx=0;
-        int tz=-3;
-        final double x0= position().x;
-        final double z0= position().z;
-        double x=position().x;
-        double y=position().x;
-        double z= position().z;
-        double centerX=x0+tx;
-        double centerZ=z0+tz;
-        float distanceFromCenter=Mth.sqrt(tx^2+tz^2);
-        int rotationTick=Mth.floor(tickCount/(double)durationRotation);
-        float degree= (float) ((Math.atan((x-x0)/(z-z0)))*180F/Mth.PI);
-        if(tickCount<=durationRotation) {
-          //  this.teleportRelative();
-         //   moveTo(x,y,z-0.1D);
-            this.moveTo(x,y,z, getYRot()-degreePerTick, 0f);
+        MovingBlockEntity.trigonometricFunctionType type=getTrigonometricFunctionType();
+        int transitionDegree=getDegreeAngle();
+        if(tickCount<=getDuration()) {
+            if (type == trigonometricFunctionType.Y_COUNTERCLOCKWISE) {
 
-            // setYRot(getYRot()-degreePerTick);
-           // this.moveTo(centerX+distanceFromCenter*Mth.sin(degreePerTick+degree), position().y(), centerZ+distanceFromCenter*Mth.cos(degreePerTick+degree), getYRot()-degreePerTick, 0f);
-        }*/
-        //setYRot(getYRot()-5f);
-       // moveTo(new Vec3(-60, -60,26));
-        setLeftRotation(new Quaternionf(new AxisAngle4d(1.57D,0D,1D,0D)));
-        setRightRotation(new Quaternionf(new AxisAngle4d(0D,0D,1D,0D)));
-        setDuration(200);
+                setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 1D, 0D)));
+                setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 1D, 0D)));
+            } else if (type == trigonometricFunctionType.Y_CLOCKWISE) {
+                setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 1D, 0D)));
+                setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 1D, 0D)));
+
+            }
+        }
     }
     public  enum trigonometricFunctionType {
         NONE((byte) 0),

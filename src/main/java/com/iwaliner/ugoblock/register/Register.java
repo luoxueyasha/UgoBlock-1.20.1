@@ -2,6 +2,13 @@ package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.object.*;
+import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
+import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerBlock;
+import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerBlockEntity;
+import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerMenu;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlockEntity;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -50,7 +57,8 @@ public class Register {
 
 
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, ModCoreUgoBlock.MODID);
-    public static final RegistryObject<MenuType<SlideControllerMenu>> SlideControllerMenu = MENUS.register("slide_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new SlideControllerMenu(windowId, inv);}));
+    public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.slide_controller.SlideControllerMenu>> SlideControllerMenu = MENUS.register("slide_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new SlideControllerMenu(windowId, inv);}));
+    public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.rotation_controller.RotationControllerMenu>> RotationControllerMenu = MENUS.register("rotation_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new RotationControllerMenu(windowId, inv);}));
 
 
 

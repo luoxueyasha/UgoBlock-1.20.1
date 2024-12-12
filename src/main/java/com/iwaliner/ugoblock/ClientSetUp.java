@@ -1,7 +1,8 @@
 package com.iwaliner.ugoblock;
 
-import com.iwaliner.ugoblock.object.MovingBlockRenderer;
-import com.iwaliner.ugoblock.object.SlideControllerScreen;
+import com.iwaliner.ugoblock.object.moving_block.MovingBlockRenderer;
+import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerScreen;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerScreen;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
@@ -25,6 +26,7 @@ public class ClientSetUp {
     public static void RegisterRendererEvent(FMLClientSetupEvent event) {
         /**コンテナにGUIを登録*/
         MenuScreens.register(Register.SlideControllerMenu.get(), SlideControllerScreen::new);
+        MenuScreens.register(Register.RotationControllerMenu.get(), RotationControllerScreen::new);
 
          }
 }

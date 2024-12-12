@@ -1,15 +1,20 @@
-package com.iwaliner.ugoblock.object;
+package com.iwaliner.ugoblock.object.rotation_controller;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -25,10 +30,13 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.AxisAngle4d;
+import org.joml.Quaternionf;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RotationControllerBlock extends BaseEntityBlock {
@@ -46,7 +54,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
     }
     protected void openContainer(Level level, BlockPos pos, Player player) {
         BlockEntity blockentity = level.getBlockEntity(pos);
-        if (blockentity instanceof SlideControllerBlockEntity) {
+        if (blockentity instanceof RotationControllerBlockEntity) {
             player.openMenu((MenuProvider)blockentity);
         }
     }
@@ -56,13 +64,12 @@ public class RotationControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()) {
                 blockEntity.setItem(0,stack);
-                blockEntity.setPositionList(ShapeCardItem.getPositionList(stack.getTag()));
+                blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
-            }else if (stack.getItem() == Register.end_location_card.get()&&stack.getTag()!=null&&blockEntity.getItem(1).isEmpty()) {
-               blockEntity.setItem(1,stack);
-                blockEntity.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
-                player.setItemInHand(hand,ItemStack.EMPTY);
-            }else if(!level.isClientSide){
+            }else if(stack.isEmpty()){
+                player.turn(0D,90D);
+            }
+            else if(!level.isClientSide){
                 this.openContainer(level, pos, player);
                 return InteractionResult.CONSUME;
             }
@@ -92,88 +99,97 @@ public class RotationControllerBlock extends BaseEntityBlock {
                    if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
                       int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
-                       if(blockEntity.getEndPos()!=null&&duration>0) {
-                           BlockPos startPos=pos.relative(state.getValue(FACING));
-                           BlockPos endPos=blockEntity.getEndPos();
-                           List<BlockPos> posList=blockEntity.getPositionList();
-                           if(posList!=null) {
-                                blockEntity.setMoving(true);
-                                /**↓移動の変位。座標ではないことに注意。*/
-                               BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
-                               for (BlockPos eachPos : posList) {
-                                   if(!blockEntity.getBlockPos().equals(eachPos)) {
-                                       /**ブロックをエンティティ化*/
-                                       makeMoveableBlock(level, startPos,eachPos, start, duration, transitionPos);
-                                   }
-                               }
-                           }
-                       }
-                           level.setBlock(pos, state.cycle(POWERED), 2);
-                           level.scheduleTick(pos, this, 2);
+                       MovingBlockEntity.trigonometricFunctionType type = MovingBlockEntity.trigonometricFunctionType.Y_COUNTERCLOCKWISE;
+                       BlockPos startPos = pos.relative(state.getValue(FACING));
+                      if(!flag) {
+                          if (duration > 0) {
+                              List<BlockPos> posList = blockEntity.getPositionList();
+                              if (posList != null) {
 
+                                  blockEntity.setMoving(true);
+                                  /**ブロックをエンティティ化*/
+                                  makeMoveableBlock(level, pos, startPos, start, duration, type, blockEntity.getDegreeAngle());
+                              }
+                          }
+                          level.setBlock(pos, state.cycle(POWERED), 2);
+                          level.scheduleTick(pos, this, 2);
+                      }else{
+                          ModCoreUgoBlock.logger.info("reverse??");
+                          for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                              return (o instanceof MovingBlockEntity);
+                          })) {
+                              MovingBlockEntity movingBlock= (MovingBlockEntity) entity;
+                              CompoundTag tag=movingBlock.getCompoundTag();
+                              int angle=movingBlock.getDegreeAngle();
+                              makeMoveableBlockReverse(level,pos,startPos,start,duration,type,angle,tag);
+                              movingBlock.discard();
+                              //reverseRotation((MovingBlockEntity) entity,duration,Utils.getReverseTrigonometricFunctionType(type),blockEntity.getDegreeAngle());
+                          }
+                          level.setBlock(pos, state.cycle(POWERED), 2);
+                      }
                    }
             }
 
 
 
     }
-    /*public static void makeMoveableBlock(Level level,BlockPos startPos,int start,int duration,BlockPos transitionPos){
-        BlockEntity blockEntity=level.getBlockEntity(startPos);
-        BlockState state=level.getBlockState(startPos);
-        MoveableBlockEntity moveableBlock;
-        if(!state.isAir()&&!state.is(Register.TAG_DISABLE_MOVING)) {
-            if (blockEntity != null) {
-                moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20, duration * 20, transitionPos, blockEntity);
-                if(blockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity&&!slideControllerBlockEntity.getPositionList().isEmpty()&&!slideControllerBlockEntity.getEndPos().equals(ShapeCardItem.errorPos())){
 
-                    List<BlockPos> newPos=new ArrayList<>();
-                    for(int i=0;i< ((SlideControllerBlockEntity) blockEntity).getPositionList().size();i++){
-                        newPos.add(slideControllerBlockEntity.getPositionList().get(i).offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ()));
-                    }
-                    slideControllerBlockEntity.setPositionList(newPos);
-                    BlockPos newEndPos=slideControllerBlockEntity.getEndPos().offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ());
-                    slideControllerBlockEntity.setEndPos(newEndPos);
+    private void makeMoveableBlock(Level level,BlockPos controllerPos,BlockPos startPos,int start,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree){
+        if(level.getBlockEntity(controllerPos) instanceof RotationControllerBlockEntity rotationControllerBlockEntity&&rotationControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&rotationControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
+            CompoundTag entityTag=new CompoundTag();
+            List<BlockPos> posList=rotationControllerBlockEntity.getPositionList();
+            CompoundTag posTag=new CompoundTag();
+            CompoundTag stateTag=new CompoundTag();
+            CompoundTag blockEntityTag=new CompoundTag();
+            float radian= Mth.PI*((float) degree/180f);
+            for(int i=0; i<posList.size();i++){
+                BlockPos eachPos=posList.get(i);
+                BlockState eachState=level.getBlockState(eachPos);
+                BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
+                if (eachBlockEntity != null) {
 
-                    moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20+1, duration * 20, transitionPos, slideControllerBlockEntity);
-
+                    blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
+                }else{
+                    blockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
                 }
-            } else {
-                moveableBlock = new MoveableBlockEntity(level, startPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start * 20+1, duration * 20, transitionPos, null);
+                if(eachState.is(Register.TAG_DISABLE_MOVING)){
+                    eachState=Blocks.AIR.defaultBlockState();
+                }
+                eachState= eachState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachPos).isEmpty() ? eachState : Blocks.AIR.defaultBlockState();
+                posTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ())));
+                stateTag.put("state_" + String.valueOf(i), NbtUtils.writeBlockState(eachState));
+
             }
+            entityTag.put("positionList",posTag);
+            entityTag.put("stateList",stateTag);
+            entityTag.put("blockEntityList",blockEntityTag);
+
+            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, type,degree,entityTag);
+
             if (!level.isClientSide) {
                 level.addFreshEntity(moveableBlock);
             }
+
         }
 
-    }*/
-    public static void makeMoveableBlock(Level level,BlockPos startPos,BlockPos visualPos,int start,int duration,BlockPos transitionPos){
-        BlockEntity blockEntity=level.getBlockEntity(visualPos);
-        BlockState state=level.getBlockState(visualPos);
-        MovingBlockEntity moveableBlock;
-        MovingBlockEntity.trigonometricFunctionType type= MovingBlockEntity.trigonometricFunctionType.Y_COUNTERCLOCKWISE;
-        if(!state.isAir()&&!state.is(Register.TAG_DISABLE_MOVING)) {
-            if (blockEntity != null) {
-                moveableBlock = new MovingBlockEntity(level, startPos,visualPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start, duration, transitionPos, blockEntity,type);
-                if(blockEntity instanceof RotationControllerBlockEntity slideControllerBlockEntity&&!slideControllerBlockEntity.getPositionList().isEmpty()&&!slideControllerBlockEntity.getEndPos().equals(ShapeCardItem.errorPos())){
+    }
+    private void makeMoveableBlockReverse(Level level,BlockPos controllerPos,BlockPos startPos,int start,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree,CompoundTag tag){
+        if(level.getBlockEntity(controllerPos) instanceof RotationControllerBlockEntity rotationControllerBlockEntity&&rotationControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&rotationControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
 
-                    List<BlockPos> newPos=new ArrayList<>();
-                    for(int i=0;i< ((RotationControllerBlockEntity) blockEntity).getPositionList().size();i++){
-                        newPos.add(slideControllerBlockEntity.getPositionList().get(i).offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ()));
-                    }
-                    slideControllerBlockEntity.setPositionList(newPos);
-                    BlockPos newEndPos=slideControllerBlockEntity.getEndPos().offset(transitionPos.getX(),transitionPos.getY(),transitionPos.getZ());
-                    slideControllerBlockEntity.setEndPos(newEndPos);
+            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, Utils.getReverseTrigonometricFunctionType(type),-degree,tag);
+            moveableBlock.setYRot(-degree);
 
-                    moveableBlock = new MovingBlockEntity(level, startPos,visualPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start+1, duration, transitionPos, slideControllerBlockEntity,type);
-
-                }
-            } else {
-                moveableBlock = new MovingBlockEntity(level, startPos,visualPos, state.hasProperty(BlockStateProperties.WATERLOGGED)? state.setValue(BlockStateProperties.WATERLOGGED,false) : level.getFluidState(startPos).isEmpty()? state : Blocks.AIR.defaultBlockState(), start+1, duration, transitionPos, null,type);
-            }
             if (!level.isClientSide) {
                 level.addFreshEntity(moveableBlock);
             }
+
         }
+
+    }
+    private void reverseRotation(MovingBlockEntity entity,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree){
+        CompoundTag tag=entity.getCompoundTag();
+        int angle=entity.getDegreeAngle();
+
 
     }
     public static void destroyOldBlock(Level level,BlockPos pos){
@@ -214,7 +230,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
         if(livingEntity instanceof Player&&state.getBlock() instanceof RotationControllerBlock){
             ItemStack endLocationCard=new ItemStack(Register.end_location_card.get());
             CompoundTag tag=new CompoundTag();
-            tag.put("end_location", NbtUtils.writeBlockPos(ShapeCardItem.errorPos()));
+            tag.put("end_location", NbtUtils.writeBlockPos(Utils.errorPos()));
             tag.put("start_location", NbtUtils.writeBlockPos(pos.relative(state.getValue(FACING))));
             endLocationCard.setTag(tag);
             ItemEntity itemEntity1=new ItemEntity(level,livingEntity.getX(),livingEntity.getY()+1D,livingEntity.getZ(),new ItemStack(Register.shape_card.get()));

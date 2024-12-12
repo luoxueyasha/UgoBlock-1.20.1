@@ -1,5 +1,8 @@
-package com.iwaliner.ugoblock.object;
+package com.iwaliner.ugoblock.object.rotation_controller;
 
+import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerMenu;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -29,25 +32,21 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     private boolean isMoving;
     private int tickCount;
     private int startTime;
-   // private int duration=20;
+    private int degreeAngle=-90;
     private int speedx10=10;
-    protected NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
+    protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
-    protected final ContainerData startTickDataAccess = new ContainerData() {
+    protected final ContainerData degreeAngleDataAccess = new ContainerData() {
         public int get(int i) {
-            switch(i) {
-                case 0:
-                    return RotationControllerBlockEntity.this.getStartTime();
-
-                default:
-                    return 0;
+            if (i == 0) {
+                return RotationControllerBlockEntity.this.getDegreeAngle();
             }
+            return 0;
         }
 
         public void set(int i, int j) {
-            switch(i) {
-                case 0:
-                    RotationControllerBlockEntity.this.startTime = j;
+            if (i == 0) {
+                RotationControllerBlockEntity.this.degreeAngle = j;
             }
 
         }
@@ -59,19 +58,15 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
 
     protected final ContainerData speedDataAccess = new ContainerData() {
         public int get(int i) {
-            switch(i) {
-                case 0:
-                    return getSpeedx10();
-
-                default:
-                    return 0;
+            if (i == 0) {
+                return getSpeedx10();
             }
+            return 0;
         }
 
         public void set(int i, int j) {
-            switch(i) {
-                case 0:
-                    RotationControllerBlockEntity.this.speedx10=j;
+            if (i == 0) {
+                RotationControllerBlockEntity.this.speedx10 = j;
             }
 
         }
@@ -90,12 +85,12 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
     @Override
     protected AbstractContainerMenu createMenu(int i, Inventory inventory) {
-        return null;
+        return new RotationControllerMenu(i,inventory,this,degreeAngleDataAccess,speedDataAccess);
     }
 
     @Override
     public int getContainerSize() {
-        return 2;
+        return 1;
     }
 
     public boolean isEmpty() {
@@ -131,9 +126,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                 this.setChanged();
             }
             if(slot==0&&stack.getItem()==Register.shape_card.get()){
-                this.setPositionList(ShapeCardItem.getPositionList(stack.getTag()));
-            }else if(slot==1&&stack.getItem()==Register.end_location_card.get()&&stack.getTag()!=null){
-                 this.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
+                this.setPositionList(Utils.getPositionList(stack.getTag()));
             }
 
     }
@@ -162,11 +155,6 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         this.isMoving=tag.getBoolean("isMoving");
         this.tickCount=tag.getInt("tickCount");
         this.startTime=tag.getInt("startTime");
-//        if(tag.contains("duration")) {
-//            this.duration = tag.getInt("duration");
-//        }else{
-//            this.duration = 20;
-//        }
         if(tag.contains("speedx10")) {
             this.speedx10 = tag.getInt("speedx10");
         }else{
@@ -183,8 +171,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         tag.putBoolean("isMoving",isMoving);
        tag.putInt("tickCount",tickCount);
         tag.putInt("startTime",startTime);
-        //tag.putInt("duration",duration);
-        tag.putInt("speedx10",speedx10);
+       tag.putInt("speedx10",speedx10);
         ContainerHelper.saveAllItems(tag, this.items);
     }
 
@@ -201,7 +188,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         load(tag);
     }
     public BlockPos getStartPos(){
-        if(level.getBlockState(getBlockPos()).getBlock()instanceof SlideControllerBlock){
+        if(level.getBlockState(getBlockPos()).getBlock()instanceof RotationControllerBlock){
             return getBlockPos().relative(level.getBlockState(getBlockPos()).getValue(BlockStateProperties.FACING));
         }
         return getBlockPos();
@@ -227,22 +214,11 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
 
 
-    public BlockPos getEndPos() {
-        if(getItem(1).getItem()==Register.end_location_card.get()&&getItem(1).getTag()!=null){
-            return EndLocationCardItem.getEndPos(getItem(1).getTag());
-        }
-       return ShapeCardItem.errorPos();
-    }
 
-    public void setEndPos(BlockPos endPos) {
-        if(getItem(1).getItem()==Register.end_location_card.get()&&getItem(1).getTag()!=null){
-             EndLocationCardItem.setEndPos(getItem(1),endPos);
-        }
-   }
 
     public List<BlockPos> getPositionList() {
         if(getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null){
-            return ShapeCardItem.getPositionList(getItem(0).getTag());
+            return Utils.getPositionList(getItem(0).getTag());
         }
        return new ArrayList<>();
     }
@@ -258,7 +234,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
 
     public void setPositionList(List<BlockPos> positionList) {
         if(getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null){
-            ShapeCardItem.setPositionList(getItem(0),positionList);
+            Utils.setPositionList(getItem(0),positionList);
         }
     }
 
@@ -270,6 +246,12 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     public void setStartTime(int startTime) {
         this.startTime = startTime;
     }
+    public int getDegreeAngle(){
+        return degreeAngle;
+    }
+    public void setDegreeAngle(int degree){
+        degreeAngle=degree;
+    }
     public int getSpeedx10(){
         return  speedx10;
     }
@@ -278,18 +260,14 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
 
     public int getDuration() {
-        double distance=this.getDistance();
+        double distance=Mth.PI*((float) getDegreeAngle()/180f);
         double d=(distance/((double) speedx10/10D))*20D;
         return Math.round((float) d);
     }
-    public double getDistance(){
-        BlockPos startPos=this.getStartPos();
-        BlockPos endPos=this.getEndPos();
-        return Mth.sqrt((float)Mth.square(startPos.getX()-endPos.getX())+(float)Mth.square(startPos.getY()-endPos.getY())+(float)Mth.square(startPos.getZ()-endPos.getZ()));
-    }
+
 
     public boolean hasCards(){
-        return getItem(0).getItem()==Register.shape_card.get()&&getItem(1).getItem()==Register.end_location_card.get()&&getItem(0).getTag()!=null&&getItem(1).getTag()!=null&&getItem(0).getTag().contains("positionList")&&getItem(1).getTag().contains("end_location");
+        return getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null&&getItem(0).getTag().contains("positionList");
     }
     private boolean isCounterClockwise(){
         return getBlockState().getBlock() instanceof RotationControllerBlock&&getBlockState().getValue(RotationControllerBlock.COUNTER_CLOCKWISE);
@@ -301,11 +279,11 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, RotationControllerBlockEntity blockEntity) {
-        if(state.getBlock() instanceof SlideControllerBlock) {
-            if(blockEntity.isMoving()&&!state.getValue(SlideControllerBlock.MOVING)){
-                level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,true),2);
-            }else if(!blockEntity.isMoving()&&state.getValue(SlideControllerBlock.MOVING)){
-                level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,false),2);
+        if(state.getBlock() instanceof RotationControllerBlock) {
+            if(blockEntity.isMoving()&&!state.getValue(RotationControllerBlock.MOVING)){
+                level.setBlock(pos,state.setValue(RotationControllerBlock.MOVING,true),2);
+            }else if(!blockEntity.isMoving()&&state.getValue(RotationControllerBlock.MOVING)){
+                level.setBlock(pos,state.setValue(RotationControllerBlock.MOVING,false),2);
             }
             if (blockEntity.getMoveTick() > 0) {
                 if (blockEntity.isMoving()) {
@@ -314,16 +292,13 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                         blockEntity.setTickCount(0);
                     } else if (blockEntity.getTickCount() == blockEntity.getMoveTick() && blockEntity.hasCards()) {
                         BlockPos startPos = blockEntity.getStartPos();
-                        List<BlockPos> posList = blockEntity.getPositionList();
-                        BlockPos endPos = new BlockPos(startPos.getX() + (startPos.getX() - blockEntity.getEndPos().getX()), startPos.getY() + (startPos.getY() - blockEntity.getEndPos().getY()), startPos.getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ()));
+                     //   List<BlockPos> posList = blockEntity.getPositionList();
                         if (blockEntity.isNotFirstTime()) {
                             List<BlockPos> posList0 = blockEntity.getPositionList();
                             for (int i = 0; i < posList0.size(); i++) {
-                                posList.set(i, new BlockPos(posList0.get(i).getX() + (startPos.getX() - blockEntity.getEndPos().getX()), posList0.get(i).getY() + (startPos.getY() - blockEntity.getEndPos().getY()), posList0.get(i).getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ())));
-                            }
+                             }
                         }
-                        blockEntity.setPositionList(posList);
-                        blockEntity.setEndPos(endPos);
+                     //   blockEntity.setPositionList(posList);
                     }
                     blockEntity.increaseTickCount(1);
                 }
@@ -344,28 +319,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
 
     @Override
     public boolean canPlaceItem(int i, ItemStack stack) {
-        if(i==1){
-            return stack.getItem()==Register.end_location_card.get();
-        }else{
             return stack.getItem()==Register.shape_card.get();
-        }
     }
-   /* public double getDistance(){
-        BlockPos startPos=this.getStartPos();
-        BlockPos endPos=this.getEndPos();
-        return Mth.sqrt((float)Mth.square(startPos.getX()-endPos.getX())+(float)Mth.square(startPos.getY()-endPos.getY())+(float)Mth.square(startPos.getZ()-endPos.getZ()));
-    }
-    public double getSpeed(){ *//**単位はブロック毎秒で、小数第一位まで。*//*
-        double distance=this.getDistance();
-        int duration=this.getDuration();
-        double d=distance/((double) duration/20D);
-        return  ((double)Math.round(d * 10))/10;
-    }
-    public void setSpeed(double speed){
-        double distance=this.getDistance();
-        double d=(distance/speed)*20D;
-        setDuration(Math.round((float) d));
-    }*/
-
 
 }

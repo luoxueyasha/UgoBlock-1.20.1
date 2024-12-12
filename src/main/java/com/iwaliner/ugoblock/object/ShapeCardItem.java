@@ -1,5 +1,7 @@
 package com.iwaliner.ugoblock.object;
 
+import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -43,7 +45,7 @@ public class ShapeCardItem extends Item {
             tag.putBoolean("select",!tag.getBoolean("select"));
             if(!(state.getBlock() instanceof SlideControllerBlock)) {
                 int ii = -1;
-                for (int i = 0; i < getMaxSize(); i++) {
+                for (int i = 0; i < Utils.getMaxSize(); i++) {
                     if (!posTag.contains("location_" + String.valueOf(i))) {
                         ii = i;
                         break;
@@ -117,7 +119,7 @@ public class ShapeCardItem extends Item {
 
             if(!(state.getBlock() instanceof SlideControllerBlock)){
                 int ii=-1;
-                for(int i=0;i<getMaxSize();i++){
+                for(int i=0;i<Utils.getMaxSize();i++){
                     if(!posTag.contains("location_"+String.valueOf(i))){
                         ii=i;
                         break;
@@ -137,7 +139,7 @@ public class ShapeCardItem extends Item {
                                 for (int k = 0; k <= Math.abs(edgeA.getZ() - pos.getZ()); k++) {
                                     BlockPos pos2=pos.offset(edgeA.getX()-pos.getX()>=0? i: -i,edgeA.getY()-pos.getY()>=0? j: -j,edgeA.getZ()-pos.getZ()>=0? k: -k);
                                     int ii2=-1;
-                                    for(int i0=0;i0<getMaxSize();i0++){
+                                    for(int i0=0;i0<Utils.getMaxSize();i0++){
                                         if(!posTag.contains("location_"+String.valueOf(i0))){
                                             ii2=i0;
                                             break;
@@ -150,7 +152,7 @@ public class ShapeCardItem extends Item {
                             }
                         }
                         /**始点をリセット*/
-                        tag.put("edge_A", NbtUtils.writeBlockPos(errorPos()));
+                        tag.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
                     }
                     /*if(list.contains(pos)) {
                         tag.put("location_" + String.valueOf(list.indexOf(pos)), NbtUtils.writeBlockPos(errorPos()));
@@ -164,43 +166,10 @@ public class ShapeCardItem extends Item {
         }
         return InteractionResult.FAIL;
     }
-    public static List<BlockPos> getPositionList(CompoundTag tag){
-
-        List<BlockPos> list=new ArrayList<>();
-        if(tag!=null) {
-            if(!tag.contains("positionList")){
-                tag.put("positionList",new CompoundTag());
-            }
-            CompoundTag posTag=tag.getCompound("positionList");
-            for (int i = 0; i < getMaxSize(); i++) {
-                if (posTag.contains("location_" + String.valueOf(i))) {
-                    list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
-                }
-            }
-        }
-        return list;
-    }
-    public static void setPositionList(ItemStack stack,List<BlockPos> list){
-        CompoundTag tag=stack.getTag();
-        if(tag!=null) {
-            if(!tag.contains("positionList")){
-                tag.put("positionList",new CompoundTag());
-            }
-            CompoundTag posTag=tag.getCompound("positionList");
-            for (int i = 0; i < list.size(); i++) {
-                posTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(list.get(i)));
-            }
-        }
-    }
 
 
-    public static int getMaxSize(){
-        return 25000;
-    }
-    public static BlockPos errorPos(){
-        return new BlockPos(0,-999999999,0);
-    }
-    public boolean isFoil(ItemStack stack) {
+
+   public boolean isFoil(ItemStack stack) {
         return stack.getTag()!=null&&stack.getTag().getBoolean("select");
     }
 
@@ -208,10 +177,10 @@ public class ShapeCardItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
         list.add(Component.translatable("info.ugoblock.shape_card"));
         if(stack.getTag()!=null) {
-            int size=getPositionList(stack.getTag()).size();
+            int size=Utils.getPositionList(stack.getTag()).size();
             for (int i = 0;size>5? i < 5 : i<size; i++) {
                 BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("positionList").getCompound("location_" + String.valueOf(i)));
-                if (!pos.equals(errorPos())) {
+                if (!pos.equals(Utils.errorPos())) {
                     list.add(Component.translatable("info.ugoblock.shape_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]"));
                 }
             }

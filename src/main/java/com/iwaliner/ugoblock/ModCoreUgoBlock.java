@@ -117,7 +117,7 @@ public class ModCoreUgoBlock
                     }
                     CompoundTag posTag=tag.getCompound("positionList");
                 int ii=-1;
-                for(int i=0;i<ShapeCardItem.getMaxSize();i++) {
+                for(int i=0;i<Utils.getMaxSize();i++) {
                     if(!posTag.contains("location_"+String.valueOf(i))){
                         ii=i-1;
                         break;
@@ -131,7 +131,7 @@ public class ModCoreUgoBlock
                         for (int j = -range; j <= range; j++) {
                             for (int k = -range; k <= range; k++) {
                                 BlockPos offsetPos = hitPos.offset(i, j, k);
-                                if(list.contains(offsetPos)&& !offsetPos.equals(ShapeCardItem.errorPos())){
+                                if(list.contains(offsetPos)&& !offsetPos.equals(Utils.errorPos())){
                                      this.renderYellowOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), event.getCamera().getEntity(), event.getCamera().getPosition().x, event.getCamera().getPosition().y, event.getCamera().getPosition().z, offsetPos);
                                 }
                             }

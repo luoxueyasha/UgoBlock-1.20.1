@@ -1,17 +1,16 @@
-package com.iwaliner.ugoblock.object;
+package com.iwaliner.ugoblock.object.slide_controller;
 
+import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.object.EndLocationCardItem;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -19,12 +18,9 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,7 +130,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
                 this.setChanged();
             }
             if(slot==0&&stack.getItem()==Register.shape_card.get()){
-                this.setPositionList(ShapeCardItem.getPositionList(stack.getTag()));
+                this.setPositionList(Utils.getPositionList(stack.getTag()));
             }else if(slot==1&&stack.getItem()==Register.end_location_card.get()&&stack.getTag()!=null){
                  this.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
             }
@@ -229,7 +225,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         if(getItem(1).getItem()==Register.end_location_card.get()&&getItem(1).getTag()!=null){
             return EndLocationCardItem.getEndPos(getItem(1).getTag());
         }
-       return ShapeCardItem.errorPos();
+       return Utils.errorPos();
     }
 
     public void setEndPos(BlockPos endPos) {
@@ -240,7 +236,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
 
     public List<BlockPos> getPositionList() {
         if(getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null){
-            return ShapeCardItem.getPositionList(getItem(0).getTag());
+            return Utils.getPositionList(getItem(0).getTag());
         }
        return new ArrayList<>();
     }
@@ -256,7 +252,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
 
     public void setPositionList(List<BlockPos> positionList) {
         if(getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null){
-            ShapeCardItem.setPositionList(getItem(0),positionList);
+            Utils.setPositionList(getItem(0),positionList);
         }
     }
 
