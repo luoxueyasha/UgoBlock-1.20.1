@@ -33,7 +33,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     private int tickCount;
     private int startTime;
     private int degreeAngle=-90;
-    private int speedx10=10;
+    private int duration=5*20;
     protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
     protected final ContainerData degreeAngleDataAccess = new ContainerData() {
@@ -46,6 +46,11 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
 
         public void set(int i, int j) {
             if (i == 0) {
+                if(RotationControllerBlockEntity.this.degreeAngle>=0&&j<0){
+                    setTurnDirection(false);
+                }else if(RotationControllerBlockEntity.this.degreeAngle<0&&j>=0){
+                    setTurnDirection(true);
+                }
                 RotationControllerBlockEntity.this.degreeAngle = j;
             }
 
@@ -56,17 +61,17 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         }
     };
 
-    protected final ContainerData speedDataAccess = new ContainerData() {
+    protected final ContainerData durationDataAccess = new ContainerData() {
         public int get(int i) {
             if (i == 0) {
-                return getSpeedx10();
+                return Mth.floor(RotationControllerBlockEntity.this.getDuration() / 20f);
             }
             return 0;
         }
 
         public void set(int i, int j) {
             if (i == 0) {
-                RotationControllerBlockEntity.this.speedx10 = j;
+                RotationControllerBlockEntity.this.duration = j * 20;
             }
 
         }
@@ -85,7 +90,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
     @Override
     protected AbstractContainerMenu createMenu(int i, Inventory inventory) {
-        return new RotationControllerMenu(i,inventory,this,degreeAngleDataAccess,speedDataAccess);
+        return new RotationControllerMenu(i,inventory,this,degreeAngleDataAccess,durationDataAccess);
     }
 
     @Override
@@ -155,10 +160,10 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         this.isMoving=tag.getBoolean("isMoving");
         this.tickCount=tag.getInt("tickCount");
         this.startTime=tag.getInt("startTime");
-        if(tag.contains("speedx10")) {
-            this.speedx10 = tag.getInt("speedx10");
+        if(tag.contains("duration")) {
+            this.duration = tag.getInt("duration");
         }else{
-            this.speedx10 = 10;
+            this.duration = 5*20;
         }
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items);
@@ -169,9 +174,9 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         super.saveAdditional(tag);
         tag.putBoolean("isNotFirstTime",isNotFirstTime);
         tag.putBoolean("isMoving",isMoving);
-       tag.putInt("tickCount",tickCount);
+        tag.putInt("tickCount",tickCount);
         tag.putInt("startTime",startTime);
-       tag.putInt("speedx10",speedx10);
+        tag.putInt("duration",duration);
         ContainerHelper.saveAllItems(tag, this.items);
     }
 
@@ -212,9 +217,11 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     public void increaseTickCount(int i){
         this.tickCount+=i;
     }
-
-
-
+    private void invertBlockRotationDirection(){
+        if(getBlockState().getBlock() instanceof RotationControllerBlock){
+            setBlockState(getBlockState().cycle(RotationControllerBlock.COUNTER_CLOCKWISE));
+        }
+    }
 
     public List<BlockPos> getPositionList() {
         if(getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null){
@@ -252,17 +259,13 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     public void setDegreeAngle(int degree){
         degreeAngle=degree;
     }
-    public int getSpeedx10(){
-        return  speedx10;
-    }
-    public void setSpeedx10(int speed){
-        speedx10=speed;
+
+    public void setDuration(int d){
+        duration=d;
     }
 
     public int getDuration() {
-        double distance=Mth.PI*((float) getDegreeAngle()/180f);
-        double d=(distance/((double) speedx10/10D))*20D;
-        return Math.round((float) d);
+        return duration;
     }
 
 

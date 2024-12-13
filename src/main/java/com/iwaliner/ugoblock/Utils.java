@@ -150,4 +150,11 @@ public class Utils {
             default: return MovingBlockEntity.trigonometricFunctionType.NONE;
         }
     }
-}
+    public static Direction.Axis getAxis(MovingBlockEntity.trigonometricFunctionType type) {
+        switch (type){
+            case X_CLOCKWISE,X_COUNTERCLOCKWISE: return Direction.Axis.X;
+            case Z_CLOCKWISE,Z_COUNTERCLOCKWISE: return Direction.Axis.Z;
+            default: return Direction.Axis.Y;
+        }
+    }
+    }

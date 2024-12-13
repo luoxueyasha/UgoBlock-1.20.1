@@ -21,7 +21,6 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
     public void init() {
         super.init();
        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-
     }
 
 
@@ -123,10 +122,10 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
         p_282928_.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
     protected void renderLabels(GuiGraphics guiGraphics, int i, int j) {
-        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_start_time"), 110, 17, 8587492);
-        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_speed"), 110, 48, 8587492);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_angle"), 110, 17, 8587492);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_duration"), 110, 48, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDegreeAngle())+"°"), 110, 30, 16777215);
-        guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getSpeed())), 110, 61, 16777215);
+        guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDurationSecond())), 110, 61, 16777215);
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 16766976, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 16766976, false);
     }

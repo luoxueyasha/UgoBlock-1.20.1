@@ -6,6 +6,7 @@ import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -311,7 +312,50 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             setCompoundTag(new CompoundTag());
         }
     }
+    private void rotateAndMakeBlock(Direction.Axis axis, int degree){ /**回転し終わってブロック化する*/
+        if(!level().isClientSide) {
+            BlockPos originPos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
+            for (int i=0;i<getPosList().size();i++) {
+                BlockPos pos=originPos;
+                if(axis== Direction.Axis.Y){
+                    if(degree==90){
+                        pos=originPos.offset(-getPosList().get(i).getZ(),getPosList().get(i).getY(),getPosList().get(i).getX());
+                    }
+                }
+                BlockState movingState = getStateList().get(i);
+                CompoundTag movingBlockEntityData = getBlockEntityDataList().get(i);
+                if (level().getBlockState(pos).canBeReplaced()) {
+                    if (movingState.getBlock() == Blocks.OBSERVER) {
+                        level().setBlock(pos, movingState, 82);
+                        level().scheduleTick(pos, movingState.getBlock(), 2);
+                    } else {
+                        level().setBlock(pos, movingState, 82);
+                        level().scheduleTick(pos, movingState.getBlock(), 2);
+                    }
+                    if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
+                        if (movingBlockEntityData != null) {
+                            BlockEntity blockentity = level().getBlockEntity(pos);
 
+                            if (blockentity != null) {
+                                blockentity.load(movingBlockEntityData);
+                            }
+                        }
+                    }
+                } else { /**移動してきた場所が他のブロックで埋まっていた場合。アイテム化する。*/
+                    if (!level().isClientSide && !movingState.is(Register.TAG_DISABLE_ITEM_DROP)) { /**通常*/
+                        ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(movingState.getBlock()));
+                        level().addFreshEntity(itemEntity);
+                    } else if (!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)) { /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
+                        ItemEntity itemEntity = new ItemEntity(level(), position().x, position().y, position().z, new ItemStack(level().getBlockState(pos).getBlock()));
+                        level().addFreshEntity(itemEntity);
+                        level().setBlock(pos, movingState, 82);
+                    }
+                    discard();
+                }
+            }
+            setCompoundTag(new CompoundTag());
+        }
+    }
 
     public Vec3 getActualPos(){
         return position();
@@ -327,29 +371,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         setPos(blockPos.getCenter());
     }
 
-
-    public Vec3 getDisplacementVisualDuringRotation(){
-
-        int time=tickCount-getStartTick();
-        if(tickCount>getStartTick()+getDuration()){
-            time=getStartTick()+getDuration();
-        }
-        float[] rotationPos;
-        /*float firstAngle;
-        switch (getTrigonometricFunctionType()){
-            case Y_COUNTERCLOCKWISE ->firstAngle= (float) Math.atan2(getDisplacementVisual().x+0.5D,getDisplacementVisual().z+0.5D);
-            default-> firstAngle= 0f;
-        }*/
-        float finalAngle=getLeftRotation().angle();
-        float radian=/*firstAngle+*/time*(finalAngle)/(float)getDuration();
-        switch (getTrigonometricFunctionType()){
-            case Y_COUNTERCLOCKWISE -> rotationPos= new float[]{(float) Math.sin(radian), 0f, (float) Math.cos(radian)};
-            default-> rotationPos= new float[]{0f, 0f, 0f};
-        }
-
-
-        return new Vec3(rotationPos[0]-0.5D,rotationPos[1]-0.5D,rotationPos[2]-0.5D);
-    }
     public BlockState getState(){
         return entityData.get(BlockDisplayMixin.getData());
     }
@@ -505,13 +526,18 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         MovingBlockEntity.trigonometricFunctionType type=getTrigonometricFunctionType();
         int transitionDegree=getDegreeAngle();
         if(tickCount<=getDuration()) {
-            if (type == trigonometricFunctionType.Y_COUNTERCLOCKWISE) {
-
+            if (Utils.getAxis(type)== Direction.Axis.X) {
+                setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 1D, 0D, 0D)));
+                setRightRotation(new Quaternionf(new AxisAngle4d(0D, 1D, 0D, 0D)));
+            } else if (Utils.getAxis(type)== Direction.Axis.Y) {
                 setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 1D, 0D)));
                 setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 1D, 0D)));
-            } else if (type == trigonometricFunctionType.Y_CLOCKWISE) {
-                setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 1D, 0D)));
-                setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 1D, 0D)));
+            }else if (Utils.getAxis(type)== Direction.Axis.Z) {
+                setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 0D, 1D)));
+                setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 0D, 1D)));
+            }
+        }else if(tickCount==getDuration()+1){
+            if(Utils.getAxis(type)== Direction.Axis.Y&&(transitionDegree-getYRot())%90==0){
 
             }
         }

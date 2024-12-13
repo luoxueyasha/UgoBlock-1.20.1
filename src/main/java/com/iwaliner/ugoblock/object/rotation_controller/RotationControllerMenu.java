@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 public class RotationControllerMenu extends AbstractContainerMenu {
     public final Container container;
     private final ContainerData degreeAngleData;
-    private final ContainerData speedData;
+    private final ContainerData durationSecondData;
 
 
 
@@ -27,14 +27,14 @@ public class RotationControllerMenu extends AbstractContainerMenu {
         this( s, inventory, new SimpleContainer(1), new SimpleContainerData(1), new SimpleContainerData(1));
     }
 
-    public RotationControllerMenu(int s, Inventory inventory, Container c, ContainerData degreeAngleData, ContainerData speedData) {
+    public RotationControllerMenu(int s, Inventory inventory, Container c, ContainerData degreeAngleData, ContainerData durationData) {
         super(Register.RotationControllerMenu.get(), s);
         checkContainerSize(c, 1);
         checkContainerDataCount(degreeAngleData, 1);
-        checkContainerDataCount(speedData, 1);
+        checkContainerDataCount(durationData, 1);
         this.container=c;
         this.degreeAngleData=degreeAngleData;
-        this.speedData=speedData;
+        this.durationSecondData=durationData;
         container.startOpen(inventory.player);
         this.addSlot(new ShapeCardSlot(c, 0, 18, 41));
          for(int i = 0; i < 3; ++i) {
@@ -47,7 +47,7 @@ public class RotationControllerMenu extends AbstractContainerMenu {
             this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
         }
         this.addDataSlots(degreeAngleData);
-        this.addDataSlots(speedData);
+        this.addDataSlots(durationData);
     }
 
     public ItemStack quickMoveStack(Player player, int i) {
@@ -93,22 +93,22 @@ public class RotationControllerMenu extends AbstractContainerMenu {
     public void setDegreeAngle(int degreeAngle) {
          degreeAngleData.set(0,degreeAngle);
     }
-    public int getSpeed(){
-        return Math.round((float) speedData.get(0)/10F);
+    public int getDurationSecond(){
+        return durationSecondData.get(0);
     }
-    public void setSpeed(double speed){
-        speedData.set(0,Mth.floor(speed*10D));
+    public void setDurationSecond(int duration){
+        durationSecondData.set(0,duration);
     }
     public void addDegreeAngle(int angle) {
         degreeAngleData.set(0,degreeAngleData.get(0)+angle);
     }
 
-    public void addSpeed(double speed) {
-        speedData.set(0,speedData.get(0)+Mth.floor(speed*10D));
+    public void addDurationSecond(int duration) {
+        durationSecondData.set(0,durationSecondData.get(0)+duration);
     }
     public boolean clickMenuButton(Player player, int variable) {
         int degreeAngle=getDegreeAngle();
-        int speed=getSpeed();
+        int durationSecond=getDurationSecond();
         if(variable==0){
             if(degreeAngle<-350){
                 setDegreeAngle(-360);
@@ -134,27 +134,27 @@ public class RotationControllerMenu extends AbstractContainerMenu {
             }
             return true;
         }else if(variable==4){
-            if(speed<=5){
-                setSpeed(1);
+            if(durationSecond<=5){
+                setDurationSecond(1);
             }else{
-                addSpeed(-5);
+                addDurationSecond(-5);
             }
             return true;
         }else if(variable==5){
-            if(speed>1){
-                addSpeed(-1);
+            if(durationSecond>1){
+                addDurationSecond(-1);
             }
             return true;
         }else if(variable==6){
-            if(speed<50){
-                addSpeed(1);
+            if(durationSecond<50){
+                addDurationSecond(1);
             }
             return true;
         }else if(variable==7){
-            if(speed<=45){
-                addSpeed(5);
+            if(durationSecond<=45){
+                addDurationSecond(5);
             }else{
-                setSpeed(50);
+                setDurationSecond(50);
             }
             return true;
         }

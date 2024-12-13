@@ -57,6 +57,7 @@ public class ModCoreUgoBlock
     public void CreativeTabEvent(BuildCreativeModeTabContentsEvent event){
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
             event.accept(Register.slide_controller_blockitem.get());
+            event.accept(Register.rotation_controller_blockitem.get());
         }
     }
 

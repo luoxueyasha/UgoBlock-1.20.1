@@ -66,8 +66,6 @@ public class RotationControllerBlock extends BaseEntityBlock {
                 blockEntity.setItem(0,stack);
                 blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
-            }else if(stack.isEmpty()){
-                player.turn(0D,90D);
             }
             else if(!level.isClientSide){
                 this.openContainer(level, pos, player);
@@ -77,6 +75,16 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
 
         return InteractionResult.SUCCESS;
+    }
+    private MovingBlockEntity.trigonometricFunctionType getTrigonometricFunctionType(BlockState state){
+        boolean isCounterClockwise=state.getValue(COUNTER_CLOCKWISE);
+        Direction facing=state.getValue(FACING);
+            switch (facing.getAxis()){
+                case X : return isCounterClockwise? MovingBlockEntity.trigonometricFunctionType.X_COUNTERCLOCKWISE : MovingBlockEntity.trigonometricFunctionType.X_CLOCKWISE;
+                case Y : return isCounterClockwise? MovingBlockEntity.trigonometricFunctionType.Y_COUNTERCLOCKWISE : MovingBlockEntity.trigonometricFunctionType.Y_CLOCKWISE;
+                case Z : return isCounterClockwise? MovingBlockEntity.trigonometricFunctionType.Z_COUNTERCLOCKWISE : MovingBlockEntity.trigonometricFunctionType.Z_CLOCKWISE;
+                default: return MovingBlockEntity.trigonometricFunctionType.NONE;
+            }
     }
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
 
@@ -94,12 +102,11 @@ public class RotationControllerBlock extends BaseEntityBlock {
     }
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
-
             if (flag != level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
                    if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
                       int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
-                       MovingBlockEntity.trigonometricFunctionType type = MovingBlockEntity.trigonometricFunctionType.Y_COUNTERCLOCKWISE;
+                       MovingBlockEntity.trigonometricFunctionType type = getTrigonometricFunctionType(state);
                        BlockPos startPos = pos.relative(state.getValue(FACING));
                       if(!flag) {
                           if (duration > 0) {
@@ -114,7 +121,6 @@ public class RotationControllerBlock extends BaseEntityBlock {
                           level.setBlock(pos, state.cycle(POWERED), 2);
                           level.scheduleTick(pos, this, 2);
                       }else{
-                          ModCoreUgoBlock.logger.info("reverse??");
                           for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                               return (o instanceof MovingBlockEntity);
                           })) {
@@ -123,14 +129,11 @@ public class RotationControllerBlock extends BaseEntityBlock {
                               int angle=movingBlock.getDegreeAngle();
                               makeMoveableBlockReverse(level,pos,startPos,start,duration,type,angle,tag);
                               movingBlock.discard();
-                              //reverseRotation((MovingBlockEntity) entity,duration,Utils.getReverseTrigonometricFunctionType(type),blockEntity.getDegreeAngle());
                           }
                           level.setBlock(pos, state.cycle(POWERED), 2);
                       }
                    }
             }
-
-
 
     }
 
@@ -141,7 +144,6 @@ public class RotationControllerBlock extends BaseEntityBlock {
             CompoundTag posTag=new CompoundTag();
             CompoundTag stateTag=new CompoundTag();
             CompoundTag blockEntityTag=new CompoundTag();
-            float radian= Mth.PI*((float) degree/180f);
             for(int i=0; i<posList.size();i++){
                 BlockPos eachPos=posList.get(i);
                 BlockState eachState=level.getBlockState(eachPos);
@@ -177,19 +179,18 @@ public class RotationControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(controllerPos) instanceof RotationControllerBlockEntity rotationControllerBlockEntity&&rotationControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&rotationControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
 
             MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, Utils.getReverseTrigonometricFunctionType(type),-degree,tag);
-            moveableBlock.setYRot(-degree);
-
+            if(Utils.getAxis(type)== Direction.Axis.Y) {
+                moveableBlock.setYRot(-degree);
+            }else if(Utils.getAxis(type)== Direction.Axis.Z) {
+                moveableBlock.setXRot(degree+90);
+            }else if(Utils.getAxis(type)== Direction.Axis.X) {
+                moveableBlock.setXRot(degree);
+            }
             if (!level.isClientSide) {
                 level.addFreshEntity(moveableBlock);
             }
 
         }
-
-    }
-    private void reverseRotation(MovingBlockEntity entity,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree){
-        CompoundTag tag=entity.getCompoundTag();
-        int angle=entity.getDegreeAngle();
-
 
     }
     public static void destroyOldBlock(Level level,BlockPos pos){
@@ -228,16 +229,9 @@ public class RotationControllerBlock extends BaseEntityBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity livingEntity, ItemStack stack) {
         super.setPlacedBy(level, pos, state, livingEntity, stack);
         if(livingEntity instanceof Player&&state.getBlock() instanceof RotationControllerBlock){
-            ItemStack endLocationCard=new ItemStack(Register.end_location_card.get());
-            CompoundTag tag=new CompoundTag();
-            tag.put("end_location", NbtUtils.writeBlockPos(Utils.errorPos()));
-            tag.put("start_location", NbtUtils.writeBlockPos(pos.relative(state.getValue(FACING))));
-            endLocationCard.setTag(tag);
             ItemEntity itemEntity1=new ItemEntity(level,livingEntity.getX(),livingEntity.getY()+1D,livingEntity.getZ(),new ItemStack(Register.shape_card.get()));
-            ItemEntity itemEntity2=new ItemEntity(level,livingEntity.getX(),livingEntity.getY()+1D,livingEntity.getZ(),endLocationCard);
             if(!level.isClientSide){
                 level.addFreshEntity(itemEntity1);
-                level.addFreshEntity(itemEntity2);
             }
         }
     }
