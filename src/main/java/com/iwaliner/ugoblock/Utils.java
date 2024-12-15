@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -156,5 +157,25 @@ public class Utils {
             case Z_CLOCKWISE,Z_COUNTERCLOCKWISE: return Direction.Axis.Z;
             default: return Direction.Axis.Y;
         }
+    }
+    public static List<BlockPos> rotatePosList(List<BlockPos> oldList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle) {
+        List<BlockPos> newList=oldList;
+        for (int i = 0; i < oldList.size(); i++) {
+            BlockPos eachPos = oldList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());;
+               Vector3f origin = newOriginPos.getCenter().toVector3f();
+                Vector3f transition = new Vector3f(eachPos.getX(), eachPos.getY(), eachPos.getZ());
+            Vector3f transitionRotated;
+            if(axis== Direction.Axis.X){
+                transitionRotated = transition.rotateX(Mth.PI * (degreeAngle) / 180f);
+            }else if(axis== Direction.Axis.Z){
+                transitionRotated = transition.rotateZ(Mth.PI * (degreeAngle) / 180f);
+            }else{
+                transitionRotated = transition.rotateY(Mth.PI * (degreeAngle) / 180f);
+            }
+                Vector3f positionRotated = origin.add(transitionRotated);
+               BlockPos rotatedPos = new BlockPos(Mth.floor(positionRotated.x), Mth.floor(positionRotated.y), Mth.floor(positionRotated.z));
+               newList.set(i,rotatedPos);
+        }
+        return newList;
     }
     }

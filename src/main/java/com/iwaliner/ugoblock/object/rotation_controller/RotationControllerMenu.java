@@ -110,27 +110,31 @@ public class RotationControllerMenu extends AbstractContainerMenu {
         int degreeAngle=getDegreeAngle();
         int durationSecond=getDurationSecond();
         if(variable==0){
-            if(degreeAngle<-350){
-                setDegreeAngle(-360);
+            if(degreeAngle<=-180){
+                setDegreeAngle(-181);
+            }else if(degreeAngle<-170){
+                setDegreeAngle(-180);
             }else{
                 addDegreeAngle(-10);
             }
             return true;
         }else if(variable==1){
-            if(degreeAngle>-360){
+            if(degreeAngle>-181){
                 addDegreeAngle(-1);
             }
             return true;
         }else if(variable==2){
-            if(getDegreeAngle()<360) {
+            if(getDegreeAngle()<181) {
                 addDegreeAngle(1);
             }
             return true;
         }else if(variable==3){
-            if(degreeAngle<350) {
+            if(degreeAngle>=180){
+                setDegreeAngle(181);
+            }else if(degreeAngle<170) {
                 addDegreeAngle(10);
             }else{
-                setDegreeAngle(360);
+                setDegreeAngle(180);
             }
             return true;
         }else if(variable==4){
@@ -146,15 +150,15 @@ public class RotationControllerMenu extends AbstractContainerMenu {
             }
             return true;
         }else if(variable==6){
-            if(durationSecond<50){
+            if(durationSecond<80){
                 addDurationSecond(1);
             }
             return true;
         }else if(variable==7){
-            if(durationSecond<=45){
+            if(durationSecond<=75){
                 addDurationSecond(5);
             }else{
-                setDurationSecond(50);
+                setDurationSecond(80);
             }
             return true;
         }

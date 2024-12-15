@@ -30,13 +30,17 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.AxisAngle4d;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RotationControllerBlock extends BaseEntityBlock {
@@ -87,9 +91,10 @@ public class RotationControllerBlock extends BaseEntityBlock {
             }
     }
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
-
         if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&blockEntity.hasCards()) {
-            List<BlockPos> posList=blockEntity.getPositionList();
+            BlockPos startPos = pos.relative(state.getValue(FACING));
+            List<BlockPos> posList=state.getValue(POWERED)? blockEntity.getPositionList() :  Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),blockEntity.getDegreeAngle());
+
             if(posList!=null) {
                 for (BlockPos eachPos : posList) {
                     if(!blockEntity.getBlockPos().equals(eachPos)) {
@@ -98,6 +103,11 @@ public class RotationControllerBlock extends BaseEntityBlock {
                 }
                 blockEntity.setNotFirstTime(true);
             }
+        }
+        for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+            return (o instanceof MovingBlockEntity);
+        })) {
+           // entity.discard();
         }
     }
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
@@ -115,37 +125,63 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
                                   blockEntity.setMoving(true);
                                   /**ブロックをエンティティ化*/
-                                  makeMoveableBlock(level, pos, startPos, start, duration, type, blockEntity.getDegreeAngle());
+                                  makeMoveableBlock(level, pos, startPos, start, duration, type, blockEntity.getDegreeAngle(),blockEntity.getPositionList(),0);
                               }
                           }
                           level.setBlock(pos, state.cycle(POWERED), 2);
                           level.scheduleTick(pos, this, 2);
                       }else{
+                          boolean b1=false;
                           for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                               return (o instanceof MovingBlockEntity);
                           })) {
+                              b1=true;
                               MovingBlockEntity movingBlock= (MovingBlockEntity) entity;
                               CompoundTag tag=movingBlock.getCompoundTag();
                               int angle=movingBlock.getDegreeAngle();
                               makeMoveableBlockReverse(level,pos,startPos,start,duration,type,angle,tag);
-                              movingBlock.discard();
+                              ((MovingBlockEntity) entity).setDiscardTime(2);
+                          }
+                          if(!b1){
+                              blockEntity.setMoving(true);
+                          //    List<BlockPos> posList = blockEntity.getPositionList();
+                              List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),blockEntity.getDegreeAngle());
+                            //  if ((blockEntity.getDegreeAngle()+blockEntity.getVisualDegree())%90==0) {
+                                /*  if (blockEntity.isNotFirstTime()) {
+                                      List<BlockPos> posList0 = blockEntity.getPositionList();
+                                      Vector3f origin = startPos.getCenter().toVector3f();
+                                      for (int i = 0; i < posList0.size(); i++) {
+                                          BlockPos eachPos = posList0.get(i).offset(-startPos.getX(),-startPos.getY(),-startPos.getZ());
+                                          Vector3f transition = new Vector3f(eachPos.getX(), eachPos.getY(), eachPos.getZ());
+
+                                          Vector3f transitionRotated = transition.rotateY(Mth.PI * (blockEntity.getVisualDegree() != 0 ? blockEntity.getDegreeAngle() : 0) / 180f);
+                                          Vector3f positionRotated = origin.add(transitionRotated);
+                                          BlockPos rotatedPos = new BlockPos(*//*startPos.getX()+*//*Mth.floor(positionRotated.x), *//*startPos.getY()+*//*Mth.floor(positionRotated.y), *//*startPos.getZ()+*//*Mth.floor(positionRotated.z));
+                                          posList.set(i, rotatedPos);
+                                      }
+                                  }*/
+                           //   }
+                              /**ブロックをエンティティ化*/
+
+                              makeMoveableBlock(level, pos, startPos, start, duration, type, -blockEntity.getDegreeAngle(),blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), blockEntity.getVisualDegree());
                           }
                           level.setBlock(pos, state.cycle(POWERED), 2);
+                          level.scheduleTick(pos, this, 2);
                       }
                    }
             }
 
     }
 
-    private void makeMoveableBlock(Level level,BlockPos controllerPos,BlockPos startPos,int start,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree){
+    private void makeMoveableBlock(Level level,BlockPos controllerPos,BlockPos startPos,int start,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree,List<BlockPos> positionList,int visualDegree){
         if(level.getBlockEntity(controllerPos) instanceof RotationControllerBlockEntity rotationControllerBlockEntity&&rotationControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&rotationControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             CompoundTag entityTag=new CompoundTag();
-            List<BlockPos> posList=rotationControllerBlockEntity.getPositionList();
             CompoundTag posTag=new CompoundTag();
+            List<BlockPos> posList=rotationControllerBlockEntity.getPositionList();
             CompoundTag stateTag=new CompoundTag();
             CompoundTag blockEntityTag=new CompoundTag();
             for(int i=0; i<posList.size();i++){
-                BlockPos eachPos=posList.get(i);
+                BlockPos eachPos=positionList.get(i);
                 BlockState eachState=level.getBlockState(eachPos);
                 BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
                 if (eachBlockEntity != null) {
@@ -166,8 +202,8 @@ public class RotationControllerBlock extends BaseEntityBlock {
             entityTag.put("stateList",stateTag);
             entityTag.put("blockEntityList",blockEntityTag);
 
-            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, type,degree,entityTag);
-
+            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, type,degree,entityTag,visualDegree,rotationControllerBlockEntity.isLoop());
+            rotationControllerBlockEntity.setVisualDegree(degree);
             if (!level.isClientSide) {
                 level.addFreshEntity(moveableBlock);
             }
@@ -177,15 +213,8 @@ public class RotationControllerBlock extends BaseEntityBlock {
     }
     private void makeMoveableBlockReverse(Level level,BlockPos controllerPos,BlockPos startPos,int start,int duration,MovingBlockEntity.trigonometricFunctionType type,int degree,CompoundTag tag){
         if(level.getBlockEntity(controllerPos) instanceof RotationControllerBlockEntity rotationControllerBlockEntity&&rotationControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&rotationControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
-
-            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, Utils.getReverseTrigonometricFunctionType(type),-degree,tag);
-            if(Utils.getAxis(type)== Direction.Axis.Y) {
-                moveableBlock.setYRot(-degree);
-            }else if(Utils.getAxis(type)== Direction.Axis.Z) {
-                moveableBlock.setXRot(degree+90);
-            }else if(Utils.getAxis(type)== Direction.Axis.X) {
-                moveableBlock.setXRot(degree);
-            }
+            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, Utils.getReverseTrigonometricFunctionType(type),-degree,tag,degree,rotationControllerBlockEntity.isLoop());
+            rotationControllerBlockEntity.setVisualDegree(degree);
             if (!level.isClientSide) {
                 level.addFreshEntity(moveableBlock);
             }
@@ -236,5 +265,29 @@ public class RotationControllerBlock extends BaseEntityBlock {
         }
     }
 
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState state2, boolean b) {
+        if(state2.isAir()) {
+            for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                return (o instanceof MovingBlockEntity);
+            })) {
+                MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
+              //  if (movingBlock.tickCount > movingBlock.getStartTick() + movingBlock.getDuration() + 2) {
+                    List<BlockState> stateList = movingBlock.getStateList();
 
+                    for (BlockState movingState : stateList) {
+                        LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level)).withParameter(LootContextParams.ORIGIN, pos.getCenter()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, movingBlock);
+                        for (ItemStack itemStack : movingState.getDrops(lootparams$builder)) {
+                            ItemEntity itemEntity = new ItemEntity(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, itemStack);
+                            if (!level.isClientSide) {
+                                level.addFreshEntity(itemEntity);
+                            }
+                        }
+                    }
+                    movingBlock.discard();
+         //       }
+            }
+        }
+        super.onRemove(state2, level, pos, state2, b);
+    }
 }

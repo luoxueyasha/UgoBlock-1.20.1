@@ -70,6 +70,9 @@ import java.util.List;
             List<BlockPos> posList=movingBlock.getPosList();
             List<BlockState> stateList=movingBlock.getStateList();
             Level level=movingBlock.level();
+            poseStack.mulPose(Axis.XP.rotationDegrees((float) movingBlock.getVisualXRot()));
+            poseStack.mulPose(Axis.YP.rotationDegrees((float) movingBlock.getVisualYRot()));
+            poseStack.mulPose(Axis.ZP.rotationDegrees((float) movingBlock.getVisualZRot()));
             for(int i=0;i<posList.size();i++){
                BlockPos eachPos=posList.get(i);
               // BlockPos pos=movingBlock.blockPosition().offset(eachPos.getX(),eachPos.getY(),eachPos.getZ());
@@ -154,11 +157,11 @@ import java.util.List;
                             poseStack.translate(0D, 0D, -1D);
                         }
                     }
-                    if(movingBlock.shouldFixFighting()) {
+                    /*if(movingBlock.shouldFixFighting()) {
                         poseStack.translate(0.005F, 0.005F, 0.005F);
                         poseStack.scale(0.99F, 0.99F, 0.99F);
 
-                    }
+                    }*/
                     if (!(block instanceof BedBlock && eachState.getValue(BedBlock.PART) == BedPart.FOOT)) {
                        /* if (movingBlock.renderDown == null || movingBlock.renderDown.isEmpty()) {
                             this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
@@ -167,7 +170,9 @@ import java.util.List;
                             Utils.renderSingleBlock(eachState, poseStack, multiBufferSource, i0,movingBlock.renderDown.get(i) ,movingBlock.renderUp.get(i), movingBlock.renderNorth.get(i), movingBlock.renderSouth.get(i), movingBlock.renderWest.get(i),movingBlock.renderEast.get(i));
                             //   Utils.renderSingleBlock(eachState, poseStack, multiBufferSource, i0, shouldRender(downState),shouldRender(upState), shouldRender(northState) ,shouldRender(southState),shouldRender(westState),shouldRender(eastState));
                         }*/
-                        poseStack.translate(-0.5D,-0.5D,-0.5D);
+
+                        poseStack.translate(-0.4999D,-0.4999D,-0.4999D);
+
                         this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
 
                     }

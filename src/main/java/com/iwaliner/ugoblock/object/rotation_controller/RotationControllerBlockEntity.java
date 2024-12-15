@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,12 +35,13 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     private int startTime;
     private int degreeAngle=-90;
     private int duration=5*20;
+    private int visualDegree;
     protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
     protected final ContainerData degreeAngleDataAccess = new ContainerData() {
         public int get(int i) {
             if (i == 0) {
-                return RotationControllerBlockEntity.this.getDegreeAngle();
+                return RotationControllerBlockEntity.this.getDegreeAngleForMenu();
             }
             return 0;
         }
@@ -51,7 +53,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                 }else if(RotationControllerBlockEntity.this.degreeAngle<0&&j>=0){
                     setTurnDirection(true);
                 }
-                RotationControllerBlockEntity.this.degreeAngle = j;
+                RotationControllerBlockEntity.this.degreeAngle =  j;
             }
 
         }
@@ -160,11 +162,13 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         this.isMoving=tag.getBoolean("isMoving");
         this.tickCount=tag.getInt("tickCount");
         this.startTime=tag.getInt("startTime");
+        this.degreeAngle=tag.getInt("degreeAngle");
         if(tag.contains("duration")) {
             this.duration = tag.getInt("duration");
         }else{
             this.duration = 5*20;
         }
+        this.visualDegree=tag.getInt("visualDegree");
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items);
 
@@ -176,7 +180,9 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         tag.putBoolean("isMoving",isMoving);
         tag.putInt("tickCount",tickCount);
         tag.putInt("startTime",startTime);
+        tag.putInt("degreeAngle",degreeAngle);
         tag.putInt("duration",duration);
+        tag.putInt("visualDegree",visualDegree);
         ContainerHelper.saveAllItems(tag, this.items);
     }
 
@@ -253,8 +259,20 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     public void setStartTime(int startTime) {
         this.startTime = startTime;
     }
-    public int getDegreeAngle(){
+    public int getDegreeAngleForMenu(){
         return degreeAngle;
+    }
+    public int getDegreeAngle(){
+        if(degreeAngle>=180){
+            return -180;
+        }else if(degreeAngle<=-180){
+            return 180;
+        }else{
+            return degreeAngle;
+        }
+    }
+    public boolean isLoop(){
+        return degreeAngle==-181||degreeAngle==181;
     }
     public void setDegreeAngle(int degree){
         degreeAngle=degree;
@@ -280,6 +298,12 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
             level.setBlock(getBlockPos(), getBlockState().setValue(RotationControllerBlock.COUNTER_CLOCKWISE, isCounterClockwise), 2);
         }
     }
+    public int getVisualDegree(){
+        return visualDegree;
+    }
+    public void setVisualDegree(int degree){
+        visualDegree=degree;
+    }
 
     public static void tick(Level level, BlockPos pos, BlockState state, RotationControllerBlockEntity blockEntity) {
         if(state.getBlock() instanceof RotationControllerBlock) {
@@ -293,22 +317,36 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                     if (blockEntity.getTickCount() > blockEntity.getMoveTick()) {
                         blockEntity.setMoving(false);
                         blockEntity.setTickCount(0);
-                    } else if (blockEntity.getTickCount() == blockEntity.getMoveTick() && blockEntity.hasCards()) {
+                    }else if (blockEntity.getTickCount() == blockEntity.getMoveTick()) {
+
+
+                    }/*else if (blockEntity.getTickCount() == blockEntity.getMoveTick() && blockEntity.hasCards()) {
                         BlockPos startPos = blockEntity.getStartPos();
-                     //   List<BlockPos> posList = blockEntity.getPositionList();
-                        if (blockEntity.isNotFirstTime()) {
-                            List<BlockPos> posList0 = blockEntity.getPositionList();
-                            for (int i = 0; i < posList0.size(); i++) {
-                             }
-                        }
-                     //   blockEntity.setPositionList(posList);
+                        List<BlockPos> posList = blockEntity.getPositionList();
+                        if ((blockEntity.getDegreeAngle()+blockEntity.getVisualDegree())%90==0){
+                            if (blockEntity.isNotFirstTime()) {
+                                List<BlockPos> posList0 = blockEntity.getPositionList();
+                                for (int i = 0; i < posList0.size(); i++) {
+                                    BlockPos eachPos = posList0.get(i);
+                                    Vector3f origin = eachPos.getCenter().toVector3f();
+                                    Vector3f transition = new Vector3f(eachPos.getX(), eachPos.getY(), eachPos.getZ());
+
+                                    Vector3f transitionRotated = transition.rotateY(Mth.PI * (blockEntity.getVisualDegree()==0? blockEntity.getDegreeAngle() : -blockEntity.getDegreeAngle()) / 180f);
+                                    Vector3f positionRotated = origin.add(transitionRotated);
+                                    BlockPos rotatedPos = new BlockPos(Mth.floor(positionRotated.x), Mth.floor(positionRotated.y), Mth.floor(positionRotated.z));
+                                    posList.set(i, rotatedPos);
+                                }
+                            }
                     }
+                        blockEntity.setPositionList(posList);
+                    }*/
+
                     blockEntity.increaseTickCount(1);
                 }
 
             }
 
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
+         //   level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
         }
 
        }

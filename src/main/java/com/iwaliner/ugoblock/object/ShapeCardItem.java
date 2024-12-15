@@ -154,11 +154,6 @@ public class ShapeCardItem extends Item {
                         /**始点をリセット*/
                         tag.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
                     }
-                    /*if(list.contains(pos)) {
-                        tag.put("location_" + String.valueOf(list.indexOf(pos)), NbtUtils.writeBlockPos(errorPos()));
-                    }else{
-                        tag.put("location_" + String.valueOf(ii), NbtUtils.writeBlockPos(pos));
-                    }*/
                 }
                 stack.setTag(tag);
                 return InteractionResult.SUCCESS;
