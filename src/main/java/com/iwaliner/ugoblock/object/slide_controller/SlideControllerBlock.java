@@ -5,10 +5,12 @@ import com.iwaliner.ugoblock.object.EndLocationCardItem;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -19,7 +21,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -65,18 +69,22 @@ public class SlideControllerBlock extends BaseEntityBlock {
                 blockEntity.setItem(0,stack);
                 blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
+                return InteractionResult.SUCCESS;
             }else if (stack.getItem() == Register.end_location_card.get()&&stack.getTag()!=null&&blockEntity.getItem(1).isEmpty()) {
                blockEntity.setItem(1,stack);
                 blockEntity.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
-            }else if(!level.isClientSide){
+                return InteractionResult.SUCCESS;
+            }else if (level.isClientSide) {
+                return InteractionResult.SUCCESS;
+            }else if(!state.getValue(MOVING)){
                 this.openContainer(level, pos, player);
                 return InteractionResult.CONSUME;
             }
         }
 
 
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
 
@@ -143,6 +151,13 @@ public class SlideControllerBlock extends BaseEntityBlock {
                             BlockPos newEndPos = slideControllerBlockEntity2.getEndPos().offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ());
                             slideControllerBlockEntity2.setEndPos(newEndPos);
 
+                        }else if (eachBlockEntity instanceof RotationControllerBlockEntity rotationControllerBlockEntity && !rotationControllerBlockEntity.getPositionList().isEmpty() ) {
+
+                            List<BlockPos> newPos = new ArrayList<>();
+                            for (int ii = 0; ii < ((RotationControllerBlockEntity) eachBlockEntity).getPositionList().size(); ii++) {
+                                newPos.add(rotationControllerBlockEntity.getPositionList().get(ii).offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ()));
+                            }
+                            rotationControllerBlockEntity.setPositionList(newPos);
                         }
                         blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
                     }else{
@@ -218,6 +233,10 @@ public class SlideControllerBlock extends BaseEntityBlock {
             }
         }
     }
-
+    @Override
+    public void appendHoverText(ItemStack stack, @org.jetbrains.annotations.Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
+        list.add(Component.translatable("info.ugoblock.slide_controller").withStyle(ChatFormatting.GREEN));
+        list.add(Component.translatable("info.ugoblock.slide_controller_observer").withStyle(ChatFormatting.GREEN));
+    }
 
 }

@@ -1,0 +1,37 @@
+{
+
+  "type": "minecraft:block",
+
+  "pools": [
+
+    {
+
+      "rolls": 1,
+
+      "entries": [
+
+        {
+
+          "type": "minecraft:item",
+
+          "name": "ugoblock:smooth_crying_obsidian"
+
+        }
+
+      ],
+
+      "conditions": [
+
+        {
+
+          "condition": "minecraft:survives_explosion"
+
+        }
+
+      ]
+
+    }
+
+  ]
+
+}

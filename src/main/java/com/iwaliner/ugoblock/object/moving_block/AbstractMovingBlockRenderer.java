@@ -143,7 +143,7 @@ import java.util.List;
 
 
                     }*/
-                    if (block instanceof ChestBlock || block instanceof EnderChestBlock || (block instanceof BedBlock)) {
+                    /*if (block instanceof ChestBlock || block instanceof EnderChestBlock || (block instanceof BedBlock)) {
                         //  poseStack.pushPose();
                         Direction direction = eachState.getValue(HorizontalDirectionalBlock.FACING);
                         Direction direction1 = Direction.from2DDataValue((direction.get2DDataValue()) % 4);
@@ -156,7 +156,7 @@ import java.util.List;
                         } else if (direction == Direction.WEST) {
                             poseStack.translate(0D, 0D, -1D);
                         }
-                    }
+                    }*/
                     /*if(movingBlock.shouldFixFighting()) {
                         poseStack.translate(0.005F, 0.005F, 0.005F);
                         poseStack.scale(0.99F, 0.99F, 0.99F);

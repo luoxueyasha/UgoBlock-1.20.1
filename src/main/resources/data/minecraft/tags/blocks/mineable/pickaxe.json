@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "ugoblock:slide_controller",
+    "ugoblock:rotation_controller",
+    "ugoblock:wireless_redstone_transmitter",
+    "ugoblock:wireless_redstone_receiver",
+    "ugoblock:smooth_crying_obsidian",
+    "ugoblock:ender_infused_smooth_crying_obsidian"
+  ]
+}

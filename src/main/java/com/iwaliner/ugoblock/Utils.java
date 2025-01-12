@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
@@ -161,7 +162,7 @@ public class Utils {
     public static List<BlockPos> rotatePosList(List<BlockPos> oldList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle) {
         List<BlockPos> newList=oldList;
         for (int i = 0; i < oldList.size(); i++) {
-            BlockPos eachPos = oldList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());;
+            BlockPos eachPos = oldList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());
                Vector3f origin = newOriginPos.getCenter().toVector3f();
                 Vector3f transition = new Vector3f(eachPos.getX(), eachPos.getY(), eachPos.getZ());
             Vector3f transitionRotated;
@@ -178,4 +179,25 @@ public class Utils {
         }
         return newList;
     }
+    public static List<Vec3> rotateVec3PosList(List<BlockPos> oldList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle) {
+        List<Vec3> newList=new ArrayList<>();
+        for (int i = 0; i < oldList.size(); i++) {
+            newList.add(oldList.get(i).getCenter());
+            BlockPos eachPos = oldList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());
+            Vector3f origin = newOriginPos.getCenter().toVector3f();
+            Vector3f transition = new Vector3f(eachPos.getX(), eachPos.getY(), eachPos.getZ());
+            Vector3f transitionRotated;
+            if(axis== Direction.Axis.X){
+                transitionRotated = transition.rotateX(Mth.PI * (degreeAngle) / 180f);
+            }else if(axis== Direction.Axis.Z){
+                transitionRotated = transition.rotateZ(Mth.PI * (degreeAngle) / 180f);
+            }else{
+                transitionRotated = transition.rotateY(Mth.PI * (degreeAngle) / 180f);
+            }
+            Vector3f positionRotated = origin.add(transitionRotated);
+            newList.set(i,new Vec3(positionRotated));
+        }
+        return newList;
+    }
+
     }

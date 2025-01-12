@@ -1,18 +1,26 @@
 package com.iwaliner.ugoblock.object.rotation_controller;
 
 import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
+import com.iwaliner.ugoblock.object.moving_block.CollisionEntity;
+import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
 import com.iwaliner.ugoblock.object.slide_controller.SlideControllerMenu;
 import com.iwaliner.ugoblock.register.Register;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -20,9 +28,15 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -33,8 +47,8 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     private boolean isMoving;
     private int tickCount;
     private int startTime;
-    private int degreeAngle=-90;
-    private int duration=5*20;
+    private int degreeAngle=-45;
+    private int duration=3*20;
     private int visualDegree;
     protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
@@ -47,7 +61,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         }
 
         public void set(int i, int j) {
-            if (i == 0) {
+            if (i == 0&&!isMoving) {
                 if(RotationControllerBlockEntity.this.degreeAngle>=0&&j<0){
                     setTurnDirection(false);
                 }else if(RotationControllerBlockEntity.this.degreeAngle<0&&j>=0){
@@ -72,7 +86,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
         }
 
         public void set(int i, int j) {
-            if (i == 0) {
+            if (i == 0&&!isMoving) {
                 RotationControllerBlockEntity.this.duration = j * 20;
             }
 
@@ -295,7 +309,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
     private void setTurnDirection(boolean isCounterClockwise) {
         if (getBlockState().getBlock() instanceof RotationControllerBlock) {
-            level.setBlock(getBlockPos(), getBlockState().setValue(RotationControllerBlock.COUNTER_CLOCKWISE, isCounterClockwise), 2);
+            level.setBlock(getBlockPos(), getBlockState().setValue(RotationControllerBlock.COUNTER_CLOCKWISE, isCounterClockwise), 3);
         }
     }
     public int getVisualDegree(){
@@ -306,17 +320,108 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, RotationControllerBlockEntity blockEntity) {
-        if(state.getBlock() instanceof RotationControllerBlock) {
+        if(state.getBlock() instanceof RotationControllerBlock rotationControllerBlock) {
             if(blockEntity.isMoving()&&!state.getValue(RotationControllerBlock.MOVING)){
                 level.setBlock(pos,state.setValue(RotationControllerBlock.MOVING,true),2);
             }else if(!blockEntity.isMoving()&&state.getValue(RotationControllerBlock.MOVING)){
                 level.setBlock(pos,state.setValue(RotationControllerBlock.MOVING,false),2);
             }
+            if(blockEntity.isLoop()&&!state.getValue(RotationControllerBlock.POWERED)){
+                boolean flag=false;
+                for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(RotationControllerBlock.FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                    return (o instanceof MovingBlockEntity);
+                })) {
+                    MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
+                    if(movingBlock.tickCount>2) {
+                        BlockPos pos0 = pos.relative(state.getValue(RotationControllerBlock.FACING));
+                        movingBlock.setPos(movingBlock.getActualPos().add(0D, 1D, 0D));
+                        List<BlockPos> rotatedPosList = movingBlock.getPosList();
+                        CollisionEntity collisionEntity=new CollisionEntity(level,pos0.getX()+0.5D,pos0.getY()+0.5D,pos0.getZ()+0.5D,movingBlock.getStateList().get(0));
+                        if(!level.isClientSide){
+                            level.addFreshEntity(collisionEntity);
+                        }
+                        for (int i = 0; i < rotatedPosList.size(); i++) {
+                            BlockPos eachPos = rotatedPosList.get(i).offset(pos0.getX(), pos0.getY(), pos0.getZ());
+                            BlockState movingState = movingBlock.getStateList().get(i);
+                            CompoundTag movingBlockEntityData = movingBlock.getBlockEntityDataList().get(i);
+                            if (level.getBlockState(eachPos).canBeReplaced()) {
+                                if (movingState.getBlock() == Blocks.OBSERVER) {
+                                    level.setBlock(eachPos, movingState, 82);
+                                    level.scheduleTick(eachPos, movingState.getBlock(), 2);
+                                } else {
+                                    level.setBlock(eachPos, movingState, 82);
+
+                                }
+                                if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
+                                    if (movingBlockEntityData != null) {
+                                        BlockEntity blockentity = level.getBlockEntity(eachPos);
+
+                                        if (blockentity != null) {
+                                            blockentity.load(movingBlockEntityData);
+                                        }
+                                    }
+                                }
+                            } else if(!flag){ /**移動してきた場所が他のブロックで埋まっていた場合。アイテム化する。*/
+                                /*if (!level.isClientSide && !movingState.is(Register.TAG_DISABLE_ITEM_DROP)) { *//**通常*//*
+
+                                    LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level)).withParameter(LootContextParams.ORIGIN, eachPos.getCenter()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, movingBlock);
+                                    for (ItemStack itemStack : movingState.getDrops(lootparams$builder)) {
+                                        ItemEntity itemEntity = new ItemEntity(level, eachPos.getX() + 0.5D, eachPos.getY() + 0.5D, eachPos.getZ() + 0.5D, itemStack);
+                                        if (!level.isClientSide) {
+                                            level.addFreshEntity(itemEntity);
+                                        }
+                                    }
+
+                                } else if (!level.isClientSide && !level.getBlockState(eachPos).is(Register.TAG_DISABLE_ITEM_DROP)) { *//**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*//*
+                                    LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level)).withParameter(LootContextParams.ORIGIN, eachPos.getCenter()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, movingBlock);
+                                    for (ItemStack itemStack : level.getBlockState(eachPos).getDrops(lootparams$builder)) {
+                                        ItemEntity itemEntity = new ItemEntity(level, eachPos.getX() + 0.5D, eachPos.getY() + 0.5D, eachPos.getZ() + 0.5D, itemStack);
+                                        if (!level.isClientSide) {
+                                            level.addFreshEntity(itemEntity);
+                                        }
+                                    }
+                                    level.setBlock(eachPos, movingState, 82);
+                                }
+                                //  discard();
+                                //      }*/
+                            }
+                        }
+                        movingBlock.discard();
+                        flag=true;
+                    }
+
+                }
+            }
             if (blockEntity.getMoveTick() > 0) {
                 if (blockEntity.isMoving()) {
-                    if (blockEntity.getTickCount() > blockEntity.getMoveTick()) {
-                        blockEntity.setMoving(false);
-                        blockEntity.setTickCount(0);
+                    if(blockEntity.getTickCount() == blockEntity.getMoveTick()-0&& blockEntity.isLoop()){
+                            for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(RotationControllerBlock.FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                                return (o instanceof MovingBlockEntity);
+                            })) {
+                                MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
+                                if (state.getValue(RotationControllerBlock.POWERED)) {
+                                    if (movingBlock.shouldRotate() && movingBlock.isLoopRotation()) {
+                                        CompoundTag entityTag = movingBlock.getCompoundTag();
+                                        MovingBlockEntity.trigonometricFunctionType type = Utils.getReverseTrigonometricFunctionType(movingBlock.getTrigonometricFunctionType());
+
+                                        MovingBlockEntity moveableBlock2 = new MovingBlockEntity(level, pos.relative(state.getValue(RotationControllerBlock.FACING)), level.getBlockState(pos), blockEntity.getStartTime() + 1, blockEntity.getDuration(), type, blockEntity.getDegreeAngle(), entityTag, movingBlock.getVisualRot() == 0 ? 180 : 0, true);
+                                        //  moveableBlock2.setInvisible(true);
+                                        blockEntity.setTickCount(0);
+                                        if (!level.isClientSide) {
+                                            level.addFreshEntity(moveableBlock2);
+                                        }
+                                        // movingBlock.setDiscardTime(1);
+                                    }
+                                }else{
+
+                                }
+
+                        }
+                    }else if (blockEntity.getTickCount() > blockEntity.getMoveTick()) {
+                        if(!blockEntity.isLoop()) {
+                            blockEntity.setMoving(false);
+                            blockEntity.setTickCount(0);
+                        }
                     }else if (blockEntity.getTickCount() == blockEntity.getMoveTick()) {
 
 

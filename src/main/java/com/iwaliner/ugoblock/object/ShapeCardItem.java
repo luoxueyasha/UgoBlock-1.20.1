@@ -2,10 +2,13 @@ package com.iwaliner.ugoblock.object;
 
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -90,7 +93,10 @@ public class ShapeCardItem extends Item {
                     stack.setTag(tag);
                 }
             }
+            level.playSound(player,pos, SoundEvents.WOODEN_BUTTON_CLICK_OFF, SoundSource.BLOCKS,1F,1F);
+
         }
+
         return true;
     }
 
@@ -156,6 +162,7 @@ public class ShapeCardItem extends Item {
                     }
                 }
                 stack.setTag(tag);
+                level.playSound(context.getPlayer(),pos, SoundEvents.WOODEN_BUTTON_CLICK_ON, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
             }
         }
@@ -170,17 +177,17 @@ public class ShapeCardItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
-        list.add(Component.translatable("info.ugoblock.shape_card"));
+        list.add(Component.translatable("info.ugoblock.shape_card").withStyle(ChatFormatting.GREEN));
         if(stack.getTag()!=null) {
             int size=Utils.getPositionList(stack.getTag()).size();
             for (int i = 0;size>5? i < 5 : i<size; i++) {
                 BlockPos pos = NbtUtils.readBlockPos(stack.getTag().getCompound("positionList").getCompound("location_" + String.valueOf(i)));
                 if (!pos.equals(Utils.errorPos())) {
-                    list.add(Component.translatable("info.ugoblock.shape_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]"));
+                    list.add(Component.translatable("info.ugoblock.shape_card_location").append("[").append(String.valueOf(pos.getX())).append(", ").append(String.valueOf(pos.getY())).append(", ").append(String.valueOf(pos.getZ())).append("]").withStyle(ChatFormatting.GRAY));
                 }
             }
             if(size>5) {
-                list.add(Component.translatable("info.ugoblock.shape_card_location_other"));
+                list.add(Component.translatable("info.ugoblock.shape_card_location_other").withStyle(ChatFormatting.GRAY));
             }
         }
     }

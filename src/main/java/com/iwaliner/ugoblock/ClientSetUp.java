@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock;
 
+import com.iwaliner.ugoblock.object.moving_block.CollisionEntityRenderer;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockRenderer;
 import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerScreen;
 import com.iwaliner.ugoblock.object.slide_controller.SlideControllerScreen;
@@ -20,6 +21,7 @@ public class ClientSetUp {
     @SubscribeEvent
     public static void RegisterEntityRendererEvent(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Register.MoveableBlock.get(), MovingBlockRenderer::new);
+        event.registerEntityRenderer(Register.CollisionEntity.get(), CollisionEntityRenderer::new);
     }
     @Nullable
     @SubscribeEvent

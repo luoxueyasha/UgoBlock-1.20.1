@@ -1,0 +1,404 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "powered": "false"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_transmitter_off"
+      }
+    },
+    {
+      "when": {
+        "powered": "true"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_transmitter_on"
+      }
+    },
+    {
+      "when": {
+        "color1": "0"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_white_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "0"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_white_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "0"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_white_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "1"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_orange_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "1"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_orange_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "1"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_orange_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "2"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_magenta_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "2"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_magenta_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "2"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_magenta_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "3"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_light_blue_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "3"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_light_blue_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "3"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_light_blue_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "4"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_yellow_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "4"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_yellow_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "4"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_yellow_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "5"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_lime_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "5"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_lime_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "5"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_lime_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "6"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_pink_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "6"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_pink_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "6"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_pink_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "7"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_gray_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "7"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_gray_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "7"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_gray_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "8"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_light_gray_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "8"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_light_gray_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "8"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_light_gray_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "9"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_cyan_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "9"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_cyan_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "9"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_cyan_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "10"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_purple_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "10"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_purple_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "10"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_purple_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "11"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_blue_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "11"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_blue_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "11"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_blue_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "12"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_brown_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "12"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_brown_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "12"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_brown_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "13"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_green_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "13"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_green_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "13"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_green_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "14"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_red_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "14"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_red_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "14"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_red_3"
+      }
+    },
+    {
+      "when": {
+        "color1": "15"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_black_1"
+      }
+    },
+    {
+      "when": {
+        "color2": "15"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_black_2"
+      }
+    },
+    {
+      "when": {
+        "color3": "15"
+      },
+      "apply": {
+        "model": "ugoblock:block/wireless_redstone_color_black_3"
+      }
+    }
+  ]
+}

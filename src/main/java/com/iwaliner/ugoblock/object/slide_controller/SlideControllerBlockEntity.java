@@ -2,7 +2,9 @@ package com.iwaliner.ugoblock.object.slide_controller;
 
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.EndLocationCardItem;
+import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerMenu;
 import com.iwaliner.ugoblock.register.Register;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -21,6 +24,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +49,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         }
 
         public void set(int i, int j) {
-            switch(i) {
-                case 0:
+           if(!isMoving){
                     SlideControllerBlockEntity.this.startTime = j;
             }
 
@@ -68,8 +71,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
         }
 
         public void set(int i, int j) {
-            switch(i) {
-                case 0:
+            if(!isMoving){
                     SlideControllerBlockEntity.this.speedx10=j;
             }
 

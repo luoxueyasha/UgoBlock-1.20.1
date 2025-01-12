@@ -1,6 +1,7 @@
 package com.iwaliner.ugoblock.object.moving_block;
 
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
@@ -58,6 +59,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public static final EntityDataAccessor<Integer> DATA_VISUAL_ROTATION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> DATA_DISCARD_TIME_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> DATA_IS_LOOP_ROTATION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_SHOULD_ROTATE_STATE_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BOOLEAN);
     List<BlockPos> posList=new ArrayList<>();
     List<BlockState> stateList=new ArrayList<>();
     List<CompoundTag> blockEntityDataList =new ArrayList<>();
@@ -108,39 +110,27 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.noPhysics = false;
         this.noCulling = false;
 
+
+
+    }
+    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration,trigonometricFunctionType type,int degree,CompoundTag tag,int visualDegree,boolean isLoop,boolean rotateState) {
+        super(Register.MoveableBlock.get(), level);
+        this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
+        this.entityData.set(BlockDisplayMixin.getData(),state);
+        this.entityData.set(DATA_START_LOCATION_ID,startPos);
+        this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
+        this.entityData.set(DisplayMixin.getDataDuration(),duration);
+        this.entityData.set(DATA_TRIGNOMETRIC_FUNCTION_ID,type.getID());
+        this.entityData.set(DATA_ROTATABLE_ID,true);
+        this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
+        this.entityData.set(DATA_DEGREE_ANGLE_ID,degree);
+        this.entityData.set(DATA_VISUAL_ROTATION_ID,visualDegree>180? visualDegree-180 : visualDegree<-180? visualDegree-180 : visualDegree);
+        this.entityData.set(DATA_IS_LOOP_ROTATION_ID,isLoop);
+        this.noPhysics = false;
+        this.noCulling = false;
+        this.entityData.set(DATA_SHOULD_ROTATE_STATE_ID,rotateState);
     }
 
-    /*public boolean shouldRenderAtSqrDistance(double p_31574_) {
-        double d0 = this.getBoundingBox().getSize() * 4.0D;
-        if (Double.isNaN(d0) || d0 == 0.0D) {
-            d0 = 4.0D;
-        }
-
-        d0 *= 64.0D;
-        return p_31574_ < d0 * d0;
-    }*/
-    /*public boolean shouldRenderAtSqrDistance(double p_31769_) {
-        double d0 = 64D*//*16.0D*//*;
-        d0 *= 64.0D * getViewScale();
-        return p_31769_ < d0 * d0;
-    }*/
-    public boolean shouldRender(double p_20296_, double p_20297_, double p_20298_) {
-        double d0 = this.getX() - p_20296_;
-        double d1 = this.getY() - p_20297_;
-        double d2 = this.getZ() - p_20298_;
-        double d3 = d0 * d0 + d1 * d1 + d2 * d2;
-        return this.shouldRenderAtSqrDistance(d3);
-    }
-
-    public boolean shouldRenderAtSqrDistance(double p_19883_) {
-        double d0 = this.getBoundingBox().getSize();
-      //  if (Double.isNaN(d0)) {
-            d0 = 10.0D;
-      //  }
-
-        d0 *= 64.0D*64D * getViewScale();
-        return p_19883_ < d0 * d0;
-    }
 
     @Override
     protected void defineSynchedData() {
@@ -154,6 +144,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_VISUAL_ROTATION_ID,0);
         this.entityData.define(DATA_DISCARD_TIME_ID,0);
         this.entityData.define(DATA_IS_LOOP_ROTATION_ID,false);
+        this.entityData.define(DATA_SHOULD_ROTATE_STATE_ID,false);
      }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
@@ -197,6 +188,15 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("loopRotation")) {
             this.entityData.set(DATA_IS_LOOP_ROTATION_ID,tag.getBoolean("loopRotation"));
         }
+        if (tag.contains("shouldRotateState")) {
+            this.entityData.set(DATA_SHOULD_ROTATE_STATE_ID,tag.getBoolean("shouldRotateState"));
+        }
+       /* if (tag.contains("leftRotationX")&&tag.contains("leftRotationY")&&tag.contains("leftRotationZ")&&tag.contains("leftRotationW")) {
+            this.entityData.set(DisplayMixin.getDataLeftRotation(),new Quaternionf(tag.getDouble("leftRotationX"),tag.getDouble("leftRotationY"),tag.getDouble("leftRotationZ"),tag.getDouble("leftRotationW")));
+        }
+        if (tag.contains("rightRotationX")&&tag.contains("rightRotationY")&&tag.contains("rightRotationZ")&&tag.contains("rightRotationW")) {
+            this.entityData.set(DisplayMixin.getDataRightRotation(),new Quaternionf(tag.getDouble("rightRotationX"),tag.getDouble("rightRotationY"),tag.getDouble("rightRotationZ"),tag.getDouble("rightRotationW")));
+        }*/
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -211,6 +211,16 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.putInt("VisualRot",entityData.get(DATA_VISUAL_ROTATION_ID));
         tag.putInt("discardTime",entityData.get(DATA_DISCARD_TIME_ID));
         tag.putBoolean("loopRotation",entityData.get(DATA_IS_LOOP_ROTATION_ID));
+        tag.putBoolean("shouldRotateState",entityData.get(DATA_SHOULD_ROTATE_STATE_ID));
+
+        /*tag.putDouble("rightRotationX",entityData.get(DisplayMixin.getDataRightRotation()).x);
+        tag.putDouble("rightRotationY",entityData.get(DisplayMixin.getDataRightRotation()).y);
+        tag.putDouble("rightRotationZ",entityData.get(DisplayMixin.getDataRightRotation()).z);
+        tag.putDouble("rightRotationW",entityData.get(DisplayMixin.getDataRightRotation()).w);
+        tag.putDouble("leftRotationX",entityData.get(DisplayMixin.getDataLeftRotation()).x);
+        tag.putDouble("leftRotationY",entityData.get(DisplayMixin.getDataLeftRotation()).y);
+        tag.putDouble("leftRotationZ",entityData.get(DisplayMixin.getDataLeftRotation()).z);
+        tag.putDouble("leftRotationW",entityData.get(DisplayMixin.getDataLeftRotation()).w);*/
     }
 
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -219,7 +229,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     @Override
     public boolean canCollideWith(Entity entity) {
-        return true;
+        return !isLoopRotation();
     }
 
 
@@ -230,17 +240,21 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
 
     public boolean isPickable() {
-        return true;
+        return !isLoopRotation();
     }
 
     @Override
     protected @NotNull AABB makeBoundingBox() {
         super.makeBoundingBox();
-       if(minX==0&&minY==0&&minZ==0&&maxX==0&&maxY==0&&maxZ==0){
-           makeBoundingBoxFirst();
-       }
-        AABB aabb=new AABB(position().x-0.5D+minX,position().y-0.5D+minY,position().z-0.5D+minZ,position().x-0.5D+maxX+1D,position().y-0.5D+maxY+1D,position().z-0.5D+maxZ+1D);
-        return aabb;
+        if(!shouldRotate()) {
+            if (minX == 0 && minY == 0 && minZ == 0 && maxX == 0 && maxY == 0 && maxZ == 0) {
+                makeBoundingBoxFirst();
+            }
+            AABB aabb = new AABB(position().x - 0.5D + minX, position().y - 0.5D + minY, position().z - 0.5D + minZ, position().x - 0.5D + maxX + 1D, position().y - 0.5D + maxY + 1D, position().z - 0.5D + maxZ + 1D);
+            return aabb;
+        }else{
+            return new AABB(getActualBlockPos());
+        }
     }
     private  void makeBoundingBoxFirst() {
          for(BlockPos eachPos : getPosList()){
@@ -288,6 +302,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
+
                         entity.fallDistance=0f;
                         Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
                         entity.setDeltaMovement(speed);
@@ -308,6 +323,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             }
         }else{
             rotate();
+            makeCollisionEntity();
         }
     }
     public boolean shouldFixFighting(){ /**このエンティティとブロックが完全に重なりZ-fightingを起こす可能性があるかどうか*/
@@ -326,7 +342,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                         level().scheduleTick(pos, movingState.getBlock(), 2);
                     } else {
                         level().setBlock(pos, movingState, 82);
-                        level().scheduleTick(pos, movingState.getBlock(), 2);
+                       // level().scheduleTick(pos, movingState.getBlock(), 2);
                     }
                     if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
                         if (movingBlockEntityData != null) {
@@ -364,7 +380,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             setCompoundTag(new CompoundTag());
         }
     }
-    private void rotateAndMakeBlock(Direction.Axis axis, int degree){ /**回転し終わってブロック化する*/
+    public void rotateAndMakeBlock(int degree){ /**回転し終わってブロック化する*/
         if(!level().isClientSide&&(degree+getVisualRot())%90==0) {
 
             List<BlockPos> rotatedPosList=Utils.rotatePosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),Utils.getAxis(getTrigonometricFunctionType()),degree+getVisualRot());
@@ -384,12 +400,23 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                     BlockState movingState = getStateList().get(i);
                     CompoundTag movingBlockEntityData = getBlockEntityDataList().get(i);
                     if (level().getBlockState(pos).canBeReplaced()) {
-                        if (movingState.getBlock() == Blocks.OBSERVER) {
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)){
+                            Direction oldDirection=movingState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+                            Direction newDirection=oldDirection;
+                            if(degree==90){
+                              newDirection=oldDirection.getCounterClockWise();
+                            }else if(degree==-90){
+                                newDirection=oldDirection.getClockWise();
+                            }else if(degree==180||degree==-180){
+                                newDirection=oldDirection.getOpposite();
+                            }
+                            level().setBlock(pos, movingState.setValue(BlockStateProperties.HORIZONTAL_FACING,newDirection), 82);
+                        }else if (movingState.getBlock() == Blocks.OBSERVER) {
                             level().setBlock(pos, movingState, 82);
                             level().scheduleTick(pos, movingState.getBlock(), 2);
                         } else {
                             level().setBlock(pos, movingState, 82);
-                            level().scheduleTick(pos, movingState.getBlock(), 2);
+
                         }
                         if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
                             if (movingBlockEntityData != null) {
@@ -411,7 +438,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                                 }
                             }
 
-                        } else if (!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)) { /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
+                        } else if (!level().isClientSide &&!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)) { /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
                             LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level())).withParameter(LootContextParams.ORIGIN, pos.getCenter()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, this);
                             for (ItemStack itemStack : level().getBlockState(pos).getDrops(lootparams$builder)) {
                                 ItemEntity itemEntity = new ItemEntity(level(), pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, itemStack);
@@ -428,7 +455,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
           //  setCompoundTag(new CompoundTag());
         }
     }
-    private void discardAfterRotate(Direction.Axis axis, int degree) { /**回転し終わってブロック化する*/
+    private void discardAfterRotate( int degree) { /**回転し終わってブロック化する*/
         if (!level().isClientSide) {
             BlockPos originPos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
 
@@ -436,6 +463,44 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 discard();
             }
         }
+    }
+    private void makeCollisionEntity(){
+        int duration=getDuration();
+        if(duration>0){
+        int startTick=getStartTick();
+        boolean flag= tickCount >= startTick && tickCount < startTick + duration;
+        boolean flag2=Mth.abs(getDegreeAngle())>=180;
+        int thetaDegree=flag? flag2? -Math.round((tickCount-startTick)*getDegreeAngle()/(float)duration) : Math.round((tickCount-startTick)*getDegreeAngle()/(float)duration) : getDegreeAngle();
+        int degreeCombined=thetaDegree+getVisualRot();
+        List<Vec3> rotatedVec3List=Utils.rotateVec3PosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),Utils.getAxis(getTrigonometricFunctionType()),degreeCombined);
+        for(int i=0;i<rotatedVec3List.size();i++) {
+
+            Vec3 eachVec3=rotatedVec3List.get(i);
+            AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
+
+              /* CollisionEntity collisionEntity0 = new CollisionEntity(level(), eachVec3.x, eachVec3.y, eachVec3.z);
+                level().addFreshEntity(collisionEntity0);*/
+
+
+                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 1d, 0d), (o) -> {
+                    return !(o instanceof MovingBlockEntity)&&!(o instanceof CollisionEntity);
+                })) {
+                       CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x, eachVec3.y, eachVec3.z,Blocks.AIR.defaultBlockState());
+                        level().addFreshEntity(collisionEntity);
+                        if(entity.getY()!=eachVec3.y+0.55D){
+                            entity.setPos(entity.getX(),eachVec3.y+0.55D,entity.getZ());
+                        }
+
+                    entity.fallDistance=0f;
+
+                    entity.setOnGround(true);
+
+                }
+
+            }
+
+        }
+
     }
     public Vec3 getActualPos(){
         return position();
@@ -489,8 +554,11 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public boolean shouldRotate(){
         return entityData.get(DATA_ROTATABLE_ID);
     }
+    public boolean shouldRotateState(){
+        return entityData.get(DATA_SHOULD_ROTATE_STATE_ID);
+    }
 
-    private trigonometricFunctionType getTrigonometricFunctionType(){
+    public trigonometricFunctionType getTrigonometricFunctionType(){
        return trigonometricFunctionType.getType(entityData.get(DATA_TRIGNOMETRIC_FUNCTION_ID));
     }
     private void setTrigonometricFunctionType(trigonometricFunctionType type){
@@ -599,6 +667,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         return Utils.getAxis(getTrigonometricFunctionType())== Direction.Axis.Z? entityData.get(DATA_VISUAL_ROTATION_ID) : 0;
     }
     public int getVisualRot(){
+        /**最初から見た目のみ回転させて配置することがある*/
         return entityData.get(DATA_VISUAL_ROTATION_ID);
     }
     public int getDiscardTime(){
@@ -642,31 +711,28 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             }
         }
         if(isLoopRotation()) {
-            /*if (tickCount == getDuration()) {
-                discard();
-            }else if (tickCount == Mth.floor(getDuration()/2D)-2) {
-                CompoundTag tag=getCompoundTag();
-                MovingBlockEntity moveableBlock = new MovingBlockEntity(level(), getActualBlockPos(), entityData.get(BlockDisplayMixin.getData()), getStartTick(), getDuration(), Utils.getReverseTrigonometricFunctionType(type),getDegreeAngle(),tag,getVisualRot()==0? 90 : 0,true);
-                moveableBlock.setInvisible(true);
-                if (!level().isClientSide) {
-                    level().addFreshEntity(moveableBlock);
-                }
-            }*/
-            if (tickCount ==getDuration()) {
+         /*   if (tickCount ==getDuration()) {
                 CompoundTag tag=getCompoundTag();
                 MovingBlockEntity moveableBlock = new MovingBlockEntity(level(), getActualBlockPos(), entityData.get(BlockDisplayMixin.getData()), getStartTick(), getDuration(), Utils.getReverseTrigonometricFunctionType(type),getDegreeAngle(),tag,getVisualRot()==0? 180 : 0,true);
                 moveableBlock.setInvisible(true);
+                moveableBlock.updateRenderState=true;
                 setInvisible(true);
                 if (!level().isClientSide) {
                     level().addFreshEntity(moveableBlock);
                 }
                 setDiscardTime(1);
             }
-        }else{
+            ModCoreUgoBlock.logger.info("axis:"+type.name()+",duration:"+getDuration()+",visualRot:"+getVisualRot()+",tickCount:"+tickCount+",RasadianAngle:"+getRadianAngle());
+      */
+            if (tickCount == getDuration() + 4) {
+                discard();
+            }
+        }
+        else{
             if (tickCount == getDuration() + 1) {
-                rotateAndMakeBlock(Utils.getAxis(type), transitionDegree);
+                rotateAndMakeBlock(transitionDegree);
             } else if (tickCount == getDuration() + 2) {
-                discardAfterRotate(Utils.getAxis(type), transitionDegree);
+                discardAfterRotate( transitionDegree);
             }
         }
     }
