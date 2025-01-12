@@ -297,7 +297,7 @@ public class SlideControllerBlockEntity extends BaseContainerBlockEntity {
             }
             if (blockEntity.getMoveTick() > 0) {
                 if (blockEntity.isMoving()) {
-                    if (blockEntity.getTickCount() > blockEntity.getMoveTick()) {
+                    if (blockEntity.getTickCount() > blockEntity.getMoveTick()+2) {
                         blockEntity.setMoving(false);
                         blockEntity.setTickCount(0);
                     } else if (blockEntity.getTickCount() == blockEntity.getMoveTick() && blockEntity.hasCards()) {

@@ -417,7 +417,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                                 }
 
                         }
-                    }else if (blockEntity.getTickCount() > blockEntity.getMoveTick()) {
+                    }else if (blockEntity.getTickCount() > blockEntity.getMoveTick()+2) {
                         if(!blockEntity.isLoop()) {
                             blockEntity.setMoving(false);
                             blockEntity.setTickCount(0);
