@@ -115,12 +115,16 @@ public class SlideControllerBlock extends BaseEntityBlock {
                                 blockEntity.setMoving(true);
                                 /**↓移動の変位。座標ではないことに注意。*/
                                BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
-                                      /**ブロックをエンティティ化*/
-                                        makeMoveableBlock(level,pos, startPos, start, duration, transitionPos);
+                               /**ブロックをエンティティ化*/
+                               makeMoveableBlock(level,pos, startPos, start, duration, transitionPos);
+
+                               level.setBlock(pos, state.cycle(POWERED), 2);
+                               level.scheduleTick(pos, this, 2);
                            }
+
                        }
-                           level.setBlock(pos, state.cycle(POWERED), 2);
-                           level.scheduleTick(pos, this, 2);
+                           //level.setBlock(pos, state.cycle(POWERED), 2);
+                          // level.scheduleTick(pos, this, 2);
 
                    }
             }
@@ -133,6 +137,9 @@ public class SlideControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(controllerPos) instanceof SlideControllerBlockEntity slideControllerBlockEntity&&slideControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&slideControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             CompoundTag entityTag=new CompoundTag();
             List<BlockPos> posList=slideControllerBlockEntity.getPositionList();
+            if(posList.contains(controllerPos)) {
+                posList.remove(controllerPos);
+            }
             CompoundTag posTag=new CompoundTag();
             CompoundTag stateTag=new CompoundTag();
             CompoundTag blockEntityTag=new CompoundTag();
