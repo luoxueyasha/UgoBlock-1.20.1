@@ -125,9 +125,9 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
         guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_angle"), 105, 17, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_duration"), 105, 48, 8587492);
         if(getMenu().getDegreeAngle()==181){
-            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_loop_counter_clockwise"), 105, 30, 16777215);
-        }else if(getMenu().getDegreeAngle()==-181){
             guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_loop_clockwise"), 105, 30, 16777215);
+        }else if(getMenu().getDegreeAngle()==-181){
+            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_loop_counter_clockwise"), 105, 30, 16777215);
         }else{
             guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDegreeAngle())+"°"), 105, 30, 16777215);
         }

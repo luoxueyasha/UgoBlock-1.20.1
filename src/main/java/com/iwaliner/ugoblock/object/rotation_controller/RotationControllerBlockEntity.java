@@ -326,6 +326,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
             }else if(!blockEntity.isMoving()&&state.getValue(RotationControllerBlock.MOVING)){
                 level.setBlock(pos,state.setValue(RotationControllerBlock.MOVING,false),2);
             }
+
             if(blockEntity.isLoop()&&!state.getValue(RotationControllerBlock.POWERED)){
                 boolean flag=false;
                 for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(RotationControllerBlock.FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
@@ -405,20 +406,20 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                                 }
                             }
                         }
-                        movingBlock.discard();
+                      //  movingBlock.discard();
                         flag=true;
                     }
-
+                    movingBlock.setDiscardTime(1);
                 }
             }
             if (blockEntity.getMoveTick() > 0) {
                 if (blockEntity.isMoving()) {
-                    if(blockEntity.getTickCount() == blockEntity.getMoveTick()-0&& blockEntity.isLoop()){
+                    if(/*blockEntity.getTickCount() == blockEntity.getMoveTick()-0&& */blockEntity.isLoop()){
                             for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(RotationControllerBlock.FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                                 return (o instanceof MovingBlockEntity);
                             })) {
                                 MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
-                                if (state.getValue(RotationControllerBlock.POWERED)) {
+                                if (state.getValue(RotationControllerBlock.POWERED)&&movingBlock.getTickCount()==movingBlock.getDuration()) {
                                     if (movingBlock.shouldRotate() && movingBlock.isLoopRotation()) {
                                         CompoundTag entityTag = movingBlock.getCompoundTag();
                                         MovingBlockEntity.trigonometricFunctionType type = Utils.getReverseTrigonometricFunctionType(movingBlock.getTrigonometricFunctionType());
@@ -429,7 +430,8 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                                         if (!level.isClientSide) {
                                             level.addFreshEntity(moveableBlock2);
                                         }
-                                        // movingBlock.setDiscardTime(1);
+                                         movingBlock.setDiscardTime(1);
+                                        //movingBlock.discard();
                                     }
                                 }else{
 
@@ -466,7 +468,13 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                     }*/
 
                     blockEntity.increaseTickCount(1);
-                }
+                }/*else if(blockEntity.isLoop()){
+                    for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(RotationControllerBlock.FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                        return (o instanceof MovingBlockEntity);
+                    })) {
+                        entity.discard();
+                    }
+                }*/
 
             }
 

@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
@@ -25,6 +26,8 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.AxisAngle4d;
+import org.joml.Quaternionf;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -90,7 +93,7 @@ import java.util.List;
                  */   poseStack.pushPose();
 
                     poseStack.translate(eachPos.getX(), eachPos.getY(),eachPos.getZ());
-                    /*if (block instanceof ChestBlock abstractchestblock) {
+                     /*if (block instanceof ChestBlock abstractchestblock) {
 
                         boolean flag = level!= null;
                         ChestType chesttype = eachState.hasProperty(ChestBlock.TYPE) ? eachState.getValue(ChestBlock.TYPE) : ChestType.SINGLE;

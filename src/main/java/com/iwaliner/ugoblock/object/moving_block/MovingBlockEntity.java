@@ -41,6 +41,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.NotNull;
 import org.joml.AxisAngle4d;
+import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -731,6 +732,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public void setDiscardTime(int tick){
         entityData.set(DATA_DISCARD_TIME_ID,tick);
     }
+    public int getTickCount(){
+        return tickCount;
+    }
     @Override
     public boolean mayInteract(Level level, BlockPos poa) {
         return true;
@@ -753,7 +757,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         setInvisible(false);
         MovingBlockEntity.trigonometricFunctionType type=getTrigonometricFunctionType();
         int transitionDegree=getDegreeAngle();
-        if(tickCount<=getDuration()) {
+         if(tickCount<=getDuration()+1) {
             if (Utils.getAxis(type)== Direction.Axis.X) {
                 setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 1D, 0D, 0D)));
                 setRightRotation(new Quaternionf(new AxisAngle4d(0D, 1D, 0D, 0D)));
@@ -761,29 +765,19 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 1D, 0D)));
                 setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 1D, 0D)));
             }else if (Utils.getAxis(type)== Direction.Axis.Z) {
-                    setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 0D, 1D)));
-                    setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 0D, 1D)));
+                setLeftRotation(new Quaternionf(new AxisAngle4d(getRadianAngle(), 0D, 0D, 1D)));
+                setRightRotation(new Quaternionf(new AxisAngle4d(0D, 0D, 0D, 1D)));
             }
         }
         if(isLoopRotation()) {
-         /*   if (tickCount ==getDuration()) {
-                CompoundTag tag=getCompoundTag();
-                MovingBlockEntity moveableBlock = new MovingBlockEntity(level(), getActualBlockPos(), entityData.get(BlockDisplayMixin.getData()), getStartTick(), getDuration(), Utils.getReverseTrigonometricFunctionType(type),getDegreeAngle(),tag,getVisualRot()==0? 180 : 0,true);
-                moveableBlock.setInvisible(true);
-                moveableBlock.updateRenderState=true;
-                setInvisible(true);
-                if (!level().isClientSide) {
-                    level().addFreshEntity(moveableBlock);
-                }
-                setDiscardTime(1);
-            }
-            ModCoreUgoBlock.logger.info("axis:"+type.name()+",duration:"+getDuration()+",visualRot:"+getVisualRot()+",tickCount:"+tickCount+",RasadianAngle:"+getRadianAngle());
-      */
+
+
             if (tickCount == getDuration() + 4) {
                 discard();
             }
         }
         else{
+
             if (tickCount == getDuration() + 1) {
                 rotateAndMakeBlock(transitionDegree);
             } else if (tickCount == getDuration() + 2) {
