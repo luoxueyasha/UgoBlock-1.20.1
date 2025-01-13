@@ -47,7 +47,7 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
     private boolean isMoving;
     private int tickCount;
     private int startTime;
-    private int degreeAngle=-45;
+    private int degreeAngle=-30;
     private int duration=3*20;
     private int visualDegree;
     protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
@@ -336,17 +336,27 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                         BlockPos pos0 = pos.relative(state.getValue(RotationControllerBlock.FACING));
                         //movingBlock.setPos(movingBlock.getActualPos().add(0D, 1D, 0D));
                         List<BlockPos> rotatedPosList = movingBlock.getPosList();
-                        if(rotatedPosList.contains(BlockPos.ZERO)) {
-                            CollisionEntity collisionEntity = new CollisionEntity(level, pos0.getX() + 0.5D, pos0.getY() + 0.5D, pos0.getZ() + 0.5D, movingBlock.getStateList().get(rotatedPosList.indexOf(BlockPos.ZERO)));
+                        /*if(rotatedPosList.contains(BlockPos.ZERO)) {
+                            CollisionEntity collisionEntity = new CollisionEntity(level, pos0.getX() + 0.5D, pos0.getY() + 0.5D, pos0.getZ() + 0.5D, movingBlock.getStateList().get(rotatedPosList.indexOf(BlockPos.ZERO)),new CompoundTag());
                             if (!level.isClientSide) {
                                 level.addFreshEntity(collisionEntity);
                             }
-                        }
+                        }*/
                         for (int i = 0; i < rotatedPosList.size(); i++) {
+                            BlockPos offset = rotatedPosList.get(i);
                             BlockPos eachPos = rotatedPosList.get(i).offset(pos0.getX(), pos0.getY(), pos0.getZ());
                             BlockState movingState = movingBlock.getStateList().get(i);
                             CompoundTag movingBlockEntityData = movingBlock.getBlockEntityDataList().get(i);
-                            if (eachPos!=pos0) {
+                            boolean axisFlag=false;
+                            Direction.Axis axis=state.getValue(RotationControllerBlock.FACING).getAxis();
+                            if(axis== Direction.Axis.X){
+                                axisFlag=offset.getY()==0&&offset.getZ()==0;
+                            }else if(axis== Direction.Axis.Y){
+                                axisFlag=offset.getX()==0&&offset.getZ()==0;
+                            }else if(axis== Direction.Axis.Z){
+                                axisFlag=offset.getX()==0&&offset.getY()==0;
+                            }
+                            if (!axisFlag) {
                                 if (level.getBlockState(eachPos).canBeReplaced()) {
                                     if (movingState.getBlock() == Blocks.OBSERVER) {
                                         level.setBlock(eachPos, movingState, 82);
@@ -387,6 +397,11 @@ public class RotationControllerBlockEntity extends BaseContainerBlockEntity {
                                 }
                                 //  discard();
                                 //      }*/
+                                }
+                            }else{
+                                CollisionEntity collisionEntity = new CollisionEntity(level, eachPos.getX() + 0.5D, eachPos.getY() + 0.5D, eachPos.getZ() + 0.5D, movingState,movingBlockEntityData);
+                                if (!level.isClientSide) {
+                                    level.addFreshEntity(collisionEntity);
                                 }
                             }
                         }

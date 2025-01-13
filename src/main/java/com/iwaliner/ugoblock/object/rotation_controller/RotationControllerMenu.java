@@ -114,6 +114,8 @@ public class RotationControllerMenu extends AbstractContainerMenu {
                 setDegreeAngle(-181);
             }else if(degreeAngle<-170){
                 setDegreeAngle(-180);
+            }else if(degreeAngle==181){
+                addDegreeAngle(-1);
             }else{
                 addDegreeAngle(-10);
             }
@@ -132,7 +134,11 @@ public class RotationControllerMenu extends AbstractContainerMenu {
             if(degreeAngle>=180){
                 setDegreeAngle(181);
             }else if(degreeAngle<170) {
-                addDegreeAngle(10);
+                if(degreeAngle==-181){
+                    addDegreeAngle(1);
+                }else {
+                    addDegreeAngle(10);
+                }
             }else{
                 setDegreeAngle(180);
             }

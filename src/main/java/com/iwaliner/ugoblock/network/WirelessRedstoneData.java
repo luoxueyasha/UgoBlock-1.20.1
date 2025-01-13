@@ -20,7 +20,9 @@ public class WirelessRedstoneData {
     }
     public void setSignalNull(DyeColor color1,DyeColor color2,DyeColor color3){
         String name="signal["+ color1.getName()+","+color2.getName()+","+color3.getName()+"]";
-        remoteRedstoneTag.remove(name);
+        if(remoteRedstoneTag!=null) {
+            remoteRedstoneTag.remove(name);
+        }
     }
     public void setSignal(DyeColor color1,DyeColor color2,DyeColor color3,boolean power){
         String name="signal["+ color1.getName()+","+color2.getName()+","+color3.getName()+"]";

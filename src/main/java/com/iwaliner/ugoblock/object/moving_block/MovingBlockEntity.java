@@ -32,6 +32,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
@@ -400,7 +402,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                     BlockState movingState = getStateList().get(i);
                     CompoundTag movingBlockEntityData = getBlockEntityDataList().get(i);
                     if (level().getBlockState(pos).canBeReplaced()) {
-                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)){
+                        BlockState newState=movingState;
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)&&Utils.getAxis(getTrigonometricFunctionType())== Direction.Axis.Y){
                             Direction oldDirection=movingState.getValue(BlockStateProperties.HORIZONTAL_FACING);
                             Direction newDirection=oldDirection;
                             if(degree==90){
@@ -410,12 +413,64 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                             }else if(degree==180||degree==-180){
                                 newDirection=oldDirection.getOpposite();
                             }
-                            level().setBlock(pos, movingState.setValue(BlockStateProperties.HORIZONTAL_FACING,newDirection), 82);
-                        }else if (movingState.getBlock() == Blocks.OBSERVER) {
-                            level().setBlock(pos, movingState, 82);
-                            level().scheduleTick(pos, movingState.getBlock(), 2);
+                           newState= movingState.setValue(BlockStateProperties.HORIZONTAL_FACING,newDirection);
+                        }else if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.AXIS)){
+                            Direction.Axis oldAxis=movingState.getValue(BlockStateProperties.AXIS);
+                            Direction.Axis newAxis=oldAxis;
+                            if(degree==90||degree==-90){
+                                if(Utils.getAxis(getTrigonometricFunctionType())== Direction.Axis.X){
+                                    newAxis= oldAxis== Direction.Axis.Y? Direction.Axis.Z : oldAxis== Direction.Axis.X? Direction.Axis.X : Direction.Axis.Y;
+                                }else if(Utils.getAxis(getTrigonometricFunctionType())== Direction.Axis.Y){
+                                    newAxis= oldAxis== Direction.Axis.X? Direction.Axis.Z : oldAxis== Direction.Axis.Y? Direction.Axis.Y :Direction.Axis.X;
+                                }else if(Utils.getAxis(getTrigonometricFunctionType())== Direction.Axis.Z){
+                                    newAxis= oldAxis== Direction.Axis.X? Direction.Axis.Y :oldAxis== Direction.Axis.Z? Direction.Axis.Z : Direction.Axis.X;
+                                }
+                            }
+                           newState=movingState.setValue(BlockStateProperties.AXIS,newAxis);
+                        }
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.FACING)){
+                            Direction oldDirection=movingState.getValue(BlockStateProperties.FACING);
+                            Direction newDirection=oldDirection;
+                            if(degree==90){
+                                newDirection=oldDirection.getCounterClockWise(Utils.getAxis(getTrigonometricFunctionType()));
+                            }else if(degree==-90){
+                                newDirection=oldDirection.getClockWise(Utils.getAxis(getTrigonometricFunctionType()));
+                            }else if(degree==180||degree==-180){
+                                newDirection=oldDirection.getClockWise(Utils.getAxis(getTrigonometricFunctionType())).getClockWise(Utils.getAxis(getTrigonometricFunctionType()));
+                            }
+                           newState=movingState.setValue(BlockStateProperties.FACING,newDirection);
+
+                        }
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.HALF)&&Utils.getAxis(getTrigonometricFunctionType())!= Direction.Axis.Y){
+                            Half oldHalf=movingState.getValue(BlockStateProperties.HALF);
+                            Half newHalf=oldHalf;
+                           if(degree==180||degree==-180){
+                               if(oldHalf==Half.BOTTOM){
+                                   newHalf=Half.TOP;
+                               }else if(oldHalf==Half.TOP){
+                                   newHalf=Half.BOTTOM;
+                               }
+                           }
+                           newState= movingState.setValue(BlockStateProperties.HALF,newHalf);
+                        }
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.SLAB_TYPE)&&Utils.getAxis(getTrigonometricFunctionType())!= Direction.Axis.Y){
+                            SlabType oldHalf=movingState.getValue(BlockStateProperties.SLAB_TYPE);
+                            SlabType newHalf=oldHalf;
+                            if(degree==180||degree==-180){
+                                if(oldHalf==SlabType.BOTTOM){
+                                    newHalf=SlabType.TOP;
+                                }else if(oldHalf==SlabType.TOP){
+                                    newHalf=SlabType.BOTTOM;
+                                }
+                            }
+                           newState= movingState.setValue(BlockStateProperties.SLAB_TYPE,newHalf);
+                        }
+
+                        if (movingState.getBlock() == Blocks.OBSERVER) {
+                            level().setBlock(pos, newState, 82);
+                            level().scheduleTick(pos, newState.getBlock(), 2);
                         } else {
-                            level().setBlock(pos, movingState, 82);
+                            level().setBlock(pos, newState, 82);
 
                         }
                         if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
@@ -485,7 +540,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity)&&!(o instanceof CollisionEntity);
                 })) {
-                       CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x, eachVec3.y, eachVec3.z,Blocks.AIR.defaultBlockState());
+                       CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x, eachVec3.y, eachVec3.z,Blocks.AIR.defaultBlockState(),new CompoundTag());
                         level().addFreshEntity(collisionEntity);
                         if(entity.getY()!=eachVec3.y+0.55D){
                             entity.setPos(entity.getX(),eachVec3.y+0.55D,entity.getZ());

@@ -58,7 +58,7 @@ public class Register {
 
     public static final DeferredRegister<EntityType<?>> Entities = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, ModCoreUgoBlock.MODID);
     public static final RegistryObject<EntityType<MovingBlockEntity>> MoveableBlock=Entities.register("moving_block", () -> EntityType.Builder.<MovingBlockEntity>of(MovingBlockEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(16).build(new ResourceLocation(ModCoreUgoBlock.MODID,"moving_block").toString()));
-    public static final RegistryObject<EntityType<CollisionEntity>> CollisionEntity=Entities.register("collision_entitiy", () -> EntityType.Builder.<CollisionEntity>of(CollisionEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(4).build(new ResourceLocation(ModCoreUgoBlock.MODID,"collision_entity").toString()));
+    public static final RegistryObject<EntityType<CollisionEntity>> CollisionEntity=Entities.register("collision_entitiy", () -> EntityType.Builder.<CollisionEntity>of(CollisionEntity::new, MobCategory.MISC).sized(1, 0.9F).clientTrackingRange(4).build(new ResourceLocation(ModCoreUgoBlock.MODID,"collision_entity").toString()));
     //public static final RegistryObject<EntityType<ControllableEntity>> ControllableEntity=Entities.register("controllable_entitiy", () -> EntityType.Builder.<ControllableEntity>of(ControllableEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(4).build(new ResourceLocation(ModCoreUgoBlock.MODID,"controllable_entity").toString()));
 
 

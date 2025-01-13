@@ -137,9 +137,9 @@ public class SlideControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(controllerPos) instanceof SlideControllerBlockEntity slideControllerBlockEntity&&slideControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&slideControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             CompoundTag entityTag=new CompoundTag();
             List<BlockPos> posList=slideControllerBlockEntity.getPositionList();
-            if(posList.contains(controllerPos)) {
+           /* if(posList.contains(controllerPos)) {
                 posList.remove(controllerPos);
-            }
+            }*/
             CompoundTag posTag=new CompoundTag();
             CompoundTag stateTag=new CompoundTag();
             CompoundTag blockEntityTag=new CompoundTag();
@@ -147,7 +147,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
                 BlockPos eachPos=posList.get(i);
                 BlockState eachState=level.getBlockState(eachPos);
                 BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
-                  if (eachBlockEntity != null) {
+                  if (eachBlockEntity != null&&i!=posList.indexOf(controllerPos)) {
                         if (eachBlockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && !slideControllerBlockEntity2.getEndPos().equals(Utils.errorPos())) {
 
                             List<BlockPos> newPos = new ArrayList<>();
@@ -170,7 +170,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
                     }else{
                         blockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
                     }
-                    if(eachState.is(Register.TAG_DISABLE_MOVING)){
+                    if(eachState.is(Register.TAG_DISABLE_MOVING)||i==posList.indexOf(controllerPos)){
                         eachState=Blocks.AIR.defaultBlockState();
                     }
                    eachState= eachState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachPos).isEmpty() ? eachState : Blocks.AIR.defaultBlockState();
