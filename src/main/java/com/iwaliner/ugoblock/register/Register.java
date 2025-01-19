@@ -1,18 +1,13 @@
 package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
-import com.iwaliner.ugoblock.object.*;
-import com.iwaliner.ugoblock.object.controllable_block.ControllableEntity;
+import com.iwaliner.ugoblock.object.block_imitation_wand.BlockImitationWandItem;
+import com.iwaliner.ugoblock.object.controller.*;
 import com.iwaliner.ugoblock.object.moving_block.CollisionEntity;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
-import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerBlock;
-import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerBlockEntity;
-import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerMenu;
-import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlock;
-import com.iwaliner.ugoblock.object.slide_controller.SlideControllerBlockEntity;
-import com.iwaliner.ugoblock.object.slide_controller.SlideControllerMenu;
 import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlock;
 import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlockEntity;
+import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableWirelessRedstoneTransmitterItem;
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.WirelessRedstoneTransmitterBlock;
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.WirelessRedstoneTransmitterBlockEntity;
 import net.minecraft.core.registries.Registries;
@@ -26,7 +21,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -41,18 +35,20 @@ public class Register {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ModCoreUgoBlock.MODID);
     public static final RegistryObject<Block> slide_controller_block =BLOCKS.register("slide_controller",() -> {return new SlideControllerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> slide_controller_blockitem =ITEMS.register("slide_controller",() -> {return new BlockItem( Objects.requireNonNull(slide_controller_block.get()), (new Item.Properties()));});
-    public static final RegistryObject<Item> shape_card =ITEMS.register("shape_card",() -> {return new ShapeCardItem(  (new Item.Properties()).stacksTo(1));});
-    public static final RegistryObject<Item> end_location_card =ITEMS.register("end_position_card",() -> {return new EndLocationCardItem(  (new Item.Properties()).stacksTo(1));});
+    public static final RegistryObject<Item> shape_card =ITEMS.register("shape_card",() -> {return new ShapeCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
+    public static final RegistryObject<Item> end_location_card =ITEMS.register("end_position_card",() -> {return new EndLocationCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
     public static final RegistryObject<Block> rotation_controller_block =BLOCKS.register("rotation_controller",() -> {return new RotationControllerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> rotation_controller_blockitem =ITEMS.register("rotation_controller",() -> {return new BlockItem( Objects.requireNonNull(rotation_controller_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Block> wireless_redstone_transmitter_block =BLOCKS.register("wireless_redstone_transmitter",() -> {return new WirelessRedstoneTransmitterBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> wireless_redstone_transmitter_blockitem =ITEMS.register("wireless_redstone_transmitter",() -> {return new BlockItem( Objects.requireNonNull(wireless_redstone_transmitter_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Block> wireless_redstone_receiver_block =BLOCKS.register("wireless_redstone_receiver",() -> {return new WirelessRedstoneReceiverBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> wireless_redstone_receiver_blockitem =ITEMS.register("wireless_redstone_receiver",() -> {return new BlockItem( Objects.requireNonNull(wireless_redstone_receiver_block.get()), (new Item.Properties()));});
+    public static final RegistryObject<Item> portable_wireless_redstone_transmitter =ITEMS.register("portable_wireless_redstone_transmitter",() -> {return new PortableWirelessRedstoneTransmitterItem(  (new Item.Properties()).stacksTo(1));});
     public static final RegistryObject<Block> smooth_crying_obsidian=BLOCKS.register("smooth_crying_obsidian",() -> {return new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> smooth_crying_obsidian_blockitem =ITEMS.register("smooth_crying_obsidian",() -> {return new BlockItem( Objects.requireNonNull(smooth_crying_obsidian.get()), (new Item.Properties()));});
     public static final RegistryObject<Block> ender_infused_smooth_crying_obsidian=BLOCKS.register("ender_infused_smooth_crying_obsidian",() -> {return new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> ender_infused_smooth_crying_obsidian_blockitem =ITEMS.register("ender_infused_smooth_crying_obsidian",() -> {return new BlockItem( Objects.requireNonNull(ender_infused_smooth_crying_obsidian.get()), (new Item.Properties()));});
+    public static final RegistryObject<Item> block_imitation_wand =ITEMS.register("block_imitation_wand",() -> {return new BlockImitationWandItem(  (new Item.Properties()).stacksTo(1).durability(16));});
 
 
 
@@ -76,8 +72,8 @@ public class Register {
 
 
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, ModCoreUgoBlock.MODID);
-    public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.slide_controller.SlideControllerMenu>> SlideControllerMenu = MENUS.register("slide_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new SlideControllerMenu(windowId, inv);}));
-    public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.rotation_controller.RotationControllerMenu>> RotationControllerMenu = MENUS.register("rotation_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new RotationControllerMenu(windowId, inv);}));
+    public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.controller.SlideControllerMenu>> SlideControllerMenu = MENUS.register("slide_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new SlideControllerMenu(windowId, inv);}));
+    public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.controller.RotationControllerMenu>> RotationControllerMenu = MENUS.register("rotation_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new RotationControllerMenu(windowId, inv);}));
 
 
 

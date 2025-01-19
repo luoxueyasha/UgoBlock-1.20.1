@@ -1,56 +1,31 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
-import com.iwaliner.ugoblock.ModCoreUgoBlock;
-import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
-import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
-import com.iwaliner.ugoblock.object.rotation_controller.RotationControllerBlockEntity;
-import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlockEntity;
-import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -230,6 +205,11 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
                     }
                 }
             }
+            if(player.isSuppressingBounce()&&!blockEntity.getImitatingState().isAir()){
+                blockEntity.setImitatingState(Blocks.AIR.defaultBlockState());
+                level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
+                return InteractionResult.SUCCESS;
+            }
         }
         return InteractionResult.PASS;
     }
@@ -268,10 +248,6 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
     }
 
     private void setColor1(Level level, BlockPos pos, BlockState state, WirelessRedstoneTransmitterBlockEntity blockEntity, DyeColor color1, Player player){
-        level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-            boolean alreadyExist=!data.isSignalNull(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3());
-
-        });
         blockEntity.setColor1(color1);
         level.setBlock(pos,state.setValue(COLOR1,color1.getId()),3);
         level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
@@ -341,5 +317,6 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
     @Override
     public void appendHoverText(ItemStack stack, @org.jetbrains.annotations.Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
         list.add(Component.translatable("info.ugoblock.wireless_redstone_frequency").withStyle(ChatFormatting.GREEN));
+        list.add(Component.translatable("info.ugoblock.block_imitatable").withStyle(ChatFormatting.GREEN));
     }
 }

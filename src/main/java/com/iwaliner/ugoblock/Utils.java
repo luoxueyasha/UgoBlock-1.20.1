@@ -1,9 +1,10 @@
 package com.iwaliner.ugoblock;
 
+import com.iwaliner.ugoblock.object.controller.*;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
+import com.iwaliner.ugoblock.register.Register;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -16,15 +17,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.EnchantmentTableBlockEntity;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
@@ -146,24 +149,6 @@ public class Utils {
         }
 
     }
-    public static MovingBlockEntity.trigonometricFunctionType getReverseTrigonometricFunctionType(MovingBlockEntity.trigonometricFunctionType type){
-        switch (type){
-            case X_COUNTERCLOCKWISE: return MovingBlockEntity.trigonometricFunctionType.X_CLOCKWISE;
-            case X_CLOCKWISE: return MovingBlockEntity.trigonometricFunctionType.X_COUNTERCLOCKWISE;
-            case Y_COUNTERCLOCKWISE: return MovingBlockEntity.trigonometricFunctionType.Y_CLOCKWISE;
-            case Y_CLOCKWISE: return MovingBlockEntity.trigonometricFunctionType.Y_COUNTERCLOCKWISE;
-            case Z_COUNTERCLOCKWISE: return MovingBlockEntity.trigonometricFunctionType.Z_CLOCKWISE;
-            case Z_CLOCKWISE: return MovingBlockEntity.trigonometricFunctionType.Z_COUNTERCLOCKWISE;
-            default: return MovingBlockEntity.trigonometricFunctionType.NONE;
-        }
-    }
-    public static Direction.Axis getAxis(MovingBlockEntity.trigonometricFunctionType type) {
-        switch (type){
-            case X_CLOCKWISE,X_COUNTERCLOCKWISE: return Direction.Axis.X;
-            case Z_CLOCKWISE,Z_COUNTERCLOCKWISE: return Direction.Axis.Z;
-            default: return Direction.Axis.Y;
-        }
-    }
     public static List<BlockPos> rotatePosList(List<BlockPos> oldList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle) {
         List<BlockPos> newList=oldList;
         for (int i = 0; i < oldList.size(); i++) {
@@ -203,6 +188,141 @@ public class Utils {
             newList.set(i,new Vec3(positionRotated));
         }
         return newList;
+    }
+    public static void makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList,int visualDegree,boolean rotateState,BlockPos transitionPos){
+        BlockState controllerState=level.getBlockState(controllerPos);
+        if((controllerState.getBlock() instanceof RotationControllerBlock ||controllerState.getBlock() instanceof SlideControllerBlock)&&level.getBlockEntity(controllerPos) instanceof AbstractControllerBlockEntity controllerBlockEntity&&controllerBlockEntity.getItem(0).getItem()== Register.shape_card.get()&&controllerBlockEntity.getItem(0).getTag().contains("positionList")) {
+            CompoundTag entityTag=new CompoundTag();
+            CompoundTag posTag=new CompoundTag();
+            List<BlockPos> posList=controllerBlockEntity.getPositionList();
+
+            CompoundTag stateTag=new CompoundTag();
+            CompoundTag blockEntityTag=new CompoundTag();
+            Direction controllerDirection=controllerState.getValue(BlockStateProperties.FACING);
+            boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
+            if(invertRotation){
+                degree=-degree;
+                visualDegree=-visualDegree;
+            }
+            for(int i=0; i<posList.size();i++){
+                BlockPos eachPos=positionList.get(i);
+                BlockState eachState=level.getBlockState(eachPos);
+                BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
+                if (eachBlockEntity != null&&i!=positionList.indexOf(controllerPos)&&!(eachBlockEntity instanceof PistonMovingBlockEntity)) {
+                    if (eachBlockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && !slideControllerBlockEntity2.getEndPos().equals(Utils.errorPos())) {
+
+                        List<BlockPos> newPos = new ArrayList<>();
+                        for (int ii = 0; ii < ((SlideControllerBlockEntity) eachBlockEntity).getPositionList().size(); ii++) {
+                            newPos.add(slideControllerBlockEntity2.getPositionList().get(ii).offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ()));
+                        }
+                        slideControllerBlockEntity2.setPositionList(newPos);
+                        BlockPos newEndPos = slideControllerBlockEntity2.getEndPos().offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ());
+                        slideControllerBlockEntity2.setEndPos(newEndPos);
+
+                    }else if (eachBlockEntity instanceof RotationControllerBlockEntity rotationControllerBlockEntity && !rotationControllerBlockEntity.getPositionList().isEmpty() ) {
+
+                        List<BlockPos> newPos = new ArrayList<>();
+                        for (int ii = 0; ii < ((RotationControllerBlockEntity) eachBlockEntity).getPositionList().size(); ii++) {
+                            newPos.add(rotationControllerBlockEntity.getPositionList().get(ii).offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ()));
+                        }
+                        rotationControllerBlockEntity.setPositionList(newPos);
+                    }
+                    blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
+                }else if (eachBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
+                    eachState=pistonMovingBlockEntity.getMovedState();
+                    blockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
+                }else if (eachState.getBlock() instanceof PressurePlateBlock ||eachState.getBlock() instanceof ButtonBlock ||eachState.getBlock() instanceof TripWireBlock) {
+                    eachState=eachState.setValue(ButtonBlock.POWERED,false);
+                    blockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
+                }else{
+                    blockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
+                }
+                if(eachState.is(Register.TAG_DISABLE_MOVING)||i==positionList.indexOf(controllerPos)){
+                    eachState= Blocks.AIR.defaultBlockState();
+                }
+                if(axis!=null) {
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.HORIZONTAL_FACING) && axis == Direction.Axis.Y) {
+                        Direction oldDirection = eachState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+                        Direction newDirection = oldDirection;
+                        if (degree == 90) {
+                            newDirection = oldDirection.getCounterClockWise();
+                        } else if (degree == -90) {
+                            newDirection = oldDirection.getClockWise();
+                        } else if (degree == 180 || degree == -180) {
+                            newDirection = oldDirection.getOpposite();
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.HORIZONTAL_FACING, newDirection);
+                    }
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.AXIS)) {
+                        Direction.Axis oldAxis = eachState.getValue(BlockStateProperties.AXIS);
+                        Direction.Axis newAxis = oldAxis;
+                        if (degree == 90 || degree == -90) {
+                            if (axis == Direction.Axis.X) {
+                                newAxis = oldAxis == Direction.Axis.Y ? Direction.Axis.Z : oldAxis == Direction.Axis.X ? Direction.Axis.X : Direction.Axis.Y;
+                            } else if (axis == Direction.Axis.Y) {
+                                newAxis = oldAxis == Direction.Axis.X ? Direction.Axis.Z : oldAxis == Direction.Axis.Y ? Direction.Axis.Y : Direction.Axis.X;
+                            } else if (axis == Direction.Axis.Z) {
+                                newAxis = oldAxis == Direction.Axis.X ? Direction.Axis.Y : oldAxis == Direction.Axis.Z ? Direction.Axis.Z : Direction.Axis.X;
+                            }
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.AXIS, newAxis);
+                    }
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.FACING)) {
+                        Direction oldDirection = eachState.getValue(BlockStateProperties.FACING);
+                        Direction newDirection = oldDirection;
+                        if (degree == 90) {
+                            newDirection = oldDirection.getCounterClockWise(controllerState.getValue(BlockStateProperties.FACING).getAxis());
+                        } else if (degree == -90) {
+                            newDirection = oldDirection.getClockWise(controllerState.getValue(BlockStateProperties.FACING).getAxis());
+                        } else if (degree == 180 || degree == -180) {
+                            newDirection = oldDirection.getClockWise(controllerState.getValue(BlockStateProperties.FACING).getAxis()).getClockWise(controllerState.getValue(BlockStateProperties.FACING).getAxis());
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.FACING, newDirection);
+                    }
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.HALF) && controllerState.getValue(BlockStateProperties.FACING).getAxis() != Direction.Axis.Y) {
+                        Half oldHalf = eachState.getValue(BlockStateProperties.HALF);
+                        Half newHalf = oldHalf;
+                        if (degree == 180 || degree == -180) {
+                            if (oldHalf == Half.BOTTOM) {
+                                newHalf = Half.TOP;
+                            } else if (oldHalf == Half.TOP) {
+                                newHalf = Half.BOTTOM;
+                            }
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.HALF, newHalf);
+                    }
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.SLAB_TYPE) && controllerState.getValue(BlockStateProperties.FACING).getAxis() != Direction.Axis.Y) {
+                        SlabType oldHalf = eachState.getValue(BlockStateProperties.SLAB_TYPE);
+                        SlabType newHalf = oldHalf;
+                        if (degree == 180 || degree == -180) {
+                            if (oldHalf == SlabType.BOTTOM) {
+                                newHalf = SlabType.TOP;
+                            } else if (oldHalf == SlabType.TOP) {
+                                newHalf = SlabType.BOTTOM;
+                            }
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.SLAB_TYPE, newHalf);
+                    }
+                }
+                eachState= eachState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachPos).isEmpty() ? eachState : Blocks.AIR.defaultBlockState();
+                posTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ())));
+                stateTag.put("state_" + String.valueOf(i), NbtUtils.writeBlockState(eachState));
+
+            }
+            entityTag.put("positionList",posTag);
+            entityTag.put("stateList",stateTag);
+            entityTag.put("blockEntityList",blockEntityTag);
+
+            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, axis,degree,entityTag,visualDegree,controllerBlockEntity.isLoop(),!rotateState,transitionPos);
+            if(axis!=null) {
+                controllerBlockEntity.setVisualDegree(degree);
+            }
+            if (!level.isClientSide) {
+                level.addFreshEntity(moveableBlock);
+            }
+
+        }
+
     }
 
 }

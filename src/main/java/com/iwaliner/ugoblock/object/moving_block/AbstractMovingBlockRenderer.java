@@ -5,6 +5,8 @@ import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.mojang.math.Transformation;
+import net.minecraft.client.Camera;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -12,9 +14,11 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.*;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.level.Level;
@@ -26,16 +30,16 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.AxisAngle4d;
-import org.joml.Quaternionf;
+import org.joml.*;
 
 import javax.annotation.Nullable;
+import java.lang.Math;
 import java.util.List;
 
 
 @OnlyIn(Dist.CLIENT)
-    public class AbstractMovingBlockRenderer extends DisplayRenderer<MovingBlockEntity, MovingBlockEntity.BlockRenderState> {
-    private final ModelPart lid;
+    public class AbstractMovingBlockRenderer<T extends Display, S> extends EntityRenderer<T> {
+   /* private final ModelPart lid;
     private final ModelPart bottom;
     private final ModelPart lock;
     private final ModelPart doubleLeftLid;
@@ -43,14 +47,14 @@ import java.util.List;
     private final ModelPart doubleLeftLock;
     private final ModelPart doubleRightLid;
     private final ModelPart doubleRightBottom;
-    private final ModelPart doubleRightLock;
+    private final ModelPart doubleRightLock;*/
     private final BlockRenderDispatcher blockRenderer;
 
     protected AbstractMovingBlockRenderer(EntityRendererProvider.Context context) {
             super(context);
         this.blockRenderer = context.getBlockRenderDispatcher();
 
-        ModelPart modelpart = context.bakeLayer(ModelLayers.CHEST);
+      /*  ModelPart modelpart = context.bakeLayer(ModelLayers.CHEST);
             this.bottom = modelpart.getChild("bottom");
             this.lid = modelpart.getChild("lid");
             this.lock = modelpart.getChild("lock");
@@ -61,18 +65,65 @@ import java.util.List;
             ModelPart modelpart2 = context.bakeLayer(ModelLayers.DOUBLE_CHEST_RIGHT);
             this.doubleRightBottom = modelpart2.getChild("bottom");
             this.doubleRightLid = modelpart2.getChild("lid");
-            this.doubleRightLock = modelpart2.getChild("lock");
+            this.doubleRightLock = modelpart2.getChild("lock");*/
         }
 
-        @Nullable
+    @Override
+    public ResourceLocation getTextureLocation(T p_114482_) {
+      return   TextureAtlas.LOCATION_BLOCKS;
+    }
+
+    @Nullable
         protected Display.BlockDisplay.BlockRenderState getSubState(MovingBlockEntity p_277721_) {
             return p_277721_.blockRenderState();
         }
 
-        public void renderInner(MovingBlockEntity movingBlock, MovingBlockEntity.BlockRenderState renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int i0, float f0) {
+    private static <T extends Display> float entityYRot(T p_297849_, float p_297686_) {
+        return Mth.rotLerp(p_297686_, p_297849_.yRotO, p_297849_.getYRot());
+    }
+
+    private static <T extends Display> float entityXRot(T p_298651_, float p_297691_) {
+        return Mth.lerp(p_297691_, p_298651_.xRotO, p_298651_.getXRot());
+    }
+
+    /**表示の補完*/
+    private Quaternionf calculateOrientation(MovingBlockEntity movingBlock, float f, Quaternionf quaternionf) {
+                if(movingBlock.getAxis()== Direction.Axis.X){
+                    quaternionf = quaternionf.rotationYXZ(0F, -0.017453292F * entityYRot(movingBlock, f), 0.0F);
+                }else if(movingBlock.getAxis()== Direction.Axis.Y){
+                    quaternionf = quaternionf.rotationYXZ(-0.017453292F * entityYRot(movingBlock, f), ((float)Math.PI / 180F) * entityXRot(movingBlock, f), 0.0F);
+                }else if(movingBlock.getAxis()== Direction.Axis.Z){
+                    quaternionf = quaternionf.rotationYXZ(0F, ((float)Math.PI / 180F) * entityXRot(movingBlock, f), -0.017453292F * entityYRot(movingBlock, f));
+                }
+        return quaternionf;
+    }
+
+    public void render(T movingBlock, float f1, float f2, PoseStack poseStack, MultiBufferSource bufferSource, int i0) {
+        Display.RenderState display$renderstate = movingBlock.renderState();
+        if (display$renderstate != null) {
+            MovingBlockEntity.BlockRenderState s = this.getSubState((MovingBlockEntity) movingBlock);
+            if (s != null) {
+                float f = movingBlock.calculateInterpolationProgress(f2);
+                this.shadowRadius = display$renderstate.shadowRadius().get(f);
+                this.shadowStrength = display$renderstate.shadowStrength().get(f);
+                super.render(movingBlock, f1, f2, poseStack, bufferSource, i0);
+                poseStack.pushPose();
+                poseStack.mulPose(this.calculateOrientation((MovingBlockEntity) movingBlock, f2, new Quaternionf()));
+                Transformation transformation = display$renderstate.transformation().get(f);
+                poseStack.mulPoseMatrix(transformation.getMatrix());
+                poseStack.last().normal().rotate(transformation.getLeftRotation()).rotate(transformation.getRightRotation());
+                this.renderInner( (MovingBlockEntity)movingBlock, s, poseStack, bufferSource, 16777215, f);
+                poseStack.popPose();
+            }
+        }
+    }
+
+
+    public void renderInner(MovingBlockEntity movingBlock, MovingBlockEntity.BlockRenderState renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int i0, float f0) {
             List<BlockPos> posList=movingBlock.getPosList();
             List<BlockState> stateList=movingBlock.getStateList();
             Level level=movingBlock.level();
+
             poseStack.mulPose(Axis.XP.rotationDegrees((float) movingBlock.getVisualXRot()));
             poseStack.mulPose(Axis.YP.rotationDegrees((float) movingBlock.getVisualYRot()));
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) movingBlock.getVisualZRot()));

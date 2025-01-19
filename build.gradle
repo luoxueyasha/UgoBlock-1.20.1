@@ -130,25 +130,23 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
-    // Put repositories for dependencies here
-    // ForgeGradle automatically adds the Forge maven and Maven Central for you
-
-    // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
-    // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
-    // flatDir {
-    //     dir 'libs'
-    // }
+    maven {
+        url "https://cursemaven.com"
+    }
 }
 
 dependencies {
-    // Specify the version of Minecraft to use.
-    // Any artifact can be supplied so long as it has a "userdev" classifier artifact and is a compatible patcher artifact.
-    // The "userdev" classifier will be requested and setup by ForgeGradle.
-    // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
-    // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    
+    runtimeOnly(  fg.deobf("curse.maven:jei-238222:5101366"))
+    compileOnly(  fg.deobf("curse.maven:jade-324717:5672013"))
+    compileOnly(  fg.deobf("curse.maven:jei-238222:5101366"))
+    runtimeOnly(  fg.deobf("curse.maven:mouse-tweaks-60089:5338457"))
+    runtimeOnly(  fg.deobf("curse.maven:jade-324717:5672013"))
+    runtimeOnly(  fg.deobf("curse.maven:effortless-building-302113:4979089"))
+    runtimeOnly(  fg.deobf("curse.maven:journeymap-32274:5789363"))
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
