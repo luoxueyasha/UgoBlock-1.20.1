@@ -5,6 +5,7 @@ import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -15,8 +16,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -323,6 +326,30 @@ public class Utils {
 
         }
 
+    }
+    public static Component getComponentFrequencyAlreadyExists(DyeColor color1,DyeColor color2,DyeColor color3){
+      return   Component.translatable("info.ugoblock.frequency_already_exists",Component.translatable(getColorComponent(color1)).getString(),Component.translatable(getColorComponent(color2)),Component.translatable(getColorComponent(color3))).withStyle(ChatFormatting.YELLOW);
+    }
+    private static String getColorComponent(DyeColor color){
+        switch (color){
+            case WHITE : return "info.ugoblock.color_white";
+            case ORANGE: return "info.ugoblock.color_orange";
+            case MAGENTA: return "info.ugoblock.color_magenta";
+            case LIGHT_BLUE: return "info.ugoblock.color_light_blue";
+            case YELLOW: return "info.ugoblock.color_yellow";
+            case LIME: return "info.ugoblock.color_lime";
+            case PINK: return "info.ugoblock.color_pink";
+            case GRAY: return "info.ugoblock.color_gray";
+            case LIGHT_GRAY: return "info.ugoblock.color_light_gray";
+            case CYAN: return "info.ugoblock.color_cyan";
+            case PURPLE: return "info.ugoblock.color_purple";
+            case BLUE: return "info.ugoblock.color_blue";
+            case BROWN: return "info.ugoblock.color_brown";
+            case GREEN: return "info.ugoblock.color_green";
+            case RED: return "info.ugoblock.color_red";
+            case BLACK: return "info.ugoblock.color_black";
+        }
+        return "info.ugoblock.color_white";
     }
 
 }

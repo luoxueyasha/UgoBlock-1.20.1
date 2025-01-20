@@ -80,7 +80,7 @@ public class ModCoreUgoBlock
                 event.getPlayer().level().getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
                     boolean alreadyExist=!data.isSignalNull(PortableWirelessRedstoneTransmitterItem.getColor1(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor2(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor3(transmitterStack));
                     if(alreadyExist&&event.getPlayer().level().isClientSide){
-                        event.getPlayer().displayClientMessage(Component.translatable("info.ugoblock.frequency_already_exists_color_portable").withStyle(ChatFormatting.RED), false);
+                        event.getPlayer().displayClientMessage(Utils.getComponentFrequencyAlreadyExists(PortableWirelessRedstoneTransmitterItem.getColor1(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor2(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor3(transmitterStack)), false);
                     }
                 });
                 event.setCanceled(true);

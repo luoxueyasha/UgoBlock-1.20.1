@@ -112,14 +112,14 @@ import java.util.List;
                 Transformation transformation = display$renderstate.transformation().get(f);
                 poseStack.mulPoseMatrix(transformation.getMatrix());
                 poseStack.last().normal().rotate(transformation.getLeftRotation()).rotate(transformation.getRightRotation());
-                this.renderInner( (MovingBlockEntity)movingBlock, s, poseStack, bufferSource, 16777215, f);
+                this.renderInner( (MovingBlockEntity)movingBlock, poseStack, bufferSource);
                 poseStack.popPose();
             }
         }
     }
 
 
-    public void renderInner(MovingBlockEntity movingBlock, MovingBlockEntity.BlockRenderState renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int i0, float f0) {
+    private void renderInner(MovingBlockEntity movingBlock, PoseStack poseStack, MultiBufferSource multiBufferSource) {
             List<BlockPos> posList=movingBlock.getPosList();
             List<BlockState> stateList=movingBlock.getStateList();
             Level level=movingBlock.level();
@@ -226,13 +226,19 @@ import java.util.List;
                         }*/
 
                         poseStack.translate(-0.4999D,-0.4999D,-0.4999D);
-
-                        this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
+                        int lightLevel=block.getLightEmission(eachState,level,eachPos);
+                         this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
 
                     }
                     poseStack.popPose();
                 }
             }
+        }
+        private int brightness(int lightLevel){
+        switch (lightLevel){
+            case 15 : return 15728880;
+            default: return 16777215;
+        }
         }
         private boolean shouldRender(BlockState state){
             return state==null||(state.getShape(null,null)!= Shapes.block())||!Utils.isBlockSolid(state);

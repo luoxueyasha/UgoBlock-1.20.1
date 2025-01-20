@@ -242,7 +242,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
             ItemStack endLocationCard=new ItemStack(Register.end_location_card.get());
             CompoundTag tag=new CompoundTag();
             tag.put("end_location", NbtUtils.writeBlockPos(Utils.errorPos()));
-            tag.put("start_location", NbtUtils.writeBlockPos(pos.relative(state.getValue(FACING))));
+            //tag.put("start_location", NbtUtils.writeBlockPos(pos.relative(state.getValue(FACING))));
             endLocationCard.setTag(tag);
             ItemEntity itemEntity1=new ItemEntity(level,livingEntity.getX(),livingEntity.getY()+1D,livingEntity.getZ(),new ItemStack(Register.shape_card.get()));
             ItemEntity itemEntity2=new ItemEntity(level,livingEntity.getX(),livingEntity.getY()+1D,livingEntity.getZ(),endLocationCard);

@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
+import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -253,7 +254,7 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
         level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
             boolean alreadyExist=!data.isSignalNull(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3());
             if(alreadyExist){
-                player.displayClientMessage(Component.translatable("info.ugoblock.frequency_already_exists_color1").withStyle(ChatFormatting.GREEN), false);
+                player.displayClientMessage(Utils.getComponentFrequencyAlreadyExists(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3()), true);
             }
         });
         level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
@@ -264,7 +265,7 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
         level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
             boolean alreadyExist=!data.isSignalNull(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3());
             if(alreadyExist){
-                player.displayClientMessage(Component.translatable("info.ugoblock.frequency_already_exists_color2").withStyle(ChatFormatting.YELLOW), false);
+                player.displayClientMessage(Utils.getComponentFrequencyAlreadyExists(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3()), true);
             }
         });
         level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
@@ -275,7 +276,7 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
         level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
             boolean alreadyExist=!data.isSignalNull(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3());
             if(alreadyExist){
-                 player.displayClientMessage(Component.translatable("info.ugoblock.frequency_already_exists_color3").withStyle(ChatFormatting.RED), false);
+                player.displayClientMessage(Utils.getComponentFrequencyAlreadyExists(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3()), true);
             }
         });
         level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
