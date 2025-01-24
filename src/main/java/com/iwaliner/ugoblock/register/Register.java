@@ -1,6 +1,9 @@
 package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlock;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlockEntity;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerMenu;
 import com.iwaliner.ugoblock.object.block_imitation_wand.BlockImitationWandItem;
 import com.iwaliner.ugoblock.object.controller.*;
 import com.iwaliner.ugoblock.object.moving_block.CollisionEntity;
@@ -39,6 +42,8 @@ public class Register {
     public static final RegistryObject<Item> end_location_card =ITEMS.register("end_position_card",() -> {return new EndLocationCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
     public static final RegistryObject<Block> rotation_controller_block =BLOCKS.register("rotation_controller",() -> {return new RotationControllerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> rotation_controller_blockitem =ITEMS.register("rotation_controller",() -> {return new BlockItem( Objects.requireNonNull(rotation_controller_block.get()), (new Item.Properties()));});
+    public static final RegistryObject<Block> basket_maker_block =BLOCKS.register("basket_maker",() -> {return new BasketMakerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
+    public static final RegistryObject<Item> basket_maker_blockitem =ITEMS.register("basket_maker",() -> {return new BlockItem( Objects.requireNonNull(basket_maker_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Block> wireless_redstone_transmitter_block =BLOCKS.register("wireless_redstone_transmitter",() -> {return new WirelessRedstoneTransmitterBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> wireless_redstone_transmitter_blockitem =ITEMS.register("wireless_redstone_transmitter",() -> {return new BlockItem( Objects.requireNonNull(wireless_redstone_transmitter_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Block> wireless_redstone_receiver_block =BLOCKS.register("wireless_redstone_receiver",() -> {return new WirelessRedstoneReceiverBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
@@ -64,6 +69,7 @@ public class Register {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ModCoreUgoBlock.MODID);
     public static final RegistryObject<BlockEntityType<SlideControllerBlockEntity>> SlideController=BLOCK_ENTITIES.register("slide_controller", () -> BlockEntityType.Builder.of(SlideControllerBlockEntity::new, Register.slide_controller_block.get()).build(null));
     public static final RegistryObject<BlockEntityType<RotationControllerBlockEntity>> RotationController=BLOCK_ENTITIES.register("rotation_controller", () -> BlockEntityType.Builder.of(RotationControllerBlockEntity::new, Register.rotation_controller_block.get()).build(null));
+    public static final RegistryObject<BlockEntityType<BasketMakerBlockEntity>> BasketMakerBlockEntity=BLOCK_ENTITIES.register("basket_maker", () -> BlockEntityType.Builder.of(BasketMakerBlockEntity::new, Register.basket_maker_block.get()).build(null));
     public static final RegistryObject<BlockEntityType<WirelessRedstoneTransmitterBlockEntity>> WirelessRedstoneTransmitterBlockEntity=BLOCK_ENTITIES.register("wireless_redstone_transmitter", () -> BlockEntityType.Builder.of(WirelessRedstoneTransmitterBlockEntity::new, Register.wireless_redstone_transmitter_block.get()).build(null));
     public static final RegistryObject<BlockEntityType<WirelessRedstoneReceiverBlockEntity>> WirelessRedstoneReceiverBlockEntity=BLOCK_ENTITIES.register("wireless_redstone_receiver", () -> BlockEntityType.Builder.of(WirelessRedstoneReceiverBlockEntity::new, Register.wireless_redstone_receiver_block.get()).build(null));
 
@@ -74,6 +80,7 @@ public class Register {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, ModCoreUgoBlock.MODID);
     public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.controller.SlideControllerMenu>> SlideControllerMenu = MENUS.register("slide_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new SlideControllerMenu(windowId, inv);}));
     public static final RegistryObject<MenuType<com.iwaliner.ugoblock.object.controller.RotationControllerMenu>> RotationControllerMenu = MENUS.register("rotation_controller", () -> IForgeMenuType.create((windowId, inv, data) -> {return new RotationControllerMenu(windowId, inv);}));
+    public static final RegistryObject<MenuType<BasketMakerMenu>> BasketMakerMenu = MENUS.register("basket_maker", () -> IForgeMenuType.create((windowId, inv, data) -> {return new BasketMakerMenu(windowId, inv);}));
 
 
 

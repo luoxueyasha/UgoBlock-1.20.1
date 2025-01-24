@@ -4,10 +4,10 @@
    "info.ugoblock.slide_controller_observer": "If it contains an Observer, the observer outputs a redstone signal after the transition.",
    "item.ugoblock.shape_card": "Shape Card",
    "item.ugoblock.end_position_card": "End Position Card",
-   "entity.urushi.moving_block": "Moving Block",
+   "entity.ugoblock.moving_block": "Moving Block",
    "info.ugoblock.shape_card": "A range can be selected by right-clicking and then right-clicking on another location. Complex shapes can be recorded by repeating this process. Left-click to deselect a selection.",
    "info.ugoblock.shape_card_location": "Recorded Position：",
-   "info.ugoblock.shape_card_location_other": "and so on.",
+   "info.ugoblock.shape_card_location_other": "and so on. %d blocks are selected.",
    "info.ugoblock.end_location_card": "Right-click to select the block you want to be in front of the Slide Controller when it finishes moving. Left click to deselect.",
    "info.ugoblock.end_location_card_location": "Recorded End Position：",
    "info.ugoblock.slide_controller_start_time": "Seconds to start moving",
@@ -56,5 +56,7 @@
    "info.ugoblock.color_green": "Green",
    "info.ugoblock.color_red": "Red",
    "info.ugoblock.color_black": "Black",
-   "info.ugoblock.frequency_already_exists": "Already exists a Transmitter of this [%s, %s, %s] frequency."
+   "info.ugoblock.frequency_already_exists": "Already exists a Transmitter of this [%s, %s, %s] frequency.",
+   "info.ugoblock.reachedPositionSelectLimit": "Too many blocks selected! The limit is %d blocks.",
+   "info.ugoblock.slide_controller_scroll": "Speed can also be set by scrolling the mouse wheel on the GUI."
 }

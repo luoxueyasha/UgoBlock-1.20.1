@@ -64,7 +64,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         ItemStack stack=player.getItemInHand(hand);
         if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
-            if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()) {
+            if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()&&!player.isSuppressingBounce()) {
                 blockEntity.setItem(0,stack);
                 blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
@@ -114,7 +114,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
     }
     private void removeBlocks (Level level,BlockPos startPos,RotationControllerBlockEntity blockEntity, BlockState state){
         if(blockEntity.hasCards()) {
-            List<BlockPos> posList=state.getValue(POWERED)? blockEntity.getPositionList() :  Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),blockEntity.getDegreeAngle());
+            List<BlockPos> posList=state.getValue(POWERED)? blockEntity.getPositionList() :  Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
             if(posList!=null) {
                 for (BlockPos eachPos : posList) {
                     if(!blockEntity.getBlockPos().equals(eachPos)) {
@@ -130,6 +130,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
         boolean flag = state.getValue(POWERED);
             if (flag != level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
                 BlockPos startPos = pos.relative(state.getValue(FACING));
+                Direction controllerDirection=state.getValue(BlockStateProperties.FACING);
                 if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
                       int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
@@ -142,11 +143,13 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
                                   blockEntity.setMoving(true);
                                   /**ブロックをエンティティ化*/
-                                  Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), blockEntity.getDegreeAngle(),blockEntity.getPositionList(),0,false,BlockPos.ZERO);
+                                  Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0);
+
                               }
                           }
                           level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,true), 2);
                           level.scheduleTick(pos, this, 2);
+
                       }else{
 
                           boolean b1=false;
@@ -162,22 +165,33 @@ public class RotationControllerBlock extends BaseEntityBlock {
                               makeMoveableBlockReverse(level,pos,movingBlock);
                           }
                           if(!b1){
-                              int degree=-blockEntity.getDegreeAngle();
+                              int degree=-getDegreeAngle(state,blockEntity);
                               /*if(degree>=180){
                                   degree=-180;
                               }else if(degree<=-180){
                                   degree=180;
                               }*/
-                             List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),blockEntity.getDegreeAngle());
-                              /**ブロックをエンティティ化*/
+                              boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
+                              int degree0=degree;
+                             // int visualDegree0=blockEntity.getVisualDegree();
+
+                              if(invertRotation&&(degree0%90)==0){
+                                  //  degree0=-degree0;
+                                  //  visualDegree0=-visualDegree0;
+                              }
+                             List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
                               if(!blockEntity.isLoop()){
-                                 Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), degree,blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), blockEntity.getVisualDegree(),true,BlockPos.ZERO);
+                                //  int visualDegree= blockEntity.getVisualDegree();
+
+
+                                  /**ブロックをエンティティ化*/
+                                  Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, getVisualDegreeAngle(state,blockEntity),true,BlockPos.ZERO,0);
                                   blockEntity.setMoving(true);
                                   level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,true), 2);
                                   level.scheduleTick(pos, this, 2);
                               }else{
                                   removeBlocks(level,startPos,blockEntity,state);
-                                  Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), degree,blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), 0,true,BlockPos.ZERO);
+                                  Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), 0,true,BlockPos.ZERO,0);
 
                               }
                           }else{
@@ -219,6 +233,22 @@ public class RotationControllerBlock extends BaseEntityBlock {
                    }
             }
 
+    }
+    public int getDegreeAngle(BlockState state,RotationControllerBlockEntity blockEntity){
+        Direction controllerDirection=state.getValue(FACING);
+        boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
+        if(invertRotation){
+          return   -blockEntity.getDegreeAngle();
+        }
+        return blockEntity.getDegreeAngle();
+    }
+    public int getVisualDegreeAngle(BlockState state,RotationControllerBlockEntity blockEntity){
+        Direction controllerDirection=state.getValue(FACING);
+        boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
+        /*if(invertRotation){
+            return   -blockEntity.getVisualDegree();
+        }*/
+        return blockEntity.getVisualDegree();
     }
 
    /* public void makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList, int visualDegree, boolean rotateState){
@@ -424,6 +454,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
     @Override
     public void appendHoverText(ItemStack stack, @org.jetbrains.annotations.Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
         list.add(Component.translatable("info.ugoblock.rotation_controller").withStyle(ChatFormatting.GREEN));
+        list.add(Component.translatable("info.ugoblock.slide_controller_observer").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.rotation_controller_scroll").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.block_imitatable").withStyle(ChatFormatting.GREEN));
     }

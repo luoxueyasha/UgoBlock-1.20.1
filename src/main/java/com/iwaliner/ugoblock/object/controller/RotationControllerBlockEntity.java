@@ -293,5 +293,8 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
     public boolean canPlaceItem(int i, ItemStack stack) {
             return stack.getItem()==Register.shape_card.get();
     }
-
+    public void markUpdated() {
+        this.setChanged();
+        this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+    }
 }

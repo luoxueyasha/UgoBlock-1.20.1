@@ -49,6 +49,7 @@ public class BlockImitationWandItem extends Item {
                 }else{
                     stack.setDamageValue(stack.getDamageValue()-1);
                 }
+                ((ImitatableBlockEntity) blockEntity).markUpdated();
                 return InteractionResult.SUCCESS;
             }
         }

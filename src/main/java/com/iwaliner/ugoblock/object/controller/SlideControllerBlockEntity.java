@@ -261,7 +261,7 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
             }
 
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
+          //  level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
         }
 
        }
@@ -280,5 +280,9 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
     public boolean isOneway() {
         return oneway;
+    }
+    public void markUpdated() {
+        this.setChanged();
+        this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
     }
 }

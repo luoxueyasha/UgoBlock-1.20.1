@@ -60,7 +60,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         ItemStack stack=player.getItemInHand(hand);
         if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
-            if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()) {
+            if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()&&!player.isSuppressingBounce()) {
                 blockEntity.setItem(0,stack);
                 blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
@@ -122,9 +122,10 @@ public class SlideControllerBlock extends BaseEntityBlock {
                                 /**↓移動の変位。座標ではないことに注意。*/
                                BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
                                /**ブロックをエンティティ化*/
-                               Utils.makeMoveableBlock(level,pos, startPos, start, duration,null,0,blockEntity.getPositionList(),0,false, transitionPos);
+                               Utils.makeMoveableBlock(level,pos, startPos, start, duration,null,0,blockEntity.getPositionList(),0,false, transitionPos,0);
 
                                level.setBlock(pos, state.cycle(POWERED), 2);
+
                                level.scheduleTick(pos, this, 2);
                            }
 
@@ -256,6 +257,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
     public void appendHoverText(ItemStack stack, @org.jetbrains.annotations.Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
         list.add(Component.translatable("info.ugoblock.slide_controller").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.slide_controller_observer").withStyle(ChatFormatting.GREEN));
+        list.add(Component.translatable("info.ugoblock.slide_controller_scroll").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.block_imitatable").withStyle(ChatFormatting.GREEN));
     }
 

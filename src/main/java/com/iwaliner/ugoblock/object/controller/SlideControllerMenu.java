@@ -163,15 +163,15 @@ public class SlideControllerMenu extends AbstractContainerMenu {
             }
             return true;
         }else if(variable==6){
-            if(speed<50){
+            if(speed<8){
                 addSpeed(1);
             }
             return true;
         }else if(variable==7){
-            if(speed<=45){
+            if(speed<=8-5){
                 addSpeed(5);
             }else{
-                setSpeed(50);
+                setSpeed(8);
             }
             return true;
         }else if(variable==8){

@@ -132,5 +132,8 @@ public class WirelessRedstoneReceiverBlockEntity extends BlockEntity implements 
             });
         }
     }
-
+    public void markUpdated() {
+        this.setChanged();
+        this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+    }
 }

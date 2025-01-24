@@ -107,5 +107,8 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
         super.onDataPacket(net, pkt);
     }
 
-
+    public void markUpdated() {
+        this.setChanged();
+        this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+    }
 }

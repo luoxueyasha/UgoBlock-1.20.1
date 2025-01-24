@@ -1,6 +1,7 @@
 package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerScreen;
 import com.iwaliner.ugoblock.object.controller.RotationControllerRenderer;
 import com.iwaliner.ugoblock.object.controller.SlideControllerRenderer;
 import com.iwaliner.ugoblock.object.moving_block.CollisionEntityRenderer;
@@ -45,6 +46,7 @@ public class ClientSetUp {
         BlockEntityRenderers.register(Register.WirelessRedstoneReceiverBlockEntity.get(), WirelessRedstoneReceiverRenderer::new);
         MenuScreens.register(Register.SlideControllerMenu.get(), SlideControllerScreen::new);
         MenuScreens.register(Register.RotationControllerMenu.get(), RotationControllerScreen::new);
+        MenuScreens.register(Register.BasketMakerMenu.get(), BasketMakerScreen::new);
             event.enqueueWork(() -> {
                 ItemProperties.register(Register.portable_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color1"), (itemStack, clientWorld, livingEntity, i) -> PortableWirelessRedstoneTransmitterItem.getColor1(itemStack).getId());
                 ItemProperties.register(Register.portable_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color2"), (itemStack, clientWorld, livingEntity, i) -> PortableWirelessRedstoneTransmitterItem.getColor2(itemStack).getId());

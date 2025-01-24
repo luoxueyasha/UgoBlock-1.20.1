@@ -1,5 +1,7 @@
 package com.iwaliner.ugoblock;
 
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlock;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlockEntity;
 import com.iwaliner.ugoblock.object.controller.*;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
@@ -16,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -37,10 +40,11 @@ import org.joml.Vector3f;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Utils {
     public static int getMaxSize(){
-        return 25000;
+        return 4801;
     }
     public static BlockPos errorPos(){
         return new BlockPos(0,-999999999,0);
@@ -154,6 +158,7 @@ public class Utils {
     }
     public static List<BlockPos> rotatePosList(List<BlockPos> oldList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle) {
         List<BlockPos> newList=oldList;
+
         for (int i = 0; i < oldList.size(); i++) {
             BlockPos eachPos = oldList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());
                Vector3f origin = newOriginPos.getCenter().toVector3f();
@@ -192,7 +197,7 @@ public class Utils {
         }
         return newList;
     }
-    public static void makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList,int visualDegree,boolean rotateState,BlockPos transitionPos){
+    public static void makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList,int visualDegree,boolean rotateState,BlockPos transitionPos,int startRotation){
         BlockState controllerState=level.getBlockState(controllerPos);
         if((controllerState.getBlock() instanceof RotationControllerBlock ||controllerState.getBlock() instanceof SlideControllerBlock)&&level.getBlockEntity(controllerPos) instanceof AbstractControllerBlockEntity controllerBlockEntity&&controllerBlockEntity.getItem(0).getItem()== Register.shape_card.get()&&controllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             CompoundTag entityTag=new CompoundTag();
@@ -201,12 +206,18 @@ public class Utils {
 
             CompoundTag stateTag=new CompoundTag();
             CompoundTag blockEntityTag=new CompoundTag();
+            CompoundTag basketPosTag=new CompoundTag();
+            CompoundTag basketOriginPosTag=new CompoundTag();
+            CompoundTag basketStateTag=new CompoundTag();
+            CompoundTag basketBlockEntityTag=new CompoundTag();
+            CompoundTag basketMakerIndexTag=new CompoundTag();
+            int basketPosAmount=0;
             Direction controllerDirection=controllerState.getValue(BlockStateProperties.FACING);
             boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
-            if(invertRotation){
+          /*  if(invertRotation*//*&&degree%90!=0*//*){
                 degree=-degree;
                 visualDegree=-visualDegree;
-            }
+            }*/
             for(int i=0; i<posList.size();i++){
                 BlockPos eachPos=positionList.get(i);
                 BlockState eachState=level.getBlockState(eachPos);
@@ -229,7 +240,34 @@ public class Utils {
                             newPos.add(rotationControllerBlockEntity.getPositionList().get(ii).offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ()));
                         }
                         rotationControllerBlockEntity.setPositionList(newPos);
+                    }else if (eachBlockEntity instanceof BasketMakerBlockEntity basketMakerBlockEntity&&eachState.is(Register.basket_maker_block.get())) {
+                        List<BlockPos> basketPosList=basketMakerBlockEntity.getPositionList();
+                        BlockPos basketMakerPos=eachPos;
+                        BlockPos basketOriginPos=basketMakerPos.relative(eachState.getValue(BasketMakerBlock.FACING));
+                        for(int j=basketPosAmount;j<basketPosAmount+basketPosList.size();j++){
+                            BlockPos eachBasketComponentPos=basketPosList.get(j);
+                            BlockState eachBasketComponentState=level.getBlockState(eachBasketComponentPos);
+                            BlockEntity eachBasketComponentBlockEntity=level.getBlockEntity(eachBasketComponentPos);
+                            if(eachBasketComponentBlockEntity!=null){
+                                if (eachBasketComponentBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
+                                    eachBasketComponentState=pistonMovingBlockEntity.getMovedState();
+                                    basketBlockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
+                                }else {
+                                    basketBlockEntityTag.put("blockEntity_" + String.valueOf(j), eachBasketComponentBlockEntity.saveWithFullMetadata());
+                                }
+                            }else{
+                                basketBlockEntityTag.put("blockEntity_" + String.valueOf(j),new CompoundTag());
+                            }
+                            eachBasketComponentState= eachBasketComponentState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachBasketComponentState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachBasketComponentPos).isEmpty() ? eachBasketComponentState : Blocks.AIR.defaultBlockState();
+                            basketOriginPosTag.put("location_" + String.valueOf(j), NbtUtils.writeBlockPos(new BlockPos(basketOriginPos.getX() - startPos.getX(), basketOriginPos.getY() - startPos.getY(), basketOriginPos.getZ() - startPos.getZ())));
+                            basketPosTag.put("location_" + String.valueOf(j), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
+                            basketStateTag.put("state_" + String.valueOf(j), NbtUtils.writeBlockState(eachBasketComponentState));
+                            basketMakerIndexTag.putInt("index_" + String.valueOf(j),i);
+                        }
+                        basketPosAmount+=basketPosList.size();
+                     //   blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
                     }
+
                     blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
                 }else if (eachBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
                     eachState=pistonMovingBlockEntity.getMovedState();
@@ -306,26 +344,85 @@ public class Utils {
                         }
                         eachState = eachState.setValue(BlockStateProperties.SLAB_TYPE, newHalf);
                     }
+                    if (rotateState&&eachState.getBlock() instanceof CrossCollisionBlock) {
+                       boolean north=eachState.getValue(CrossCollisionBlock.NORTH);
+                       boolean east=eachState.getValue(CrossCollisionBlock.EAST);
+                       boolean south=eachState.getValue(CrossCollisionBlock.SOUTH);
+                       boolean west=eachState.getValue(CrossCollisionBlock.WEST);
+                       boolean north2=north;
+                       boolean east2=east;
+                       boolean south2=south;
+                       boolean west2=west;
+
+                            if (axis == Direction.Axis.X) {
+                                if(degree==180||degree==-180){
+                                    north2=south;
+                                    south2=north;
+                                }
+                             } else if (axis == Direction.Axis.Y) {
+                                if(degree==90) {
+                                    north2 = east;
+                                    west2 = north;
+                                    south2 = west;
+                                    east2 = south;
+                                }else if(degree==-90) {
+                                    north2 = west;
+                                    west2 = south;
+                                    south2 = east;
+                                    east2 = north;
+                                }else if(degree==180||degree==-180) {
+                                    east2=west;
+                                    west2=east;
+                                    north2=south;
+                                    south2=north;
+                                }
+                             } else if (axis == Direction.Axis.Z) {
+                                if(degree==180||degree==-180){
+                                    east2=west;
+                                    west2=east;
+                                }
+                        }
+                        eachState = eachState.setValue(CrossCollisionBlock.NORTH,north2).setValue(CrossCollisionBlock.EAST,east2).setValue(CrossCollisionBlock.SOUTH,south2).setValue(CrossCollisionBlock.WEST,west2);
+                    }
                 }
                 eachState= eachState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachPos).isEmpty() ? eachState : Blocks.AIR.defaultBlockState();
-                posTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ())));
-                stateTag.put("state_" + String.valueOf(i), NbtUtils.writeBlockState(eachState));
+                CompoundTag posNBT=NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ()));
+                posTag.put("location_" + String.valueOf(i),posNBT );
+                CompoundTag stateNBT=NbtUtils.writeBlockState(eachState);
+                stateTag.put("state_" + String.valueOf(i), stateNBT);
+
 
             }
-            entityTag.put("positionList",posTag);
+            /*entityTag.put("positionList",posTag);
             entityTag.put("stateList",stateTag);
-            entityTag.put("blockEntityList",blockEntityTag);
+            entityTag.put("blockEntityList",blockEntityTag);*/
+            CompoundTag basketTag=new CompoundTag();
+            basketTag.put("indexList",basketMakerIndexTag);
+            basketTag.put("positionList",basketPosTag);
+            basketTag.put("originPositionList",basketOriginPosTag);
+            basketTag.put("stateList",basketStateTag);
+            basketTag.put("blockEntityList",basketBlockEntityTag);
+            entityTag.put("basketData",basketTag);
+            if(reachedNBTLimit(basketTag)||reachedNBTLimit(posTag)||reachedNBTLimit(stateTag)||reachedNBTLimit(blockEntityTag)){
 
-            MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, axis,degree,entityTag,visualDegree,controllerBlockEntity.isLoop(),!rotateState,transitionPos);
-            if(axis!=null) {
-                controllerBlockEntity.setVisualDegree(degree);
+            }else {
+                MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, axis, degree, posTag, stateTag, blockEntityTag, entityTag, visualDegree, controllerBlockEntity.isLoop(), !rotateState, transitionPos);
+                moveableBlock.setStartRotation(startRotation);
+                if (axis != null) {
+                    controllerBlockEntity.setVisualDegree(degree);
+                }
+                if (!level.isClientSide) {
+                    level.addFreshEntity(moveableBlock);
+                }
             }
-            if (!level.isClientSide) {
-                level.addFreshEntity(moveableBlock);
-            }
-
         }
 
+    }
+    private static int calculateDataSize(CompoundTag tag){
+        return tag.sizeInBytes();
+    }
+    public static boolean reachedNBTLimit(CompoundTag tag){
+        return calculateDataSize(tag)>=2097152;
     }
     public static Component getComponentFrequencyAlreadyExists(DyeColor color1,DyeColor color2,DyeColor color3){
       return   Component.translatable("info.ugoblock.frequency_already_exists",Component.translatable(getColorComponent(color1)).getString(),Component.translatable(getColorComponent(color2)),Component.translatable(getColorComponent(color3))).withStyle(ChatFormatting.YELLOW);

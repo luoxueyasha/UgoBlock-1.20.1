@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.controller;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -122,7 +123,7 @@ public class ShapeCardItem extends Item {
             }
             tag.putBoolean("select",!tag.getBoolean("select"));
 
-            if(!(state.getBlock() instanceof SlideControllerBlock)){
+         //   if(!(state.getBlock() instanceof SlideControllerBlock)){
                 int ii=-1;
                 for(int i=0;i<Utils.getMaxSize();i++){
                     if(!posTag.contains("location_"+String.valueOf(i))){
@@ -156,15 +157,25 @@ public class ShapeCardItem extends Item {
                                 }
                             }
                         }
+
                         /**始点をリセット*/
                         tag.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
                     }
                 }
+            if(posTag.size()>=Utils.getMaxSize()){
+                if(context.getPlayer()!=null&&!level.isClientSide) {
+                    context.getPlayer().displayClientMessage(Component.translatable("info.ugoblock.reachedPositionSelectLimit",Utils.getMaxSize()-1).withStyle(ChatFormatting.RED), false);
+                }
+                CompoundTag tag1=new CompoundTag();
+                tag1.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
+                stack.setTag(tag1);
+            }else {
                 stack.setTag(tag);
+            }
                 level.playSound(context.getPlayer(),pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
             }
-        }
+       // }
         return InteractionResult.FAIL;
     }
 
@@ -186,7 +197,7 @@ public class ShapeCardItem extends Item {
                 }
             }
             if(size>5) {
-                list.add(Component.translatable("info.ugoblock.shape_card_location_other").withStyle(ChatFormatting.GRAY));
+                list.add(Component.translatable("info.ugoblock.shape_card_location_other",size).withStyle(ChatFormatting.GRAY));
             }
         }
     }

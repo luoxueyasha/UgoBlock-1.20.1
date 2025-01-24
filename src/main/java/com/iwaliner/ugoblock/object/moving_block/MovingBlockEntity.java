@@ -1,11 +1,10 @@
 package com.iwaliner.ugoblock.object.moving_block;
 
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
-import com.iwaliner.ugoblock.object.controller.RotationControllerBlock;
-import com.iwaliner.ugoblock.object.controller.SlideControllerBlock;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -58,7 +57,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     /**回転時の回転軸*/
     public static final EntityDataAccessor<Byte> DATA_AXIS_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BYTE);
 
-    /**移動している最中の各位置におけるブロックエンティティのデータを格納*/
+    /**移動している最中の各座標、ブロック、ブロックエンティティのデータを格納*/
     public static final EntityDataAccessor<CompoundTag> DATA_COMPOUND_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     /**動かす角度。左回りが正。(度数法)*/
@@ -84,11 +83,35 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     /**動き始めた瞬間の向き(Yrot)*/
     public static final EntityDataAccessor<Integer> DATA_STAT_ROTATION_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.INT);
 
+    public static final EntityDataAccessor<CompoundTag> DATA_POSITION_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<CompoundTag> DATA_STATE_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     @Nullable
     private MovingBlockEntity.PosRotInterpolationTarget posRotInterpolationTarget;
-    List<BlockPos> posList=new ArrayList<>();
-    List<BlockState> stateList=new ArrayList<>();
-    List<CompoundTag> blockEntityDataList =new ArrayList<>();
+
+    /**絶対座標ではなく、制御機の正面からの相対座標。*/
+    private List<BlockPos> posList=new ArrayList<>();
+
+    /**posListの各位置におけるブロックのデータ*/
+    private List<BlockState> stateList=new ArrayList<>();
+
+    /**posListの各位置におけるブロックエンティティのデータ*/
+    private List<CompoundTag> blockEntityDataList =new ArrayList<>();
+
+    /**バスケットとなる座標範囲。絶対座標ではなく、制御機の正面からの相対座標。バスケット作成機からの相対座標ではない。*/
+    private List<BlockPos> basketPosList=new ArrayList<>();
+
+    /**バスケットとなる各座標において、どこが回転中心か。バスケット作成機の正面の座標が該当。絶対座標ではなく、制御機の正面からの相対座標。*/
+    private List<BlockPos> basketOriginPosList=new ArrayList<>();
+
+    /**basketPosListの各位置におけるブロックのデータ*/
+    private List<BlockState> basketStateList=new ArrayList<>();
+
+    /**basketPosListの各位置におけるブロックエンティティのデータ*/
+    private List<CompoundTag> basketBlockEntityDataList =new ArrayList<>();
+
+    /**このbasketを作成しているバスケット作成機は大元のposListだとどの番号に相当するか*/
+    private List<Integer> basketIndexList =new ArrayList<>();
     int minX=0;
     int minY=0;
     int minZ=0;
@@ -141,7 +164,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
 
     }
-    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState,BlockPos endPos) {
+    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag posNBT, CompoundTag stateNBT, CompoundTag blockentityNBT, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState,BlockPos endPos) {
         super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
         this.entityData.set(BlockDisplayMixin.getData(),state);
@@ -166,6 +189,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             this.entityData.set(DATA_IS_LOOP_ROTATION_ID,isLoop);
             this.entityData.set(DATA_AXIS_ID,AxisType.getType(axis).getID());
         }
+        this.entityData.set(DATA_POSITION_TAG_ID,posNBT);
+        this.entityData.set(DATA_STATE_TAG_ID,stateNBT);
+        this.entityData.set(DATA_BLOCKENTITY_TAG_ID,blockentityNBT);
     }
 
 
@@ -185,6 +211,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_SHOULD_ROTATE_STATE_ID,false);
         this.entityData.define(DATA_TIME_COUNT_ID,0);
         this.entityData.define(DATA_STAT_ROTATION_ID,0);
+        this.entityData.define(DATA_POSITION_TAG_ID,new CompoundTag());
+        this.entityData.define(DATA_STATE_TAG_ID,new CompoundTag());
+        this.entityData.define(DATA_BLOCKENTITY_TAG_ID,new CompoundTag());
      }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
@@ -238,6 +267,15 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("startRotation")) {
             this.entityData.set(DATA_STAT_ROTATION_ID,tag.getInt("startRotation"));
         }
+        if (tag.contains("positionList")) {
+            this.entityData.set(DATA_POSITION_TAG_ID,tag.getCompound("positionList"));
+        }
+        if (tag.contains("stateList")) {
+            this.entityData.set(DATA_STATE_TAG_ID,tag.getCompound("stateList"));
+        }
+        if (tag.contains("blockEntityList")) {
+            this.entityData.set(DATA_BLOCKENTITY_TAG_ID,tag.getCompound("blockEntityList"));
+        }
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -255,6 +293,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.putInt("timeCount", entityData.get(DATA_TIME_COUNT_ID));
         tag.putInt("teleport_duration", this.getPosRotInterpolationDuration());
         tag.putInt("startRotation",entityData.get(DATA_STAT_ROTATION_ID));
+        tag.put("positionList",entityData.get(DATA_POSITION_TAG_ID));
+        tag.put("stateList",entityData.get(DATA_STATE_TAG_ID));
+        tag.put("blockEntityList",entityData.get(DATA_BLOCKENTITY_TAG_ID));
     }
 
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -410,7 +451,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                     entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,0D,entity.getDeltaMovement().z));
                     entity.setOnGround(true);
                 }
-                makeBlock();
+                if(getTimeCount()>3) {
+                    makeBlock();
+                }
             } else if (duration > 0 && getTimeCount() == startTick + duration + 1) {
                 discard();
             }
@@ -546,6 +589,46 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                                 }
                             }
                            newState= movingState.setValue(BlockStateProperties.SLAB_TYPE,newHalf);
+                        }
+                        if (shouldRotateState()&&movingState.getBlock() instanceof CrossCollisionBlock) {
+                            boolean north=movingState.getValue(CrossCollisionBlock.NORTH);
+                            boolean east=movingState.getValue(CrossCollisionBlock.EAST);
+                            boolean south=movingState.getValue(CrossCollisionBlock.SOUTH);
+                            boolean west=movingState.getValue(CrossCollisionBlock.WEST);
+                            boolean north2=north;
+                            boolean east2=east;
+                            boolean south2=south;
+                            boolean west2=west;
+
+                            if (getAxis() == Direction.Axis.X) {
+                                if(degree==180||degree==-180){
+                                    north2=south;
+                                    south2=north;
+                                }
+                            } else if (getAxis() == Direction.Axis.Y) {
+                                if(degree==90) {
+                                    north2 = east;
+                                    west2 = north;
+                                    south2 = west;
+                                    east2 = south;
+                                }else if(degree==-90) {
+                                    north2 = west;
+                                    west2 = south;
+                                    south2 = east;
+                                    east2 = north;
+                                }else if(degree==180||degree==-180) {
+                                    east2=west;
+                                    west2=east;
+                                    north2=south;
+                                    south2=north;
+                                }
+                            } else if (getAxis() == Direction.Axis.Z) {
+                                if(degree==180||degree==-180){
+                                    east2=west;
+                                    west2=east;
+                                }
+                            }
+                            newState = movingState.setValue(CrossCollisionBlock.NORTH,north2).setValue(CrossCollisionBlock.EAST,east2).setValue(CrossCollisionBlock.SOUTH,south2).setValue(CrossCollisionBlock.WEST,west2);
                         }
 
                         if (movingState.getBlock() == Blocks.OBSERVER) {
@@ -747,12 +830,20 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         entityData.set(DATA_IS_LOOP_ROTATION_ID,isLoop);
     }
 
-    public List<BlockPos> getPosListFirst(){
-        CompoundTag entityTag=getCompoundTag();
+    private List<BlockPos> getPosListFirst(){
+      /*  CompoundTag entityTag=getCompoundTag();
         if(!entityTag.contains("positionList")){
             entityTag.put("positionList",new CompoundTag());
         }
         CompoundTag posTag=entityTag.getCompound("positionList");
+        List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< posTag.size();i++){
+            if (posTag.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;*/
+        CompoundTag posTag=entityData.get(DATA_POSITION_TAG_ID);
         List<BlockPos> posList=new ArrayList<>();
         for(int i=0; i< posTag.size();i++){
             if (posTag.contains("location_" + String.valueOf(i))) {
@@ -777,12 +868,21 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     }
 
-    public List<BlockState> getStateListFirst(){
-        CompoundTag entityTag=getCompoundTag();
+    private List<BlockState> getStateListFirst(){
+       /* CompoundTag entityTag=getCompoundTag();
         if(!entityTag.contains("stateList")){
             entityTag.put("stateList",new CompoundTag());
         }
         CompoundTag stateTag=entityTag.getCompound("stateList");
+        List<BlockState> stateList=new ArrayList<>();
+        for(int i=0; i<getPosList().size();i++){
+            if (stateTag.contains("state_" + String.valueOf(i))) {
+                stateList.add(NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK),stateTag.getCompound("state_" + String.valueOf(i))));
+            }
+        }
+        return stateList;*/
+
+        CompoundTag stateTag=entityData.get(DATA_STATE_TAG_ID);
         List<BlockState> stateList=new ArrayList<>();
         for(int i=0; i<getPosList().size();i++){
             if (stateTag.contains("state_" + String.valueOf(i))) {
@@ -800,8 +900,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     }
 
-    public List<CompoundTag> getBlockEntityDataListFirst(){
-        CompoundTag entityTag=getCompoundTag();
+    private List<CompoundTag> getBlockEntityDataListFirst(){
+        /*CompoundTag entityTag=getCompoundTag();
         if(!entityTag.contains("blockEntityList")){
             entityTag.put("blockEntityList",new CompoundTag());
         }
@@ -812,9 +912,145 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
             }
         }
+        return blockEntityList;*/
+
+        CompoundTag blockEntityTag=entityData.get(DATA_BLOCKENTITY_TAG_ID);
+        List<CompoundTag> blockEntityList=new ArrayList<>();
+        for(int i=0; i<getPosList().size();i++){
+            if (blockEntityTag.contains("blockEntity_" + String.valueOf(i))) {
+                blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
+            }
+        }
         return blockEntityList;
     }
+    private List<Integer> getBasketIndexListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("basketData")){
+            entityTag.put("basketData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("basketData");
+        if(!basketTag.contains("indexList")){
+            basketTag.put("indexList",new CompoundTag());
+        }
+        CompoundTag indexTag=basketTag.getCompound("indexList");
+        List<Integer> indexList=new ArrayList<>();
+        for(int i=0; i< indexTag.size();i++){
+            if (indexTag.contains("index_" + String.valueOf(i))) {
+                indexList.add(indexTag.getInt("index_" + String.valueOf(i)));
+            }
+        }
+        return indexList;
+    }
 
+    public List<Integer> getBasketIndexList() {
+        if(basketIndexList==null||basketIndexList.isEmpty()){
+            basketIndexList=getBasketIndexListFirst();
+        }
+        return basketIndexList;
+    }
+    private List<BlockPos> getBasketPosListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("basketData")){
+            entityTag.put("basketData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("basketData");
+        if(!basketTag.contains("positionList")){
+            basketTag.put("positionList",new CompoundTag());
+        }
+        CompoundTag posTag=basketTag.getCompound("positionList");
+        List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< posTag.size();i++){
+            if (posTag.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;
+    }
+
+    public List<BlockPos> getBasketPosList() {
+        if(basketPosList==null||basketPosList.isEmpty()){
+            basketPosList=getBasketPosListFirst();
+        }
+        return basketPosList;
+    }
+    private List<BlockPos> getBasketOriginPosListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("basketData")){
+            entityTag.put("basketData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("basketData");
+        if(!basketTag.contains("originPositionList")){
+            basketTag.put("originPositionList",new CompoundTag());
+        }
+        CompoundTag posTag=basketTag.getCompound("originPositionList");
+        List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< posTag.size();i++){
+            if (posTag.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;
+    }
+
+    public List<BlockPos> getBasketOriginPosList() {
+        if(basketOriginPosList==null||basketOriginPosList.isEmpty()){
+            basketOriginPosList=getBasketOriginPosListFirst();
+        }
+        return basketOriginPosList;
+    }
+    public List<BlockState> getBasketStateList() {
+        if(basketStateList==null||basketStateList.isEmpty()){
+            basketStateList=getBasketStateListFirst();
+        }
+        return basketStateList;
+
+    }
+
+    private List<BlockState> getBasketStateListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("basketData")){
+            entityTag.put("basketData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("basketData");
+        if(!basketTag.contains("stateList")){
+            basketTag.put("stateList",new CompoundTag());
+        }
+        CompoundTag stateTag=basketTag.getCompound("stateList");
+        List<BlockState> stateList=new ArrayList<>();
+        for(int i=0; i<getPosList().size();i++){
+            if (stateTag.contains("state_" + String.valueOf(i))) {
+                stateList.add(NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK),stateTag.getCompound("state_" + String.valueOf(i))));
+            }
+        }
+        return stateList;
+    }
+
+    public List<CompoundTag> getBasketBlockEntityDataList() {
+        if(basketBlockEntityDataList ==null|| basketBlockEntityDataList.isEmpty()){
+            basketBlockEntityDataList =getBasketBlockEntityDataListFirst();
+        }
+        return basketBlockEntityDataList;
+
+    }
+
+    private List<CompoundTag> getBasketBlockEntityDataListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("basketData")){
+            entityTag.put("basketData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("basketData");
+        if(!basketTag.contains("blockEntityList")){
+            basketTag.put("blockEntityList",new CompoundTag());
+        }
+        CompoundTag blockEntityTag=basketTag.getCompound("blockEntityList");
+        List<CompoundTag> blockEntityList=new ArrayList<>();
+        for(int i=0; i<getPosList().size();i++){
+            if (blockEntityTag.contains("blockEntity_" + String.valueOf(i))) {
+                blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
+            }
+        }
+        return blockEntityList;
+    }
 
     public int getVisualXRot(){
         return getAxis()== Direction.Axis.X? entityData.get(DATA_VISUAL_ROTATION_ID) : 0;

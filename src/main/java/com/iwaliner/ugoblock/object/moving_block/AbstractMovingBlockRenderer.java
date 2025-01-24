@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.moving_block;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -107,43 +108,51 @@ import java.util.List;
                 this.shadowRadius = display$renderstate.shadowRadius().get(f);
                 this.shadowStrength = display$renderstate.shadowStrength().get(f);
                 super.render(movingBlock, f1, f2, poseStack, bufferSource, i0);
+
                 poseStack.pushPose();
-                poseStack.mulPose(this.calculateOrientation((MovingBlockEntity) movingBlock, f2, new Quaternionf()));
+                Quaternionf rotatedQuaternionf=this.calculateOrientation((MovingBlockEntity) movingBlock, f2, new Quaternionf());
+                poseStack.mulPose(rotatedQuaternionf);
                 Transformation transformation = display$renderstate.transformation().get(f);
                 poseStack.mulPoseMatrix(transformation.getMatrix());
                 poseStack.last().normal().rotate(transformation.getLeftRotation()).rotate(transformation.getRightRotation());
-                this.renderInner( (MovingBlockEntity)movingBlock, poseStack, bufferSource);
+                this.renderInner( (MovingBlockEntity)movingBlock, poseStack, bufferSource,rotatedQuaternionf);
                 poseStack.popPose();
+
+
+
+
             }
         }
     }
 
 
-    private void renderInner(MovingBlockEntity movingBlock, PoseStack poseStack, MultiBufferSource multiBufferSource) {
-            List<BlockPos> posList=movingBlock.getPosList();
-            List<BlockState> stateList=movingBlock.getStateList();
-            Level level=movingBlock.level();
+    private void renderInner(MovingBlockEntity movingBlock, PoseStack poseStack, MultiBufferSource multiBufferSource,Quaternionf rotatedQuaternionf) {
+        List<BlockPos> posList = movingBlock.getPosList();
+        List<BlockState> stateList = movingBlock.getStateList();
+        Level level = movingBlock.level();
 
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) movingBlock.getVisualXRot()));
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) movingBlock.getVisualYRot()));
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) movingBlock.getVisualZRot()));
-            for(int i=0;i<posList.size();i++){
-               BlockPos eachPos=posList.get(i);
-              // BlockPos pos=movingBlock.blockPosition().offset(eachPos.getX(),eachPos.getY(),eachPos.getZ());
-               BlockState eachState=stateList.get(i);
-               Block block=eachState.getBlock();
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) movingBlock.getVisualXRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) movingBlock.getVisualYRot()));
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) movingBlock.getVisualZRot()));
 
 
-                if(!stateList.get(i).isAir()) {
+        for (int i = 0; i < posList.size(); i++) {
+            BlockPos eachPos = posList.get(i);
+            // BlockPos pos=movingBlock.blockPosition().offset(eachPos.getX(),eachPos.getY(),eachPos.getZ());
+            BlockState eachState = stateList.get(i);
+            Block block = eachState.getBlock();
+
+            if (!stateList.get(i).isAir()) {
                    /* BlockState downState=posList.contains(eachPos.below())?  stateList.get(posList.indexOf(eachPos.below())) : null;
                     BlockState upState=posList.contains(eachPos.above())?  stateList.get(posList.indexOf(eachPos.above())) : null;
                     BlockState northState=posList.contains(eachPos.north())?  stateList.get(posList.indexOf(eachPos.north())) : null;
                     BlockState southState=posList.contains(eachPos.south())?  stateList.get(posList.indexOf(eachPos.south())) : null;
                     BlockState westState=posList.contains(eachPos.west())?  stateList.get(posList.indexOf(eachPos.west())) : null;
                     BlockState eastState=posList.contains(eachPos.east())?  stateList.get(posList.indexOf(eachPos.east())) : null;
-                 */   poseStack.pushPose();
+                 */
+                poseStack.pushPose();
 
-                    poseStack.translate(eachPos.getX(), eachPos.getY(),eachPos.getZ());
+                poseStack.translate(eachPos.getX(), eachPos.getY(), eachPos.getZ());
                      /*if (block instanceof ChestBlock abstractchestblock) {
 
                         boolean flag = level!= null;
@@ -216,7 +225,7 @@ import java.util.List;
                         poseStack.scale(0.99F, 0.99F, 0.99F);
 
                     }*/
-                    if (!(block instanceof BedBlock && eachState.getValue(BedBlock.PART) == BedPart.FOOT)) {
+                if (!(block instanceof BedBlock && eachState.getValue(BedBlock.PART) == BedPart.FOOT)) {
                        /* if (movingBlock.renderDown == null || movingBlock.renderDown.isEmpty()) {
                             this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, i0, OverlayTexture.NO_OVERLAY);
 
@@ -225,15 +234,76 @@ import java.util.List;
                             //   Utils.renderSingleBlock(eachState, poseStack, multiBufferSource, i0, shouldRender(downState),shouldRender(upState), shouldRender(northState) ,shouldRender(southState),shouldRender(westState),shouldRender(eastState));
                         }*/
 
-                        poseStack.translate(-0.4999D,-0.4999D,-0.4999D);
-                        int lightLevel=block.getLightEmission(eachState,level,eachPos);
-                         this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+                    poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
+                    int lightLevel = block.getLightEmission(eachState, level, eachPos);
+                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+
+                   /* poseStack.translate(0.4999D, 0.4999D, 0.4999D);
+                    if (movingBlock.getAxis() == Direction.Axis.X) {
+                        poseStack.mulPose(new Quaternionf(-rotatedQuaternionf.x, 0F, 0F, rotatedQuaternionf.w));
+
+                    } else if (movingBlock.getAxis() == Direction.Axis.Y) {
+                        poseStack.mulPose(new Quaternionf(0F, -rotatedQuaternionf.y, 0F, rotatedQuaternionf.w));
+
+                    } else if (movingBlock.getAxis() == Direction.Axis.Z) {
+                        poseStack.mulPose(new Quaternionf(0F, 0F, -rotatedQuaternionf.z, rotatedQuaternionf.w));
 
                     }
-                    poseStack.popPose();
+                    poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
+                    poseStack.translate(1D, 0D, 0D);
+                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+*/
+
                 }
+                poseStack.popPose();
+
+
             }
         }
+        List<BlockPos> basketPosList = movingBlock.getBasketPosList();
+        List<BlockPos> basketOriginPosList = movingBlock.getBasketOriginPosList();
+        List<BlockState> basketStateList = movingBlock.getBasketStateList();
+        List<Integer> basketIndexList = movingBlock.getBasketIndexList();
+        for (int j = 0; j < basketIndexList.size(); j++) {
+            int eachBasketIndex=basketIndexList.get(j);
+            BlockPos eachBasketPos = basketPosList.get(j);
+            BlockPos eachBasketOriginPos = basketOriginPosList.get(j);
+            BlockPos eachBasketOffset=eachBasketPos.offset(-eachBasketOriginPos.getX(),-eachBasketOriginPos.getY(),-eachBasketOriginPos.getZ());
+            BlockState eachBasketState = basketStateList.get(j);
+            Block eachBasketBlock = eachBasketState.getBlock();
+            poseStack.pushPose();
+            poseStack.translate(eachBasketOriginPos.getX(), eachBasketOriginPos.getY(),eachBasketOriginPos.getZ());
+            if (!(eachBasketBlock instanceof BedBlock && eachBasketState.getValue(BedBlock.PART) == BedPart.FOOT)) {
+               int lightLevel = eachBasketBlock.getLightEmission(eachBasketState, level, eachBasketPos);
+               if((movingBlock.getDegreeAngle()+movingBlock.getVisualRot()+movingBlock.getStartRotation())%90==0) {
+                   if (movingBlock.getAxis() == Direction.Axis.X) {
+                       poseStack.mulPose(new Quaternionf(-rotatedQuaternionf.x + (movingBlock.getVisualXRot()+movingBlock.getStartRotation()) * ((float) Math.PI / 180F), 0F, 0F, rotatedQuaternionf.w));
+
+                   } else if (movingBlock.getAxis() == Direction.Axis.Y) {
+                       poseStack.mulPose(new Quaternionf(0F, -rotatedQuaternionf.y + (movingBlock.getVisualXRot()+movingBlock.getStartRotation()) * ((float) Math.PI / 180F), 0F, rotatedQuaternionf.w));
+
+                   } else if (movingBlock.getAxis() == Direction.Axis.Z) {
+                       poseStack.mulPose(new Quaternionf(0F, 0F, -rotatedQuaternionf.z +(movingBlock.getVisualXRot()+movingBlock.getStartRotation()) * ((float) Math.PI / 180F), rotatedQuaternionf.w));
+                   }
+               }else{
+                   if (movingBlock.getAxis() == Direction.Axis.X) {
+                       poseStack.mulPose(new Quaternionf(-rotatedQuaternionf.x + (movingBlock.getVisualXRot()) * ((float) Math.PI / 180F), 0F, 0F, rotatedQuaternionf.w));
+
+                   } else if (movingBlock.getAxis() == Direction.Axis.Y) {
+                       poseStack.mulPose(new Quaternionf(0F, -rotatedQuaternionf.y + (movingBlock.getVisualXRot()) * ((float) Math.PI / 180F), 0F, rotatedQuaternionf.w));
+
+                   } else if (movingBlock.getAxis() == Direction.Axis.Z) {
+                       poseStack.mulPose(new Quaternionf(0F, 0F, -rotatedQuaternionf.z +(movingBlock.getVisualXRot()) * ((float) Math.PI / 180F), rotatedQuaternionf.w));
+                   }
+               }
+                poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
+                poseStack.translate(eachBasketOffset.getX(), eachBasketOffset.getY(), eachBasketOffset.getZ());
+                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+            }
+            poseStack.popPose();
+        }
+    }
+
         private int brightness(int lightLevel){
         switch (lightLevel){
             case 15 : return 15728880;

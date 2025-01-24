@@ -47,6 +47,7 @@ public class ModCoreUgoBlock
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
             event.accept(Register.slide_controller_blockitem.get());
             event.accept(Register.rotation_controller_blockitem.get());
+            event.accept(Register.basket_maker_blockitem.get());
             event.accept(Register.wireless_redstone_transmitter_blockitem.get());
             event.accept(Register.wireless_redstone_receiver_blockitem.get());
             event.accept(Register.portable_wireless_redstone_transmitter.get());

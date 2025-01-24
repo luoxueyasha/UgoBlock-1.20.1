@@ -26,7 +26,23 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
 
     }
 
+    @Override
+    public boolean mouseScrolled(double x, double y, double scrollY) {
+        /**scrollYは、マウスのホイールを下に回したときに負、上に回したときに正。*/
+        if(scrollY>0) {
+            if (this.menu.clickMenuButton(this.minecraft.player, 6)) {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
+                this.minecraft.gameMode.handleInventoryButtonClick((this.menu).containerId, 6);
+            }
 
+        }else{
+            if (this.menu.clickMenuButton(this.minecraft.player, 5)) {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
+                this.minecraft.gameMode.handleInventoryButtonClick((this.menu).containerId, 5);
+            }
+        }
+        return super.mouseScrolled(x, y, scrollY);
+    }
     public boolean mouseClicked(double x, double y, int ii) {
         if(isButtonA(x,y)) {
             if (this.menu.clickMenuButton(this.minecraft.player, 0)) {
