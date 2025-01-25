@@ -1022,7 +1022,7 @@ if(!shouldRotate()){
         }
         CompoundTag stateTag=basketTag.getCompound("stateList");
         List<BlockState> stateList=new ArrayList<>();
-        for(int i=0; i<getPosList().size();i++){
+        for(int i=0; i<getBasketIndexList().size();i++){
             if (stateTag.contains("state_" + String.valueOf(i))) {
                 stateList.add(NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK),stateTag.getCompound("state_" + String.valueOf(i))));
             }
@@ -1049,7 +1049,7 @@ if(!shouldRotate()){
         }
         CompoundTag blockEntityTag=basketTag.getCompound("blockEntityList");
         List<CompoundTag> blockEntityList=new ArrayList<>();
-        for(int i=0; i<getPosList().size();i++){
+        for(int i=0; i<getBasketIndexList().size();i++){
             if (blockEntityTag.contains("blockEntity_" + String.valueOf(i))) {
                 blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
             }

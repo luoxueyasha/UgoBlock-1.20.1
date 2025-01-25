@@ -4,6 +4,7 @@ import com.iwaliner.ugoblock.network.WirelessRedstoneData;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import com.iwaliner.ugoblock.object.block_imitation_wand.BlockImitationWandDecoration;
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableWirelessRedstoneTransmitterItem;
+import com.iwaliner.ugoblock.register.ClientNonBusSetUp;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
