@@ -27,7 +27,7 @@ public class ShapeCardItem extends Item {
         super(p_41383_);
     }
 
-    @Override
+/*    @Override
     public boolean onBlockStartBreak(ItemStack stack, BlockPos pos, Player player) {
         if(stack.getItem() instanceof ShapeCardItem) {
             List<BlockPos> list=new ArrayList<>();
@@ -41,12 +41,12 @@ public class ShapeCardItem extends Item {
                 tag.put("positionList",new CompoundTag());
             }
             CompoundTag posTag=tag.getCompound("positionList");
-            /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
+            *//**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*//*
             if(!tag.contains("select")){
                 tag.putBoolean("select",false);
             }
             tag.putBoolean("select",!tag.getBoolean("select"));
-            if(!(state.getBlock() instanceof SlideControllerBlock)) {
+         //   if(!(state.getBlock() instanceof SlideControllerBlock)) {
                 int ii = -1;
                 for (int i = 0; i < Utils.getMaxSize(); i++) {
                     if (!posTag.contains("location_" + String.valueOf(i))) {
@@ -58,12 +58,13 @@ public class ShapeCardItem extends Item {
                 }
                 if (ii != -1) {
                     if (tag.getBoolean("select")) {
-                        /**範囲選択の始点を登録*/
+                        *//**範囲選択の始点を登録*//*
                         tag.put("edge_A", NbtUtils.writeBlockPos(pos));
 
                         stack.setTag(tag);
+                        return true;
                     } else {
-                        /**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*/
+                        *//**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*//*
                         BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
                         List<BlockPos> removeList = new ArrayList<>();
                         List<BlockPos> newList = new ArrayList<>();
@@ -92,13 +93,13 @@ public class ShapeCardItem extends Item {
                 } else {
                     stack.setTag(tag);
                 }
-            }
+          //  }
             level.playSound(player,pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS,1F,1F);
 
         }
 
         return true;
-    }
+    }*/
 
     @Override
     public InteractionResult useOn(UseOnContext context) {

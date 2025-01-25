@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.controller;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.block_imitation_wand.ImitatableBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
@@ -142,9 +143,9 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
                 this.setChanged();
             }
             if(slot==0&&stack.getItem()==Register.shape_card.get()){
-                this.setPositionList(Utils.getPositionList(stack.getTag()));
-            }else if(slot==1&&stack.getItem()==Register.end_location_card.get()&&stack.getTag()!=null){
-                 this.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
+                //this.setPositionList(Utils.getPositionList(stack.getTag()));
+            }else if(slot==1&&stack.getItem()==Register.vector_card.get()&&stack.getTag()!=null){
+                // this.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
             }
 
     }
@@ -197,18 +198,25 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
 
 
-    public BlockPos getEndPos() {
-        if(getItem(1).getItem()==Register.end_location_card.get()&&getItem(1).getTag()!=null){
+   /* public BlockPos getEndPos() {
+        if(getItem(1).getItem()==Register.vector_card.get()&&getItem(1).getTag()!=null){
             return EndLocationCardItem.getEndPos(getItem(1).getTag());
         }
        return Utils.errorPos();
     }
 
     public void setEndPos(BlockPos endPos) {
-        if(getItem(1).getItem()==Register.end_location_card.get()&&getItem(1).getTag()!=null){
+        if(getItem(1).getItem()==Register.vector_card.get()&&getItem(1).getTag()!=null){
              EndLocationCardItem.setEndPos(getItem(1),endPos);
         }
+   }*/
+   public BlockPos getTransition() {
+       if(getItem(1).getItem()==Register.vector_card.get()&&getItem(1).getTag()!=null){
+           return VectorCardItem.getTransition(getItem(1));
+       }
+       return Utils.errorPos();
    }
+
     public int getSpeedx10(){
         return  speedx10;
     }
@@ -223,16 +231,33 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
     }
     public double getDistance(){
         BlockPos startPos=this.getStartPos();
-        BlockPos endPos=this.getEndPos();
-        return Mth.sqrt((float)Mth.square(startPos.getX()-endPos.getX())+(float)Mth.square(startPos.getY()-endPos.getY())+(float)Mth.square(startPos.getZ()-endPos.getZ()));
+        BlockPos transition=getTransition();
+        return Mth.sqrt((float)Mth.square(transition.getX())+(float)Mth.square(transition.getY())+(float)Mth.square(transition.getZ()));
     }
 
     public boolean hasCards(){
-        return getItem(0).getItem()==Register.shape_card.get()&&getItem(1).getItem()==Register.end_location_card.get()&&getItem(0).getTag()!=null&&getItem(1).getTag()!=null&&getItem(0).getTag().contains("positionList")&&getItem(1).getTag().contains("end_location");
+        return getItem(0).getItem()==Register.shape_card.get()&&getItem(1).getItem()==Register.vector_card.get()&&getItem(0).getTag()!=null&&getItem(1).getTag()!=null&&getItem(0).getTag().contains("positionList")&&VectorCardItem.isSelectionFinished(getItem(1));
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, SlideControllerBlockEntity blockEntity) {
         if(state.getBlock() instanceof SlideControllerBlock) {
+
+            if(blockEntity.getItem(1).is(Register.end_location_card.get())){
+                CompoundTag endLocationCardTag=blockEntity.getItem(1).getTag();
+                if(endLocationCardTag!=null&&endLocationCardTag.contains("end_location")) {
+                    BlockPos originPos = pos.relative(state.getValue(SlideControllerBlock.FACING));
+                    BlockPos endPos=NbtUtils.readBlockPos(endLocationCardTag.getCompound("end_location"));
+                    ItemStack vectorCardStack=new ItemStack(Register.vector_card.get());
+                    CompoundTag vectorCardTag=new CompoundTag();
+                    vectorCardTag.putBoolean("select",false);
+                    vectorCardTag.put("originPosition",NbtUtils.writeBlockPos(endPos));
+                    vectorCardTag.put("endPosition",NbtUtils.writeBlockPos(originPos));
+                    vectorCardStack.setTag(vectorCardTag);
+                    blockEntity.setItem(1,vectorCardStack);
+                }
+
+            }
+
             if(blockEntity.isMoving()&&!state.getValue(SlideControllerBlock.MOVING)){
                 level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,true),2);
             }else if(!blockEntity.isMoving()&&state.getValue(SlideControllerBlock.MOVING)){
@@ -246,15 +271,15 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
                     } else if (blockEntity.getTickCount() == blockEntity.getMoveTick() && blockEntity.hasCards()&&!blockEntity.isOneway()) {
                         BlockPos startPos = blockEntity.getStartPos();
                         List<BlockPos> posList = blockEntity.getPositionList();
-                        BlockPos endPos = new BlockPos(startPos.getX() + (startPos.getX() - blockEntity.getEndPos().getX()), startPos.getY() + (startPos.getY() - blockEntity.getEndPos().getY()), startPos.getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ()));
                         if (blockEntity.isNotFirstTime()) {
                             List<BlockPos> posList0 = blockEntity.getPositionList();
+                            BlockPos transition=blockEntity.getTransition();
                             for (int i = 0; i < posList0.size(); i++) {
-                                posList.set(i, new BlockPos(posList0.get(i).getX() + (startPos.getX() - blockEntity.getEndPos().getX()), posList0.get(i).getY() + (startPos.getY() - blockEntity.getEndPos().getY()), posList0.get(i).getZ() + (startPos.getZ() - blockEntity.getEndPos().getZ())));
+                                posList.set(i, new BlockPos(posList0.get(i).getX() + (transition.getX()), posList0.get(i).getY() + (transition.getY()), posList0.get(i).getZ() + (transition.getZ())));
                             }
                         }
                         blockEntity.setPositionList(posList);
-                        blockEntity.setEndPos(endPos);
+                        VectorCardItem.invertTransition(blockEntity.getItem(1));
                     }
                     blockEntity.increaseTickCount(1);
                 }
@@ -268,7 +293,7 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
     @Override
     public boolean canPlaceItem(int i, ItemStack stack) {
         if(i==1){
-            return stack.getItem()==Register.end_location_card.get();
+            return stack.getItem()==Register.vector_card.get();
         }else{
             return stack.getItem()==Register.shape_card.get();
         }

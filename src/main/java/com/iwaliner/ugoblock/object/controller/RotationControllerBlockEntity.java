@@ -7,9 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
@@ -18,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
@@ -30,6 +27,10 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
     private int duration=3*20;
     private int visualDegree;
     protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
+    private CompoundTag basketPosList;
+    private CompoundTag basketOriginPosList;
+
+
     /**ContainerDataを1つにまとめるとGUI内のボタンを推した時に連動しちゃったから分けてる*/
     protected final ContainerData degreeAngleDataAccess = new ContainerData() {
         public int get(int i) {
@@ -126,7 +127,7 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
                 this.setChanged();
             }
             if(slot==0&&stack.getItem()==Register.shape_card.get()){
-                this.setPositionList(Utils.getPositionList(stack.getTag()));
+               // this.setPositionList(Utils.getPositionList(stack.getTag()));
             }
 
     }
@@ -158,6 +159,8 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
             this.duration = 5*20;
         }
         this.visualDegree=tag.getInt("visualDegree");
+        basketPosList =tag.getCompound("basketPosList");
+        basketOriginPosList =tag.getCompound("basketOriginPosList");
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items);
 
@@ -168,7 +171,44 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
         tag.putInt("degreeAngle",degreeAngle);
         tag.putInt("duration",duration);
         tag.putInt("visualDegree",visualDegree);
+        if(basketPosList !=null) {
+            tag.put("basketPosList", basketPosList);
+        }
+        if(basketOriginPosList !=null) {
+            tag.put("basketOriginPosList", basketOriginPosList);
+        }
         ContainerHelper.saveAllItems(tag, this.items);
+    }
+    public void setBasketPosList(CompoundTag tag){
+        basketPosList =tag;
+    }
+    public void setBasketOriginPosList(CompoundTag tag){
+        basketOriginPosList =tag;
+    }
+
+    public List<BlockPos> getBasketPosList(){
+        if(basketPosList==null){
+            basketPosList=new CompoundTag();
+        }
+       List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< basketPosList.size();i++){
+            if (basketPosList.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(basketPosList.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;
+    }
+    public List<BlockPos> getBasketOriginPosList(){
+        if(basketOriginPosList==null){
+            basketOriginPosList=new CompoundTag();
+        }
+        List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< basketOriginPosList.size();i++){
+            if (basketOriginPosList.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(basketOriginPosList.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;
     }
 
     public BlockPos getStartPos(){

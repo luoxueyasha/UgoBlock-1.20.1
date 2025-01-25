@@ -80,7 +80,7 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
                 this.setChanged();
             }
             if(slot==0&&stack.getItem()==Register.shape_card.get()){
-                this.setPositionList(Utils.getPositionList(stack.getTag()));
+               // this.setPositionList(Utils.getPositionList(stack.getTag()));
             }
 
     }
@@ -176,5 +176,15 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
     public void markUpdated() {
         this.setChanged();
         this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+    }
+    public void rotateBasketPosList(BlockPos basketMakerPos,BlockState basketMakerState,int degreeAngle,BlockPos rotationControllerOriginPos){
+        BlockPos originPos=basketMakerPos.relative(basketMakerState.getValue(BasketMakerBlock.FACING));
+        List<BlockPos> posList=getPositionList();
+        List<BlockPos> originPosList=getPositionList();
+        for(int i=0;i<originPosList.size();i++) {
+           originPosList.set(i,originPos);
+        }
+        List<BlockPos> rotatedBasketPosList = Utils.rotateBasketPosList(posList,rotationControllerOriginPos,rotationControllerOriginPos,basketMakerState.getValue(BasketMakerBlock.FACING).getAxis(),degreeAngle,originPosList);
+        Utils.setPositionList(getItem(0),rotatedBasketPosList);
     }
 }

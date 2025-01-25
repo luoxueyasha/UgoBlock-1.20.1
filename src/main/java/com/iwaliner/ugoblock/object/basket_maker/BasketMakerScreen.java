@@ -17,7 +17,7 @@ public class BasketMakerScreen extends AbstractContainerScreen<BasketMakerMenu>{
     private final ResourceLocation texture;
     public BasketMakerScreen(BasketMakerMenu p_97741_, Inventory p_97742_, Component p_97743_) {
         super(p_97741_, p_97742_, p_97743_);
-        this.texture = new ResourceLocation("ugoblock:textures/gui/rotation_controller.png");
+        this.texture = new ResourceLocation("ugoblock:textures/gui/basket_maker.png");
     }
     public void init() {
         super.init();

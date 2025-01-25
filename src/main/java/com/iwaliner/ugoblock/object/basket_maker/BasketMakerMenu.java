@@ -28,7 +28,7 @@ public class BasketMakerMenu extends AbstractContainerMenu {
         checkContainerSize(c, 1);
         this.container=c;
         container.startOpen(inventory.player);
-        this.addSlot(new ShapeCardSlot(c, 0, 18, 41));
+        this.addSlot(new ShapeCardSlot(c, 0, 80, 41));
          for(int i = 0; i < 3; ++i) {
             for(int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(inventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));

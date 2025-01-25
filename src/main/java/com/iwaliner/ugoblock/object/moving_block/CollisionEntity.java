@@ -28,12 +28,18 @@ public class CollisionEntity extends Entity {
 
     public CollisionEntity(EntityType<?> type, Level level) {
         super(Register.CollisionEntity.get(), level);
+        this.noPhysics = false;
+        this.noCulling = false;
+        this.blocksBuilding=false;
     }
     public CollisionEntity(Level level, double x, double y, double z,BlockState state,CompoundTag blockEntityData) {
         super(Register.CollisionEntity.get(), level);
         this.setPos(x, y, z);
         this.entityData.set(DATA_BLOCK_STATE_ID,state);
         this.entityData.set(DATA_BLOCKENTITY_ID,blockEntityData);
+        this.noPhysics = false;
+        this.noCulling = false;
+        this.blocksBuilding=false;
     }
 
     public BlockState getBlockState() {
@@ -62,14 +68,22 @@ public class CollisionEntity extends Entity {
 
     }
 
-
+    @Override
+    public boolean canCollideWith(Entity entity) {
+        return true;
+    }
 
     /**trueにすると、当たり判定内に入ったときにはじき出される*/
     public boolean canBeCollidedWith() {
         return true;
     }
 
-
+    public boolean isPushable() {
+        return false;
+    }
+    public boolean isPickable() {
+        return true;
+    }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -87,13 +101,13 @@ public class CollisionEntity extends Entity {
             return o instanceof Player;
         })) {
             Player player= (Player) entity;
-            if(!player.tryToStartFallFlying()&& !player.getAbilities().flying) {
+            /*if(!player.tryToStartFallFlying()&& !player.getAbilities().flying) {
                 if (player.isShiftKeyDown() && !player.getAbilities().flying) {
                     player.setForcedPose(Pose.CROUCHING);
                 } else{
                     player.setForcedPose(Pose.STANDING);
                 }
-            }
+            }*/
         }
             if(!state.isAir()) {
                 level.setBlockAndUpdate(pos, state);
@@ -107,7 +121,10 @@ public class CollisionEntity extends Entity {
                     }
                 }
             }
-            discard();
+
+            if(tickCount>10) {
+                discard();
+            }
        // }
 
     }

@@ -56,7 +56,7 @@ public class BlockImitationWandItem extends Item {
         return InteractionResult.PASS;
     }
     private boolean isMachine(BlockState state){
-       return state.is(Register.slide_controller_block.get())||state.is(Register.rotation_controller_block.get())||state.is(Register.wireless_redstone_transmitter_block.get())||state.is(Register.wireless_redstone_receiver_block.get());
+       return state.is(Register.slide_controller_block.get())||state.is(Register.rotation_controller_block.get())||state.is(Register.wireless_redstone_transmitter_block.get())||state.is(Register.wireless_redstone_receiver_block.get())||state.is(Register.basket_maker_block.get());
     }
     private boolean isNotSavedState(Level level,ItemStack stack){
         CompoundTag tag =stack.getTag();

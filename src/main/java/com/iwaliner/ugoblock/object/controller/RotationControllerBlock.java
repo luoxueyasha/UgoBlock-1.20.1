@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.controller;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
@@ -29,7 +30,6 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.*;
@@ -66,7 +66,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()&&!player.isSuppressingBounce()) {
                 blockEntity.setItem(0,stack);
-                blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
+                //blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
@@ -122,6 +122,14 @@ public class RotationControllerBlock extends BaseEntityBlock {
                     }
                 }
                 blockEntity.setNotFirstTime(true);
+            }
+            List<BlockPos> basketPosList=blockEntity.getBasketPosList();
+             if(basketPosList!=null){
+            for (int i = 0; i < basketPosList.size(); i++) {
+                   BlockPos eachBasketPos=basketPosList.get(i).offset(startPos.getX(),startPos.getY(),startPos.getZ());
+                    destroyOldBlock(level,eachBasketPos);
+            }
+              //   blockEntity.setBasketPosList(new CompoundTag());
             }
         }
     }
@@ -179,10 +187,15 @@ public class RotationControllerBlock extends BaseEntityBlock {
                                   //  degree0=-degree0;
                                   //  visualDegree0=-visualDegree0;
                               }
-                             List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
+                              List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
+                              List<BlockPos> rotatedBasketPosList = Utils.rotateBasketPosList(blockEntity.getBasketPosList(),BlockPos.ZERO,startPos,state.getValue(FACING).getAxis(),-getDegreeAngle(state,blockEntity),blockEntity.getBasketOriginPosList());
+                              /*List<BlockPos> rotatedBasketPosList = blockEntity.getBasketPosList();
+                              for(int j=0;j<rotatedBasketPosList.size();j++){
+                                  rotatedBasketPosList.set(j,rotatedBasketPosList.get(j).offset(startPos.getX(),startPos.getY(),startPos.getZ()));
+                              }*/
+                              rotatedPosList.addAll(rotatedBasketPosList);
                               if(!blockEntity.isLoop()){
                                 //  int visualDegree= blockEntity.getVisualDegree();
-
 
                                   /**ブロックをエンティティ化*/
                                   Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, getVisualDegreeAngle(state,blockEntity),true,BlockPos.ZERO,0);

@@ -6,13 +6,18 @@ import com.iwaliner.ugoblock.object.block_imitation_wand.BlockImitationWandDecor
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableWirelessRedstoneTransmitterItem;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.RegisterItemDecorationsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
@@ -21,12 +26,16 @@ import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.ItemStackedOnOtherEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Mod(ModCoreUgoBlock.MODID)
@@ -90,16 +99,80 @@ public class ModCoreUgoBlock
     }
 
     @SubscribeEvent
-    public void ItemTooltipEvent(ItemTooltipEvent event) {
-            CompoundTag tag=event.getItemStack().getTag();
-    }
-    @SubscribeEvent
-    public void BreakSpeedEvent(PlayerEvent.BreakSpeed event) {
-        Item item=event.getEntity().getMainHandItem().getItem();
-        if(item== Register.end_location_card.get()||item== Register.shape_card.get()){
-            event.setNewSpeed(10000f);
+    public void CardLeftClickEvent(PlayerInteractEvent.LeftClickBlock event) {
+        ItemStack stack=event.getItemStack();
+        BlockPos pos=event.getPos();
+        if(stack.is(Register.shape_card.get())&&event.getAction()== PlayerInteractEvent.LeftClickBlock.Action.START){
+            List<BlockPos> list=new ArrayList<>();
+            Level level=event.getLevel();
+            BlockState state=level.getBlockState(pos);
+            CompoundTag tag = stack.getTag();
+            if (tag == null) {
+                tag = new CompoundTag();
+            }
+            if(!tag.contains("positionList")){
+                tag.put("positionList",new CompoundTag());
+            }
+            CompoundTag posTag=tag.getCompound("positionList");
+            /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
+            if(!tag.contains("select")){
+                tag.putBoolean("select",false);
+            }
+            tag.putBoolean("select",!tag.getBoolean("select"));
+            //   if(!(state.getBlock() instanceof SlideControllerBlock)) {
+            int ii = -1;
+            for (int i = 0; i < Utils.getMaxSize(); i++) {
+                if (!posTag.contains("location_" + String.valueOf(i))) {
+                    ii = i;
+                    break;
+                } else {
+                    list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+                }
+            }
+            if (ii != -1) {
+                if (tag.getBoolean("select")) {
+                    /**範囲選択の始点を登録*/
+                    tag.put("edge_A", NbtUtils.writeBlockPos(pos));
+
+                    stack.setTag(tag);
+                } else {
+                    /**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*/
+                    BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
+                    List<BlockPos> removeList = new ArrayList<>();
+                    List<BlockPos> newList = new ArrayList<>();
+                    for (int i = 0; i <= Math.abs(edgeA.getX() - pos.getX()); i++) {
+                        for (int j = 0; j <= Math.abs(edgeA.getY() - pos.getY()); j++) {
+                            for (int k = 0; k <= Math.abs(edgeA.getZ() - pos.getZ()); k++) {
+                                BlockPos pos2 = pos.offset(edgeA.getX() - pos.getX() >= 0 ? i : -i, edgeA.getY() - pos.getY() >= 0 ? j : -j, edgeA.getZ() - pos.getZ() >= 0 ? k : -k);
+                                if (list.contains(pos2)) {
+                                    removeList.add(pos2);
+                                }
+                            }
+                        }
+                    }
+                    for (int i = 0; i < list.size(); i++) {
+                        if (!removeList.contains(list.get(i))) {
+                            newList.add(list.get(i));
+                        }
+                    }
+                    CompoundTag newTag = new CompoundTag();
+                    for (int i = 0; i < newList.size(); i++) {
+                        newTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(newList.get(i)));
+                    }
+                    tag.put("positionList",newTag);
+                    stack.setTag(tag);
+                }
+            } else {
+                stack.setTag(tag);
+            }
+            //  }
+            level.playSound(event.getEntity(),pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS,1F,1F);
+            if(event.getEntity().isCreative()) {
+                event.setCanceled(true);
+            }
         }
     }
+
 
     @SubscribeEvent
     public void AttachCapabilitiesLevel(AttachCapabilitiesEvent<Level> event) {

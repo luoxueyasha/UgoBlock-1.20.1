@@ -34,7 +34,7 @@ public class SlideControllerMenu extends AbstractContainerMenu {
         this.onewayData=onewayData;
         container.startOpen(inventory.player);
         this.addSlot(new ShapeCardSlot(c, 0, 18, 41));
-        this.addSlot(new EndLocationCardSlot(c,  1, 36, 41));
+        this.addSlot(new VectorCardSlot(c,  1, 36, 41));
         for(int i = 0; i < 3; ++i) {
             for(int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(inventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));

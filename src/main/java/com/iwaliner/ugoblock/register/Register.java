@@ -40,6 +40,7 @@ public class Register {
     public static final RegistryObject<Item> slide_controller_blockitem =ITEMS.register("slide_controller",() -> {return new BlockItem( Objects.requireNonNull(slide_controller_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Item> shape_card =ITEMS.register("shape_card",() -> {return new ShapeCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
     public static final RegistryObject<Item> end_location_card =ITEMS.register("end_position_card",() -> {return new EndLocationCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
+    public static final RegistryObject<Item> vector_card =ITEMS.register("vector_card",() -> {return new VectorCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
     public static final RegistryObject<Block> rotation_controller_block =BLOCKS.register("rotation_controller",() -> {return new RotationControllerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> rotation_controller_blockitem =ITEMS.register("rotation_controller",() -> {return new BlockItem( Objects.requireNonNull(rotation_controller_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Block> basket_maker_block =BLOCKS.register("basket_maker",() -> {return new BasketMakerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
@@ -59,7 +60,7 @@ public class Register {
 
     public static final DeferredRegister<EntityType<?>> Entities = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, ModCoreUgoBlock.MODID);
     public static final RegistryObject<EntityType<MovingBlockEntity>> MoveableBlock=Entities.register("moving_block", () -> EntityType.Builder.<MovingBlockEntity>of(MovingBlockEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(16).build(new ResourceLocation(ModCoreUgoBlock.MODID,"moving_block").toString()));
-    public static final RegistryObject<EntityType<CollisionEntity>> CollisionEntity=Entities.register("collision_entitiy", () -> EntityType.Builder.<CollisionEntity>of(CollisionEntity::new, MobCategory.MISC).sized(1, 0.9F).clientTrackingRange(4).build(new ResourceLocation(ModCoreUgoBlock.MODID,"collision_entity").toString()));
+    public static final RegistryObject<EntityType<CollisionEntity>> CollisionEntity=Entities.register("collision_entity", () -> EntityType.Builder.<CollisionEntity>of(CollisionEntity::new, MobCategory.MISC).sized(1.1F, 1F).clientTrackingRange(4).build(new ResourceLocation(ModCoreUgoBlock.MODID,"collision_entity").toString()));
     //public static final RegistryObject<EntityType<ControllableEntity>> ControllableEntity=Entities.register("controllable_entitiy", () -> EntityType.Builder.<ControllableEntity>of(ControllableEntity::new, MobCategory.MISC).sized(1, 1).clientTrackingRange(4).build(new ResourceLocation(ModCoreUgoBlock.MODID,"controllable_entity").toString()));
 
 

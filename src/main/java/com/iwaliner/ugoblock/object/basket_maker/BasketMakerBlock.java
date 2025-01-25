@@ -38,15 +38,39 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class BasketMakerBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    private static final VoxelShape SOUTH_BOX = Block.box(0D, 0D, 8D, 16D, 16D, 16D);
+    private static final VoxelShape NORTH_BOX = Block.box(0D, 0.0D, 0D, 16D, 16D, 8D);
+    private static final VoxelShape WEST_BOX = Block.box(0D, 0.0D, 0D, 8D, 16D, 16D);
+    private static final VoxelShape EAST_BOX = Block.box(8D, 0.0D, 0D, 16D, 16D, 16D);
+    private static final VoxelShape UP_BOX = Block.box(0D, 8.0D, 0D, 16D, 16D, 16D);
+    private static final VoxelShape DOWN_BOX = Block.box(0D, 0.0D, 0D, 16D, 8D, 16D);
     public BasketMakerBlock(Properties p_49795_) {
         super(p_49795_);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter getter, BlockPos pos, CollisionContext context) {
+        if(state.getValue(FACING)==Direction.EAST){
+            return EAST_BOX;
+        }else if(state.getValue(FACING)==Direction.WEST){
+            return WEST_BOX;
+        }else if(state.getValue(FACING)==Direction.SOUTH){
+            return SOUTH_BOX;
+        }else if(state.getValue(FACING)==Direction.NORTH){
+            return NORTH_BOX;
+        }else if(state.getValue(FACING)==Direction.DOWN){
+            return DOWN_BOX;
+        }else {
+            return UP_BOX;
+        }
     }
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49915_) {
@@ -64,12 +88,24 @@ public class BasketMakerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof BasketMakerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()) {
                 blockEntity.setItem(0,stack);
-                blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
+                //blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
             }else if(stack.is(Register.block_imitation_wand.get())){
                 return InteractionResult.PASS;
+            }else  {
+                if (!player.isSuppressingBounce()) {
+                    if (level.isClientSide) {
+                        return InteractionResult.SUCCESS;
+                    }
+                    this.openContainer(level, pos, player);
+                    return InteractionResult.CONSUME;
+                }else if(!blockEntity.getImitatingState().isAir()){
+                    blockEntity.setImitatingState(Blocks.AIR.defaultBlockState());
+                    level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
+                    return InteractionResult.SUCCESS;
+                }
             }
         }
       return InteractionResult.PASS;
@@ -147,7 +183,8 @@ public class BasketMakerBlock extends BaseEntityBlock {
     }
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
-        list.add(Component.literal("製作途中。回転制御機とあわせて使うことで、観覧車におけるカゴ部分を作成できるようになる予定。").withStyle(ChatFormatting.GREEN));
-
+        list.add(Component.translatable("info.ugoblock.basket_maker").withStyle(ChatFormatting.GREEN));
+        list.add(Component.translatable("info.ugoblock.basket_maker2").withStyle(ChatFormatting.GREEN));
+        list.add(Component.translatable("info.ugoblock.basket_maker3").withStyle(ChatFormatting.GREEN));
     }
 }

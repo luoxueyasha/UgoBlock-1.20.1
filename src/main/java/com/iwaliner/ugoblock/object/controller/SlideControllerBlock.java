@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.controller;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
@@ -62,13 +63,13 @@ public class SlideControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()&&!player.isSuppressingBounce()) {
                 blockEntity.setItem(0,stack);
-                blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
+                //blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
-            }else if (stack.getItem() == Register.end_location_card.get()&&stack.getTag()!=null&&blockEntity.getItem(1).isEmpty()) {
+            }else if (stack.getItem() == Register.vector_card.get()&&stack.getTag()!=null&&blockEntity.getItem(1).isEmpty()) {
                blockEntity.setItem(1,stack);
-                blockEntity.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
+
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
@@ -111,16 +112,15 @@ public class SlideControllerBlock extends BaseEntityBlock {
 
             if (flag != level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
                    if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
-                      int start=blockEntity.getStartTime();
+                       int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
-                       if(blockEntity.getEndPos()!=null&&duration>0) {
+                       if(!blockEntity.getTransition().equals(Utils.errorPos())&&duration>0) {
                            BlockPos startPos=pos.relative(state.getValue(FACING));
-                           BlockPos endPos=blockEntity.getEndPos();
                            List<BlockPos> posList=blockEntity.getPositionList();
                            if(posList!=null) {
                                 blockEntity.setMoving(true);
                                 /**↓移動の変位。座標ではないことに注意。*/
-                               BlockPos transitionPos = new BlockPos(startPos.getX() - endPos.getX(), startPos.getY() - endPos.getY(), startPos.getZ() - endPos.getZ());
+                               BlockPos transitionPos = blockEntity.getTransition();
                                /**ブロックをエンティティ化*/
                                Utils.makeMoveableBlock(level,pos, startPos, start, duration,null,0,blockEntity.getPositionList(),0,false, transitionPos,0);
 
@@ -240,7 +240,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity livingEntity, ItemStack stack) {
         super.setPlacedBy(level, pos, state, livingEntity, stack);
         if(livingEntity instanceof Player&&state.getBlock() instanceof SlideControllerBlock){
-            ItemStack endLocationCard=new ItemStack(Register.end_location_card.get());
+            ItemStack endLocationCard=new ItemStack(Register.vector_card.get());
             CompoundTag tag=new CompoundTag();
             tag.put("end_location", NbtUtils.writeBlockPos(Utils.errorPos()));
             //tag.put("start_location", NbtUtils.writeBlockPos(pos.relative(state.getValue(FACING))));

@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -18,8 +19,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.DyeColor;
@@ -31,16 +32,13 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.Half;
-import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Utils {
     public static int getMaxSize(){
@@ -57,7 +55,7 @@ public class Utils {
                 tag.put("positionList",new CompoundTag());
             }
             CompoundTag posTag=tag.getCompound("positionList");
-            for (int i = 0; i < Utils.getMaxSize(); i++) {
+            for (int i = 0; i < posTag.size(); i++) {
                 if (posTag.contains("location_" + String.valueOf(i))) {
                     list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
                 }
@@ -197,13 +195,55 @@ public class Utils {
         }
         return newList;
     }
+    public static List<BlockPos> rotateBasketPosList(List<BlockPos> oldBasketList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle,List<BlockPos> basketOriginPosList) {
+        List<BlockPos> newList=oldBasketList;
+
+        for (int i = 0; i < oldBasketList.size(); i++) {
+            BlockPos eachOffsetPos=oldBasketList.get(i).offset(-basketOriginPosList.get(i).getX(),-basketOriginPosList.get(i).getY(),-basketOriginPosList.get(i).getZ());
+            BlockPos eachBasketOriginPos = basketOriginPosList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());
+            Vector3f origin = newOriginPos.getCenter().toVector3f();
+            Vector3f transition = new Vector3f(eachBasketOriginPos.getX(), eachBasketOriginPos.getY(), eachBasketOriginPos.getZ());
+            Vector3f transitionRotated;
+            if(axis== Direction.Axis.X){
+                transitionRotated = transition.rotateX(Mth.PI * (degreeAngle) / 180f);
+            }else if(axis== Direction.Axis.Z){
+                transitionRotated = transition.rotateZ(Mth.PI * (degreeAngle) / 180f);
+            }else{
+                transitionRotated = transition.rotateY(Mth.PI * (degreeAngle) / 180f);
+            }
+            Vector3f positionRotated = origin.add(transitionRotated);
+            BlockPos rotatedPos = new BlockPos(Mth.floor(positionRotated.x), Mth.floor(positionRotated.y), Mth.floor(positionRotated.z));
+            newList.set(i,rotatedPos.offset(eachOffsetPos.getX(),eachOffsetPos.getY(),eachOffsetPos.getZ()));
+        }
+        return newList;
+    }
+    public static List<Vec3> rotateVec3BasketPosList(List<BlockPos> oldBasketList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle,List<BlockPos> basketOriginPosList) {
+        List<Vec3> newList=new ArrayList<>();
+        for (int i = 0; i < oldBasketList.size(); i++) {
+            newList.add(oldBasketList.get(i).getCenter());
+            BlockPos eachOffsetPos=oldBasketList.get(i).offset(-basketOriginPosList.get(i).getX(),-basketOriginPosList.get(i).getY(),-basketOriginPosList.get(i).getZ());
+            BlockPos eachBasketOriginPos = basketOriginPosList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());
+            Vector3f origin = newOriginPos.getCenter().toVector3f();
+            Vector3f transition = new Vector3f(eachBasketOriginPos.getX(), eachBasketOriginPos.getY(), eachBasketOriginPos.getZ());
+            Vector3f transitionRotated;
+            if(axis== Direction.Axis.X){
+                transitionRotated = transition.rotateX(Mth.PI * (degreeAngle) / 180f);
+            }else if(axis== Direction.Axis.Z){
+                transitionRotated = transition.rotateZ(Mth.PI * (degreeAngle) / 180f);
+            }else{
+                transitionRotated = transition.rotateY(Mth.PI * (degreeAngle) / 180f);
+            }
+            Vector3f positionRotated = origin.add(transitionRotated).add(eachOffsetPos.getX(),eachOffsetPos.getY(),eachOffsetPos.getZ());
+            newList.set(i,new Vec3(positionRotated));
+        }
+        return newList;
+    }
     public static void makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList,int visualDegree,boolean rotateState,BlockPos transitionPos,int startRotation){
         BlockState controllerState=level.getBlockState(controllerPos);
         if((controllerState.getBlock() instanceof RotationControllerBlock ||controllerState.getBlock() instanceof SlideControllerBlock)&&level.getBlockEntity(controllerPos) instanceof AbstractControllerBlockEntity controllerBlockEntity&&controllerBlockEntity.getItem(0).getItem()== Register.shape_card.get()&&controllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             CompoundTag entityTag=new CompoundTag();
             CompoundTag posTag=new CompoundTag();
             List<BlockPos> posList=controllerBlockEntity.getPositionList();
-
             CompoundTag stateTag=new CompoundTag();
             CompoundTag blockEntityTag=new CompoundTag();
             CompoundTag basketPosTag=new CompoundTag();
@@ -213,25 +253,19 @@ public class Utils {
             CompoundTag basketMakerIndexTag=new CompoundTag();
             int basketPosAmount=0;
             Direction controllerDirection=controllerState.getValue(BlockStateProperties.FACING);
-            boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
-          /*  if(invertRotation*//*&&degree%90!=0*//*){
-                degree=-degree;
-                visualDegree=-visualDegree;
-            }*/
             for(int i=0; i<posList.size();i++){
                 BlockPos eachPos=positionList.get(i);
                 BlockState eachState=level.getBlockState(eachPos);
                 BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
                 if (eachBlockEntity != null&&i!=positionList.indexOf(controllerPos)&&!(eachBlockEntity instanceof PistonMovingBlockEntity)) {
-                    if (eachBlockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && !slideControllerBlockEntity2.getEndPos().equals(Utils.errorPos())) {
+                    if (eachBlockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && VectorCardItem.isSelectionFinished(slideControllerBlockEntity2.getItem(1))) {
 
                         List<BlockPos> newPos = new ArrayList<>();
                         for (int ii = 0; ii < ((SlideControllerBlockEntity) eachBlockEntity).getPositionList().size(); ii++) {
                             newPos.add(slideControllerBlockEntity2.getPositionList().get(ii).offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ()));
                         }
                         slideControllerBlockEntity2.setPositionList(newPos);
-                        BlockPos newEndPos = slideControllerBlockEntity2.getEndPos().offset(transitionPos.getX(), transitionPos.getY(), transitionPos.getZ());
-                        slideControllerBlockEntity2.setEndPos(newEndPos);
+                        VectorCardItem.offsetTransition(slideControllerBlockEntity2.getItem(1),transitionPos);
 
                     }else if (eachBlockEntity instanceof RotationControllerBlockEntity rotationControllerBlockEntity && !rotationControllerBlockEntity.getPositionList().isEmpty() ) {
 
@@ -245,13 +279,13 @@ public class Utils {
                         BlockPos basketMakerPos=eachPos;
                         BlockPos basketOriginPos=basketMakerPos.relative(eachState.getValue(BasketMakerBlock.FACING));
                         for(int j=basketPosAmount;j<basketPosAmount+basketPosList.size();j++){
-                            BlockPos eachBasketComponentPos=basketPosList.get(j);
+                            BlockPos eachBasketComponentPos=basketPosList.get(j-basketPosAmount);
                             BlockState eachBasketComponentState=level.getBlockState(eachBasketComponentPos);
                             BlockEntity eachBasketComponentBlockEntity=level.getBlockEntity(eachBasketComponentPos);
                             if(eachBasketComponentBlockEntity!=null){
                                 if (eachBasketComponentBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
                                     eachBasketComponentState=pistonMovingBlockEntity.getMovedState();
-                                    basketBlockEntityTag.put("blockEntity_" + String.valueOf(i),new CompoundTag());
+                                    basketBlockEntityTag.put("blockEntity_" + String.valueOf(j),new CompoundTag());
                                 }else {
                                     basketBlockEntityTag.put("blockEntity_" + String.valueOf(j), eachBasketComponentBlockEntity.saveWithFullMetadata());
                                 }
@@ -263,10 +297,16 @@ public class Utils {
                             basketPosTag.put("location_" + String.valueOf(j), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
                             basketStateTag.put("state_" + String.valueOf(j), NbtUtils.writeBlockState(eachBasketComponentState));
                             basketMakerIndexTag.putInt("index_" + String.valueOf(j),i);
+                         }
+                        if(controllerBlockEntity instanceof RotationControllerBlockEntity rotationControllerBlockEntity) {
+                            rotationControllerBlockEntity.setBasketPosList(basketPosTag);
+                            rotationControllerBlockEntity.setBasketOriginPosList(basketOriginPosTag);
+                            if (degree % 90 == 0&&!controllerBlockEntity.isLoop()) {
+                                   basketMakerBlockEntity.rotateBasketPosList(eachPos, eachState, degree, controllerPos.relative(controllerDirection));
+                            }
                         }
                         basketPosAmount+=basketPosList.size();
-                     //   blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
-                    }
+                     }
 
                     blockEntityTag.put("blockEntity_" + String.valueOf(i),eachBlockEntity.saveWithFullMetadata());
                 }else if (eachBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
@@ -384,6 +424,26 @@ public class Utils {
                         }
                         eachState = eachState.setValue(CrossCollisionBlock.NORTH,north2).setValue(CrossCollisionBlock.EAST,east2).setValue(CrossCollisionBlock.SOUTH,south2).setValue(CrossCollisionBlock.WEST,west2);
                     }
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+                        DoubleBlockHalf oldHalf = eachState.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
+                        DoubleBlockHalf newHalf = oldHalf;
+                        if (degree == 180 || degree == -180) {
+                             if (axis == Direction.Axis.X||axis== Direction.Axis.Z) {
+                                newHalf= oldHalf==DoubleBlockHalf.LOWER? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER;
+                            }
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, newHalf);
+                    }
+                    if (rotateState && eachState.hasProperty(BlockStateProperties.BED_PART)) {
+                        BedPart oldPart = eachState.getValue(BlockStateProperties.BED_PART);
+                        BedPart newPart = oldPart;
+                        if (degree == 180 || degree == -180) {
+                            if (axis == Direction.Axis.X||axis == Direction.Axis.Z) {
+                                newPart= oldPart==BedPart.FOOT? BedPart.HEAD : BedPart.FOOT;
+                            }
+                        }
+                        eachState = eachState.setValue(BlockStateProperties.BED_PART, newPart);
+                    }
                 }
                 eachState= eachState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachPos).isEmpty() ? eachState : Blocks.AIR.defaultBlockState();
                 CompoundTag posNBT=NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ()));
@@ -416,7 +476,6 @@ public class Utils {
                 }
             }
         }
-
     }
     private static int calculateDataSize(CompoundTag tag){
         return tag.sizeInBytes();
@@ -447,6 +506,12 @@ public class Utils {
             case BLACK: return "info.ugoblock.color_black";
         }
         return "info.ugoblock.color_white";
+    }
+    public static void displayImage(GuiGraphics guiGraphics, String textureName, int width, int height){
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().scale(0.45F,0.45F,0.45F);
+        guiGraphics.blit(new ResourceLocation(ModCoreUgoBlock.MODID,"textures/gui/"+textureName+".png"), width, height, 0, 0, 256, 256);
+        guiGraphics.pose().popPose();
     }
 
 }

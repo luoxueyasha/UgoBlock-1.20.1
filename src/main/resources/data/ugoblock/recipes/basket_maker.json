@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " I ",
+    "GOG",
+    " I "
+  ],
+  "key": {
+    "O": {
+     "item": "ugoblock:smooth_crying_obsidian"
+    },
+    "G": {
+     "tag": "forge:glass"
+    },
+    "I": {
+    "tag": "forge:ingots/iron"
+    }
+  },
+  "result": {
+    "item": "ugoblock:basket_maker",
+    "count": 1
+  }
+}

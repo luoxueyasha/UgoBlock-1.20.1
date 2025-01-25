@@ -1,6 +1,7 @@
 package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerRenderer;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerScreen;
 import com.iwaliner.ugoblock.object.controller.RotationControllerRenderer;
 import com.iwaliner.ugoblock.object.controller.SlideControllerRenderer;
@@ -44,6 +45,7 @@ public class ClientSetUp {
         BlockEntityRenderers.register(Register.RotationController.get(), RotationControllerRenderer::new);
         BlockEntityRenderers.register(Register.WirelessRedstoneTransmitterBlockEntity.get(), WirelessRedstoneTransmitterRenderer::new);
         BlockEntityRenderers.register(Register.WirelessRedstoneReceiverBlockEntity.get(), WirelessRedstoneReceiverRenderer::new);
+        BlockEntityRenderers.register(Register.BasketMakerBlockEntity.get(), BasketMakerRenderer::new);
         MenuScreens.register(Register.SlideControllerMenu.get(), SlideControllerScreen::new);
         MenuScreens.register(Register.RotationControllerMenu.get(), RotationControllerScreen::new);
         MenuScreens.register(Register.BasketMakerMenu.get(), BasketMakerScreen::new);

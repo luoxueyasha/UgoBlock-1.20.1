@@ -1,6 +1,6 @@
 {
     "parent": "item/generated",
     "textures": {
-        "layer0": "ugoblock:item/end_location_card"
+        "layer0": "ugoblock:item/vector_card"
     }
 }

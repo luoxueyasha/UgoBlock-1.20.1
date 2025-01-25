@@ -26,9 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.Half;
-import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
@@ -86,7 +84,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public static final EntityDataAccessor<CompoundTag> DATA_POSITION_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DATA_STATE_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
-    @Nullable
+
+     @Nullable
     private MovingBlockEntity.PosRotInterpolationTarget posRotInterpolationTarget;
 
     /**絶対座標ではなく、制御機の正面からの相対座標。*/
@@ -120,50 +119,13 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     int maxZ=0;
 
 
-
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
         this.noPhysics = false;
         this.noCulling = false;
+        this.blocksBuilding=false;
     }
-    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, BlockPos endPos,CompoundTag tag) {
-        super(Register.MoveableBlock.get(), level);
-        this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
-        this.entityData.set(BlockDisplayMixin.getData(),state);
-        this.entityData.set(DATA_TRANSITION_POSITION_ID,endPos);
-        this.entityData.set(DATA_START_LOCATION_ID,startPos);
-        this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
-        this.entityData.set(DisplayMixin.getDataDuration(),duration);
-        this.entityData.set(DATA_AXIS_ID,AxisType.NONE.getID());
-        this.entityData.set(DATA_ROTATABLE_ID,false);
-        this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
-        this.entityData.set(DATA_VISUAL_ROTATION_ID,0);
-        this.entityData.set(DATA_TIME_COUNT_ID,0);
-        this.entityData.set(DATA_STAT_ROTATION_ID,0);
 
-        this.noPhysics = false;
-        this.noCulling = false;
-
-    }
-    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag tag, int visualDegree, boolean isLoop) {
-        super(Register.MoveableBlock.get(), level);
-        this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
-        this.entityData.set(BlockDisplayMixin.getData(),state);
-        this.entityData.set(DATA_START_LOCATION_ID,startPos);
-        this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
-        this.entityData.set(DisplayMixin.getDataDuration(),duration);
-        this.entityData.set(DATA_AXIS_ID,AxisType.getType(axis).getID());
-        this.entityData.set(DATA_ROTATABLE_ID,true);
-        this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
-        this.entityData.set(DATA_DEGREE_ANGLE_ID,degree);
-        this.entityData.set(DATA_VISUAL_ROTATION_ID, visualDegree);
-        this.entityData.set(DATA_IS_LOOP_ROTATION_ID,isLoop);
-        this.noPhysics = false;
-        this.noCulling = false;
-        this.entityData.set(DATA_TIME_COUNT_ID,0);
-
-
-    }
     public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag posNBT, CompoundTag stateNBT, CompoundTag blockentityNBT, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState,BlockPos endPos) {
         super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
@@ -192,7 +154,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.set(DATA_POSITION_TAG_ID,posNBT);
         this.entityData.set(DATA_STATE_TAG_ID,stateNBT);
         this.entityData.set(DATA_BLOCKENTITY_TAG_ID,blockentityNBT);
+        this.blocksBuilding=false;
     }
+
 
 
     @Override
@@ -214,7 +178,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_POSITION_TAG_ID,new CompoundTag());
         this.entityData.define(DATA_STATE_TAG_ID,new CompoundTag());
         this.entityData.define(DATA_BLOCKENTITY_TAG_ID,new CompoundTag());
-     }
+      }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
         super.onSyncedDataUpdated(p_277476_);
@@ -276,6 +240,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("blockEntityList")) {
             this.entityData.set(DATA_BLOCKENTITY_TAG_ID,tag.getCompound("blockEntityList"));
         }
+
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -454,7 +419,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 if(getTimeCount()>3) {
                     makeBlock();
                 }
-            } else if (duration > 0 && getTimeCount() == startTick + duration + 1) {
+            } else if (duration > 0 && getTimeCount() >= startTick + duration + 1) {
                 discard();
             }
         }else{
@@ -520,12 +485,27 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public void rotateAndMakeBlock(int degree){ /**回転し終わってブロック化する*/
         int degree2= degree+getVisualRot()+getStartRotation();
         if(!level().isClientSide&&degree2%90==0) {
-
+           List<BlockState> blockStateList=getStateList();
+            List<BlockState> basketStateList2=getBasketStateList();
+            List<CompoundTag> blockEntityList=getBlockEntityDataList();
+            List<CompoundTag> basketBlockEntityList=getBasketBlockEntityDataList();
+ModCoreUgoBlock.logger.info("degree2:"+degree2);
+if(!shouldRotate()){
+    ModCoreUgoBlock.logger.info("!shouldRotate");
+}
             List<BlockPos> rotatedPosList=Utils.rotatePosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degree2);
-          for (int i=0;i<rotatedPosList.size();i++) {
+            int basketAngle= degree2==0&&degree%90==0? degree: degree2;
+            List<BlockPos> rotatedBasketPosList=Utils.rotateBasketPosList(getBasketPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),basketAngle,getBasketOriginPosList());
+                for (int j = 0; j < rotatedBasketPosList.size(); j++) {
+                   rotatedPosList.add(rotatedBasketPosList.get(j));
+                   blockStateList.add(basketStateList2.get(j));
+                   blockEntityList.add(basketBlockEntityList.get(j));
+               }
+
+            for (int i=0;i<rotatedPosList.size();i++) {
                 BlockPos pos=rotatedPosList.get(i);
-                    BlockState movingState = getStateList().get(i);
-                    CompoundTag movingBlockEntityData = getBlockEntityDataList().get(i);
+                    BlockState movingState = blockStateList.get(i);
+                    CompoundTag movingBlockEntityData = blockEntityList.get(i);
                     if (level().getBlockState(pos).canBeReplaced()) {
                         BlockState newState=movingState;
                         if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)&&getAxis()== Direction.Axis.Y){
@@ -630,6 +610,28 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                             }
                             newState = movingState.setValue(CrossCollisionBlock.NORTH,north2).setValue(CrossCollisionBlock.EAST,east2).setValue(CrossCollisionBlock.SOUTH,south2).setValue(CrossCollisionBlock.WEST,west2);
                         }
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)){
+                            DoubleBlockHalf oldHalf = movingState.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
+                            DoubleBlockHalf newHalf = oldHalf;
+                            if (degree == 180 || degree == -180) {
+                                if (getAxis() == Direction.Axis.X||getAxis() == Direction.Axis.Z) {
+                                    newHalf= oldHalf==DoubleBlockHalf.LOWER? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER;
+                                }
+                            }
+                            newState=movingState.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF,newHalf);
+
+                        }
+                        if(shouldRotateState()&&movingState.hasProperty(BlockStateProperties.BED_PART)){
+                            BedPart oldPart = movingState.getValue(BlockStateProperties.BED_PART);
+                            BedPart newPart = oldPart;
+                            if (degree == 180 || degree == -180) {
+                                if (getAxis() == Direction.Axis.X||getAxis() == Direction.Axis.Z) {
+                                    newPart= oldPart==BedPart.FOOT? BedPart.HEAD : BedPart.FOOT;
+                                }
+                            }
+                            newState=movingState.setValue(BlockStateProperties.BED_PART,newPart);
+
+                        }
 
                         if (movingState.getBlock() == Blocks.OBSERVER) {
                             level().setBlock(pos, newState, 82);
@@ -688,9 +690,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         boolean flag= getTimeCount() >= startTick && getTimeCount() < startTick + duration;
         boolean flag2=false;
         int thetaDegree= (flag||isLoopRotation())? Math.round((getTimeCount()-startTick)*getDegreeAngle()/(float)duration) : getDegreeAngle();
-        int degreeCombined=thetaDegree+getVisualRot();
+        int degreeCombined=thetaDegree+getVisualRot()+getStartRotation();
         List<Vec3> rotatedVec3List=Utils.rotateVec3PosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombined);
-        for(int i=0;i<rotatedVec3List.size();i++) {
+            int basketAngle= thetaDegree-getVisualRot();
+        List<Vec3> rotatedVec3BasketList=Utils.rotateVec3BasketPosList(getBasketPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombined,getBasketOriginPosList());
+        rotatedVec3List.addAll(rotatedVec3BasketList);
+            for(int i=0;i<rotatedVec3List.size();i++) {
 
             Vec3 eachVec3=rotatedVec3List.get(i);
             AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
@@ -698,11 +703,11 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity)&&!(o instanceof CollisionEntity);
                 })) {
-                       CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x, eachVec3.y, eachVec3.z,Blocks.AIR.defaultBlockState(),new CompoundTag());
+                       CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x+0.5D, eachVec3.y-0.5D, eachVec3.z+0.5D,Blocks.AIR.defaultBlockState(),new CompoundTag());
                         level().addFreshEntity(collisionEntity);
-                        if(entity.getY()!=eachVec3.y+0.55D){
+                       /* if(entity.getY()!=eachVec3.y+0.55D){
                             entity.setPos(entity.getX(),eachVec3.y+0.55D,entity.getZ());
-                        }
+                        }*/
 
                     entity.fallDistance=0f;
 
