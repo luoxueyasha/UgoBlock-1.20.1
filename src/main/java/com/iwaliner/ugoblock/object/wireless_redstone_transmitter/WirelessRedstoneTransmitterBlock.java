@@ -2,6 +2,8 @@ package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
+import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlockEntity;
+import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +21,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -51,9 +55,7 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
         ItemStack stack=player.getItemInHand(hand);
         if(level.getBlockEntity(pos) instanceof WirelessRedstoneTransmitterBlockEntity blockEntity) {
             Optional<Vec2> optional = getRelativeHitCoordinatesForBlockFace(result);
-            if (optional.isEmpty()||result.getDirection().getAxis()== Direction.Axis.Y) {
-                return InteractionResult.PASS;
-            } else {
+            if (!optional.isEmpty()&&result.getDirection().getAxis()!= Direction.Axis.Y) {
                 if(/*optional.get().x>0.125F&&*/optional.get().x<0.40625F){
                     if(stack.is(Items.WHITE_DYE)){
                         setColor1(level,pos,state,blockEntity,DyeColor.WHITE,player);
@@ -210,6 +212,9 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
                 blockEntity.setImitatingState(Blocks.AIR.defaultBlockState());
                 level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
+            }else{
+                player.displayClientMessage(Utils.getComponentFrequencyColors(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3()), true);
+                return InteractionResult.SUCCESS;
             }
         }
         return InteractionResult.PASS;
@@ -320,4 +325,5 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
         list.add(Component.translatable("info.ugoblock.wireless_redstone_frequency").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.block_imitatable").withStyle(ChatFormatting.GREEN));
     }
+
 }

@@ -1,15 +1,13 @@
 package com.iwaliner.ugoblock.object.moving_block;
 
-import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
-import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.mojang.math.Transformation;
 import net.minecraft.client.Camera;
-import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -22,12 +20,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -38,7 +39,7 @@ import java.lang.Math;
 import java.util.List;
 
 
-@OnlyIn(Dist.CLIENT)
+/*@OnlyIn(Dist.CLIENT)*/
     public class AbstractMovingBlockRenderer<T extends Display, S> extends EntityRenderer<T> {
    /* private final ModelPart lid;
     private final ModelPart bottom;
@@ -88,7 +89,7 @@ import java.util.List;
     }
 
     /**表示の補完*/
-    private Quaternionf calculateOrientation(MovingBlockEntity movingBlock, float f, Quaternionf quaternionf) {
+    private Quaternionf calculateOrientationSmooth(MovingBlockEntity movingBlock, float f, Quaternionf quaternionf) {
                 if(movingBlock.getAxis()== Direction.Axis.X){
                     quaternionf = quaternionf.rotationYXZ(0F, -0.017453292F * entityYRot(movingBlock, f), 0.0F);
                 }else if(movingBlock.getAxis()== Direction.Axis.Y){
@@ -99,6 +100,7 @@ import java.util.List;
         return quaternionf;
     }
 
+
     public void render(T movingBlock, float f1, float f2, PoseStack poseStack, MultiBufferSource bufferSource, int i0) {
         Display.RenderState display$renderstate = movingBlock.renderState();
         if (display$renderstate != null) {
@@ -108,29 +110,26 @@ import java.util.List;
                 this.shadowRadius = display$renderstate.shadowRadius().get(f);
                 this.shadowStrength = display$renderstate.shadowStrength().get(f);
                 super.render(movingBlock, f1, f2, poseStack, bufferSource, i0);
+                Quaternionf rotatedQuaternionf=this.calculateOrientationSmooth((MovingBlockEntity) movingBlock, f2, new Quaternionf());
 
                 poseStack.pushPose();
-                Quaternionf rotatedQuaternionf=this.calculateOrientation((MovingBlockEntity) movingBlock, f2, new Quaternionf());
                 poseStack.mulPose(rotatedQuaternionf);
                 Transformation transformation = display$renderstate.transformation().get(f);
                 poseStack.mulPoseMatrix(transformation.getMatrix());
                 poseStack.last().normal().rotate(transformation.getLeftRotation()).rotate(transformation.getRightRotation());
-                this.renderInner( (MovingBlockEntity)movingBlock, poseStack, bufferSource,rotatedQuaternionf);
+                this.renderInner( (MovingBlockEntity)movingBlock, poseStack, bufferSource,rotatedQuaternionf,i0);
                 poseStack.popPose();
-
-
-
-
             }
         }
     }
+    protected int getBlockLightLevel(T p_174216_, BlockPos p_174217_) {
+        return p_174216_.getType() == EntityType.GLOW_ITEM_FRAME ? Math.max(5, super.getBlockLightLevel(p_174216_, p_174217_)) : super.getBlockLightLevel(p_174216_, p_174217_);
+    }
 
-
-    private void renderInner(MovingBlockEntity movingBlock, PoseStack poseStack, MultiBufferSource multiBufferSource,Quaternionf rotatedQuaternionf) {
+    private void renderInner(MovingBlockEntity movingBlock, PoseStack poseStack, MultiBufferSource multiBufferSource,Quaternionf rotatedQuaternionf,int i0) {
         List<BlockPos> posList = movingBlock.getPosList();
         List<BlockState> stateList = movingBlock.getStateList();
         Level level = movingBlock.level();
-
 
 
        /* poseStack.pushPose();
@@ -239,8 +238,10 @@ import java.util.List;
                         }*/
 
                     poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
-                    int lightLevel = block.getLightEmission(eachState, level, eachPos);
-                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+                    int blockLightLevel = block.getLightEmission(eachState, level, eachPos);
+                    int skyLightLevel = this.getSkyLightLevel((T) movingBlock,eachPos);
+                   //this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(blockLightLevel,skyLightLevel,i0), OverlayTexture.NO_OVERLAY);
 
                    /* poseStack.translate(0.4999D, 0.4999D, 0.4999D);
                     if (movingBlock.getAxis() == Direction.Axis.X) {
@@ -271,7 +272,7 @@ import java.util.List;
         List<BlockPos> basketOriginPosList = movingBlock.getBasketOriginPosList();
         List<BlockState> basketStateList = movingBlock.getBasketStateList();
         List<Integer> basketIndexList = movingBlock.getBasketIndexList();
-        for (int j = 0; j < basketIndexList.size(); j++) {
+        for (int j = 0; j < basketPosList.size(); j++) {
             int eachBasketIndex=basketIndexList.get(j);
             BlockPos eachBasketPos = basketPosList.get(j);
             BlockPos eachBasketOriginPos = basketOriginPosList.get(j);
@@ -282,17 +283,7 @@ import java.util.List;
             poseStack.translate(eachBasketOriginPos.getX(), eachBasketOriginPos.getY(),eachBasketOriginPos.getZ());
             if (!(eachBasketBlock instanceof BedBlock && eachBasketState.getValue(BedBlock.PART) == BedPart.FOOT)) {
                int lightLevel = eachBasketBlock.getLightEmission(eachBasketState, level, eachBasketPos);
-               /*if((movingBlock.getDegreeAngle()+movingBlock.getVisualRot()+movingBlock.getStartRotation())%90!=0) {
-                   if (movingBlock.getAxis() == Direction.Axis.X) {
-                       poseStack.mulPose(new Quaternionf(-rotatedQuaternionf.x + (movingBlock.getVisualXRot()-movingBlock.getStartRotation()) * ((float) Math.PI / 180F), 0F, 0F, rotatedQuaternionf.w));
-
-                   } else if (movingBlock.getAxis() == Direction.Axis.Y) {
-                       poseStack.mulPose(new Quaternionf(0F, -rotatedQuaternionf.y + (movingBlock.getVisualXRot()-movingBlock.getStartRotation()) * ((float) Math.PI / 180F), 0F, rotatedQuaternionf.w));
-
-                   } else if (movingBlock.getAxis() == Direction.Axis.Z) {
-                       poseStack.mulPose(new Quaternionf(0F, 0F, -rotatedQuaternionf.z +(movingBlock.getVisualXRot()-movingBlock.getStartRotation()) * ((float) Math.PI / 180F), rotatedQuaternionf.w));
-                   }
-               }else{*/
+                int skyLightLevel = this.getSkyLightLevel((T) movingBlock,eachBasketPos);
                    if (movingBlock.getAxis() == Direction.Axis.X) {
                        poseStack.mulPose(new Quaternionf(-rotatedQuaternionf.x /*+ (movingBlock.getVisualXRot()) * ((float) Math.PI / 180F)*/, 0F, 0F, rotatedQuaternionf.w));
 
@@ -302,20 +293,19 @@ import java.util.List;
                    } else if (movingBlock.getAxis() == Direction.Axis.Z) {
                        poseStack.mulPose(new Quaternionf(0F, 0F, -rotatedQuaternionf.z/* +(movingBlock.getVisualXRot()) * ((float) Math.PI / 180F)*/, rotatedQuaternionf.w));
                    }
-        //       }
                 poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
                 poseStack.translate(eachBasketOffset.getX(), eachBasketOffset.getY(), eachBasketOffset.getZ());
-                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
+                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, brightness(lightLevel,skyLightLevel,i0), OverlayTexture.NO_OVERLAY);
             }
             poseStack.popPose();
         }
     }
 
-        private int brightness(int lightLevel){
-        switch (lightLevel){
-            case 15 : return 15728880;
-            default: return 16777215;
+        private int brightness(int blockLightLevel,int skyLightLevel, int i0){
+        if(blockLightLevel==0){
+            return i0;
         }
+        return Math.max(i0,LightTexture.pack(blockLightLevel,skyLightLevel));
         }
         private boolean shouldRender(BlockState state){
             return state==null||(state.getShape(null,null)!= Shapes.block())||!Utils.isBlockSolid(state);

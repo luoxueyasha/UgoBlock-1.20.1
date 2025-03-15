@@ -115,8 +115,8 @@ public class VectorCardItem extends Item {
         if(tag!=null&&tag.contains("originPosition")&& tag.contains("endPosition")) {
             BlockPos originPos = NbtUtils.readBlockPos(tag.getCompound("originPosition"));
             BlockPos endPos = NbtUtils.readBlockPos(tag.getCompound("endPosition"));
-            tag.put("originPosition", NbtUtils.writeBlockPos(endPos));
-            tag.put("endPosition", NbtUtils.writeBlockPos(originPos));
+            tag.put("originPosition", NbtUtils.writeBlockPos(originPos.offset(transition)));
+            tag.put("endPosition", NbtUtils.writeBlockPos(endPos.offset(transition)));
             stack.setTag(tag);
         }
     }

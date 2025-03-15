@@ -6,7 +6,9 @@
   "mixins": [
     "BlockDisplayMixin",
     "DisplayMixin",
-    "EntityMixin"
+    "EntityMixin",
+    "FallingBlockMixin",
+    "PistonMovingBlockEntityMixin"
   ],
   "client": [
   ],

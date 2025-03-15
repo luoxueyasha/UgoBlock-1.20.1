@@ -1,6 +1,7 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -147,6 +148,9 @@ public class PortableWirelessRedstoneTransmitterItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
        list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter2").withStyle(ChatFormatting.GREEN));
+        if(!isColor1Null(stack)&&!isColor2Null(stack)&&!isColor3Null(stack)){
+            list.add(Utils.getComponentFrequencyColors(getColor1(stack),getColor2(stack),getColor3(stack)));
+        }
 
     }
     public static boolean makeSureTagIsValid(@javax.annotation.Nullable CompoundTag tag) {

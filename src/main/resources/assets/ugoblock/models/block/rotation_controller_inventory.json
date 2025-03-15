@@ -2,7 +2,7 @@
 	"parent": "block/block",
 	"render_type": "minecraft:cutout",
 	"textures": {
-		"0": "ugoblock:block/rotation_controller_top",
+		"0": "ugoblock:block/rotation_controller_bottom_counter_clockwise",
 		"1": "ugoblock:block/rotation_controller_bottom_clockwise",
 		"2": "ugoblock:block/rotation_controller_side_clockwise",
 		"3": "ugoblock:block/rotation_controller_side_on",

@@ -5,7 +5,10 @@ import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
+import com.iwaliner.ugoblock.object.seat.SeatBlock;
+import com.iwaliner.ugoblock.object.seat.SeatEntity;
 import com.iwaliner.ugoblock.register.Register;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -18,9 +21,14 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
@@ -39,6 +47,7 @@ import org.joml.Quaternionf;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MovingBlockEntity extends Display.BlockDisplay {
 
@@ -87,6 +96,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
      @Nullable
     private MovingBlockEntity.PosRotInterpolationTarget posRotInterpolationTarget;
+    private int lerpSteps;
+    private double lerpX;
+    private double lerpY;
+    private double lerpZ;
+    private double lerpYRot;
+    private double lerpXRot;
 
     /**絶対座標ではなく、制御機の正面からの相対座標。*/
     private List<BlockPos> posList=new ArrayList<>();
@@ -111,6 +126,15 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     /**このbasketを作成しているバスケット作成機は大元のposListだとどの番号に相当するか*/
     private List<Integer> basketIndexList =new ArrayList<>();
+
+    /**座席の初期位置の相対座標*/
+    private List<BlockPos> seatPosList=new ArrayList<>();
+
+    /**座席の回転中心の相対座標*/
+    private List<BlockPos> seatOriginPosList=new ArrayList<>();
+
+    /**座席がゴンドラ内かどうか*/
+    private List<Boolean> seatIsInBasketList=new ArrayList<>();
     int minX=0;
     int minY=0;
     int minZ=0;
@@ -240,6 +264,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("blockEntityList")) {
             this.entityData.set(DATA_BLOCKENTITY_TAG_ID,tag.getCompound("blockEntityList"));
         }
+        if (tag.contains("teleport_duration")) {
+            this.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID,tag.getInt("teleport_duration"));
+        }
 
     }
     @Override
@@ -261,6 +288,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.put("positionList",entityData.get(DATA_POSITION_TAG_ID));
         tag.put("stateList",entityData.get(DATA_STATE_TAG_ID));
         tag.put("blockEntityList",entityData.get(DATA_BLOCKENTITY_TAG_ID));
+        tag.putInt("teleport_duration",entityData.get(DATA_POS_ROT_INTERPOLATION_DURATION_ID));
     }
 
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -280,62 +308,65 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
 
     public boolean isPickable() {
+       // return true;
         return !isLoopRotation();
     }
 
     @Override
     protected @NotNull AABB makeBoundingBox() {
         super.makeBoundingBox();
-        if(!shouldRotate()) {
+       /* if(!shouldRotate()) {
             if (minX == 0 && minY == 0 && minZ == 0 && maxX == 0 && maxY == 0 && maxZ == 0) {
                 makeBoundingBoxFirst();
             }
             AABB aabb = new AABB(position().x - 0.5D + minX, position().y - 0.5D + minY, position().z - 0.5D + minZ, position().x - 0.5D + maxX + 1D, position().y - 0.5D + maxY + 1D, position().z - 0.5D + maxZ + 1D);
             return aabb;
-        }else{
+        }else{*/
             return new AABB(getActualBlockPos());
-        }
+       // }
     }
     private  void makeBoundingBoxFirst() {
-        boolean flag=true;
-         for(int i=0;i<getPosList().size();i++) {
-             BlockPos eachPos = getPosList().get(i);
-             BlockState eachState = getStateList().get(i);
-             VoxelShape shape = eachState.getCollisionShape(level(), this.blockPosition());
-             if (flag && !shape.isEmpty()) {
-                 minX = eachPos.getX();
-                 minY = eachPos.getY();
-                 minZ = eachPos.getZ();
-                 maxX = eachPos.getX();
-                 maxY = eachPos.getY();
-                 maxZ = eachPos.getZ();
-                 flag = false;
-                 break;
-             }
-         }
-             for(int i=0;i<getPosList().size();i++){
-                 BlockPos eachPos = getPosList().get(i);
-                 BlockState eachState = getStateList().get(i);
-                 VoxelShape shape = eachState.getCollisionShape(level(), this.blockPosition());
-             if(minX>eachPos.getX()&&!shape.isEmpty()){
-                 minX=eachPos.getX();
-             }
-             if(maxX<eachPos.getX()&&!shape.isEmpty()){
-                 maxX=eachPos.getX();
-             }
-             if(minY>eachPos.getY()&&!shape.isEmpty()){
-                 minY=eachPos.getY();
-             }
-             if(maxY<eachPos.getY()&&!shape.isEmpty()){
-                 maxY=eachPos.getY();
-             }
-             if(minZ>eachPos.getZ()&&!shape.isEmpty()){
-                 minZ=eachPos.getZ();
-             }
-             if(maxZ<eachPos.getZ()&&!shape.isEmpty()){
-                 maxZ=eachPos.getZ();
-             }
-         }
+        if(getPosList().size()==getStateList().size()) {
+            boolean flag = true;
+            for (int i = 0; i < getPosList().size(); i++) {
+                BlockPos eachPos = getPosList().get(i);
+                BlockState eachState = getStateList().get(i);
+                VoxelShape shape = eachState.getCollisionShape(level(), this.blockPosition());
+                if (flag && !shape.isEmpty()) {
+                    minX = eachPos.getX();
+                    minY = eachPos.getY();
+                    minZ = eachPos.getZ();
+                    maxX = eachPos.getX();
+                    maxY = eachPos.getY();
+                    maxZ = eachPos.getZ();
+                    flag = false;
+                    break;
+                }
+            }
+            for (int i = 0; i < getPosList().size(); i++) {
+                BlockPos eachPos = getPosList().get(i);
+                BlockState eachState = getStateList().get(i);
+                VoxelShape shape = eachState.getCollisionShape(level(), this.blockPosition());
+                if (minX > eachPos.getX() && !shape.isEmpty()) {
+                    minX = eachPos.getX();
+                }
+                if (maxX < eachPos.getX() && !shape.isEmpty()) {
+                    maxX = eachPos.getX();
+                }
+                if (minY > eachPos.getY() && !shape.isEmpty()) {
+                    minY = eachPos.getY();
+                }
+                if (maxY < eachPos.getY() && !shape.isEmpty()) {
+                    maxY = eachPos.getY();
+                }
+                if (minZ > eachPos.getZ() && !shape.isEmpty()) {
+                    minZ = eachPos.getZ();
+                }
+                if (maxZ < eachPos.getZ() && !shape.isEmpty()) {
+                    maxZ = eachPos.getZ();
+                }
+            }
+        }
     }
     @Override
     public @NotNull AABB getBoundingBoxForCulling() {
@@ -343,6 +374,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     }
     @Override
     public void tick() {
+        this.tickLerp();
 
         for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos()).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
             return (o instanceof MovingBlockEntity);
@@ -388,9 +420,11 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if(getDiscardTime()>1){
             setDiscardTime(getDiscardTime()-1);
         }else if(getDiscardTime()==1){
+            getPassengers().forEach(Entity::discard);
             discard();
         }else if(getDiscardTime()==-1){
             rotateAndMakeBlock(0);
+            getPassengers().forEach(Entity::discard);
             discard();
         }
         if(!shouldRotate()) {
@@ -398,7 +432,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
                setActualPos(pos);
 
-                for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
 
@@ -406,31 +440,45 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                         Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
                         entity.setDeltaMovement(speed);
                         entity.setOnGround(true);
-                }
+                }*/
 
             } else if (duration > 0 && getTimeCount() == startTick + duration + 0) {
-                for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
                     entity.fallDistance=0f;
                     entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,0D,entity.getDeltaMovement().z));
                     entity.setOnGround(true);
-                }
+                }*/
                 if(getTimeCount()>3) {
                     makeBlock();
                 }
             } else if (duration > 0 && getTimeCount() >= startTick + duration + 1) {
+                getPassengers().forEach(Entity::discard);
                 discard();
             }
         }else{
             rotate();
-            makeCollisionEntity();
+            //makeCollisionEntity();
         }
+        makeCollisionEntity();
         addTimeCount(1);
     }
 
     private void makeBlock(){ /**移動し終わってブロック化する*/
         if(!level().isClientSide) {
+           /* List<Entity> seatPassengerList=new ArrayList<>();
+            for(int i=0;i<getPassengers().size();i++){
+                Entity entity=getPassengers().get(i);
+                Entity passenger=null;
+                if(entity instanceof SeatEntity){
+                    if(entity.getFirstPassenger()!=null) {
+                        passenger = entity.getFirstPassenger();
+                    }
+                    seatPassengerList.add(passenger);
+                }
+               // seatPassengerList.add(passenger);
+            }*/
             BlockPos originPos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
             for (int i=0;i<getPosList().size();i++) {
                 BlockPos pos=originPos.offset(getPosList().get(i).getX(),getPosList().get(i).getY(),getPosList().get(i).getZ());
@@ -445,6 +493,27 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                         level().scheduleTick(pos, movingState.getBlock(), 2);
                     }else {
                         level().setBlock(pos, movingState, 82);
+                    }
+                    if(movingState.getBlock()==Register.seat.get()){
+                        AABB aabb = new AABB(pos);
+                        Entity seatEntity0=null;
+                        Entity passenger=null;
+                        for (Entity entity : level().getEntities((Entity) null, aabb.move(0D, 0D, 0D).inflate(0d, 0d, 0d), (o) -> {
+                            return (o instanceof SeatEntity);
+                        })) {
+                            seatEntity0=entity;
+                            break;
+                        }
+                        if(seatEntity0!=null&&seatEntity0.getFirstPassenger()!=null){
+                            passenger=seatEntity0.getFirstPassenger();
+                        }
+                        SeatEntity seatEntity=new SeatEntity(level(),pos,false);
+                        if(!level().isClientSide()){
+                            level().addFreshEntity(seatEntity);
+                        }
+                        if(passenger!=null) {
+                            passenger.startRiding(seatEntity);
+                        }
                     }
                     if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
                         if (movingBlockEntityData != null) {
@@ -474,10 +543,15 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                                 level().addFreshEntity(itemEntity);
                             }
                         }
-                        level().setBlock(pos, movingState, 82);
+                        level().setBlock(pos, movingState,82);
                     }
                     discard();
                 }
+            }
+            for (int i=0;i<getPosList().size();i++) {
+                BlockPos pos = originPos.offset(getPosList().get(i).getX(), getPosList().get(i).getY(), getPosList().get(i).getZ());
+                BlockState movingState = getStateList().get(i);
+                level().updateNeighborsAt(pos,movingState.getBlock());
             }
             setCompoundTag(new CompoundTag());
         }
@@ -489,10 +563,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             List<BlockState> basketStateList2=getBasketStateList();
             List<CompoundTag> blockEntityList=getBlockEntityDataList();
             List<CompoundTag> basketBlockEntityList=getBasketBlockEntityDataList();
-ModCoreUgoBlock.logger.info("degree2:"+degree2);
-if(!shouldRotate()){
-    ModCoreUgoBlock.logger.info("!shouldRotate");
-}
             List<BlockPos> rotatedPosList=Utils.rotatePosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degree2);
             int basketAngle= degree2==0&&degree%90==0? degree: degree2;
             List<BlockPos> rotatedBasketPosList=Utils.rotateBasketPosList(getBasketPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),basketAngle,getBasketOriginPosList());
@@ -640,6 +710,27 @@ if(!shouldRotate()){
                             level().setBlock(pos, newState, 82);
 
                         }
+                        if(movingState.getBlock()==Register.seat.get()){
+                            AABB aabb = new AABB(pos);
+                            Entity seatEntity0=null;
+                            Entity passenger=null;
+                            for (Entity entity : level().getEntities((Entity) null, aabb.move(0D, 0D, 0D).inflate(0d, 0d, 0d), (o) -> {
+                                return (o instanceof SeatEntity);
+                            })) {
+                                seatEntity0=entity;
+                                break;
+                            }
+                            if(seatEntity0!=null&&seatEntity0.getFirstPassenger()!=null){
+                                passenger=seatEntity0.getFirstPassenger();
+                            }
+                            SeatEntity seatEntity=new SeatEntity(level(),pos,false);
+                            if(!level().isClientSide()){
+                                level().addFreshEntity(seatEntity);
+                            }
+                            if(passenger!=null) {
+                                passenger.startRiding(seatEntity);
+                            }
+                        }
                         if (!movingBlockEntityData.isEmpty() && movingState.hasBlockEntity()) {
                             if (movingBlockEntityData != null) {
                                 BlockEntity blockentity = level().getBlockEntity(pos);
@@ -659,7 +750,6 @@ if(!shouldRotate()){
                                     level().addFreshEntity(itemEntity);
                                 }
                             }
-
                         } else if (!level().isClientSide &&!level().getBlockState(pos).is(Register.TAG_DISABLE_ITEM_DROP)) { /**アイテムをドロップしたくないブロックが移動してきたがその場所が埋まっていた場合。もともとあったブロックをアイテム化したうえでドロップしたくないブロックを設置する。*/
                             LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level())).withParameter(LootContextParams.ORIGIN, pos.getCenter()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, this);
                             for (ItemStack itemStack : level().getBlockState(pos).getDrops(lootparams$builder)) {
@@ -672,6 +762,11 @@ if(!shouldRotate()){
                         }
                 }
             }
+            for (int i=0;i<rotatedPosList.size();i++) {
+                BlockPos pos = rotatedPosList.get(i);
+                BlockState movingState = blockStateList.get(i);
+                level().updateNeighborsAt(pos,movingState.getBlock());
+            }
         }
     }
     private void discardAfterRotate( int degree) { /**回転し終わってブロック化する*/
@@ -679,6 +774,7 @@ if(!shouldRotate()){
             int degree2= degree+getVisualRot()+getStartRotation();
 
             if ( degree2 % 90 == 0) {
+                getPassengers().forEach(Entity::discard);
                 discard();
             }
         }
@@ -687,38 +783,208 @@ if(!shouldRotate()){
         int duration=getDuration();
         if(duration>0){
         int startTick=getStartTick();
+        List<Vec3> entityOffsetPosList=new ArrayList<>();
+        List<Vec3> originPosList=new ArrayList<>();
+        for(int i=0;i<getPosList().size();i++){
+            entityOffsetPosList.add(Vec3.ZERO);
+            originPosList.add(getActualPos());
+        }
+        for(int i=0;i<getBasketOriginPosList().size();i++){
+            BlockPos basketPos=getBasketPosList().get(i);
+            BlockPos originPos=getBasketOriginPosList().get(i);
+            BlockPos differ=originPos.offset(-basketPos.getX(),-basketPos.getY(),-basketPos.getZ());
+            entityOffsetPosList.add(differ.getCenter());
+            originPosList.add(originPos.getCenter().add(blockPosition().getX(),blockPosition().getY(),blockPosition().getZ()));
+        }
         boolean flag= getTimeCount() >= startTick && getTimeCount() < startTick + duration;
-        boolean flag2=false;
-        int thetaDegree= (flag||isLoopRotation())? Math.round((getTimeCount()-startTick)*getDegreeAngle()/(float)duration) : getDegreeAngle();
-        int degreeCombined=thetaDegree+getVisualRot()+getStartRotation();
-        List<Vec3> rotatedVec3List=Utils.rotateVec3PosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombined);
-            int basketAngle= thetaDegree-getVisualRot();
-        List<Vec3> rotatedVec3BasketList=Utils.rotateVec3BasketPosList(getBasketPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombined,getBasketOriginPosList());
+        float thetaDegreeF= (flag||isLoopRotation())? (getTimeCount()-startTick)*getDegreeAngle()/(float)duration : getDegreeAngle();
+        float degreeCombinedF=thetaDegreeF/*+getVisualRot()*/+getStartRotation();
+        if(!shouldRotate()){
+            degreeCombinedF=0f;
+        }
+        List<Vec3> rotatedVec3BasketList=Utils.rotateVec3BasketPosList(getBasketPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombinedF,getBasketOriginPosList());
+        List<Vec3> rotatedVec3List=Utils.rotateVec3PosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombinedF);
+        List<Vec3> rotatedOriginPosList=Utils.rotateVec3PosList(getPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombinedF);
+        rotatedOriginPosList.addAll(Utils.rotateVec3PosList(getBasketOriginPosList(),BlockPos.ZERO,getActualBlockPos(),getAxis(),degreeCombinedF));
         rotatedVec3List.addAll(rotatedVec3BasketList);
-            for(int i=0;i<rotatedVec3List.size();i++) {
-
-            Vec3 eachVec3=rotatedVec3List.get(i);
-            AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
-
-                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 1d, 0d), (o) -> {
-                    return !(o instanceof MovingBlockEntity)&&!(o instanceof CollisionEntity);
+        List<BlockState> blockStateList=getStateList();
+        blockStateList.addAll(getBasketStateList());
+        //posList2.addAll(getBasketPosList());
+            /*for(int i=0;i<rotatedVec3ListFloat.size();i++) {
+                Vec3 eachVec3 = rotatedVec3ListFloat.get(i);
+                double s = 0.4D;
+                AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x +s, eachVec3.y +s, eachVec3.z +s);
+                for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof SeatEntity);
                 })) {
-                       CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x+0.5D, eachVec3.y-0.5D, eachVec3.z+0.5D,Blocks.AIR.defaultBlockState(),new CompoundTag());
-                        level().addFreshEntity(collisionEntity);
-                       /* if(entity.getY()!=eachVec3.y+0.55D){
-                            entity.setPos(entity.getX(),eachVec3.y+0.55D,entity.getZ());
-                        }*/
-
-                    entity.fallDistance=0f;
-
-                    entity.setOnGround(true);
-
+                    entity.moveTo(eachVec3);
                 }
+            }*/
+            /*for(int i=0;i<getPosList().size();i++) {
+                Vec3 eachVec3= getPosList().get(i).getCenter();
+                //s=0d;
+                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
+                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof LivingEntity);
+                })) {
+                    if(!entity.isPassenger()) {
+                      //  CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x + 0.5D, eachVec3.y - 0.5D, eachVec3.z + 0.5D, Blocks.AIR.defaultBlockState(), new CompoundTag());
+                       // level().addFreshEntity(collisionEntity);
+
+                        if (entity.getY() != eachVec3.y + 0.55D) {
+                            //    entity.setPos(entity.getX(), eachVec3.y + 0.55D, entity.getZ());
+                        }
+
+                        entity.fallDistance = 0f;
+
+                        Vec3 aimedPos=eachVec3.add(0D,0.5D,0D);
+                        Vec3 currentEntityPos=entity.position();
+                        Vec3 differ=aimedPos.add(-currentEntityPos.x,-currentEntityPos.y,-currentEntityPos.z);
+                         //Vec3 speeds=new Vec3();
+                         entity.setDeltaMovement(differ);
+                        float dd=getDegreeAngle();
+                        Vec3 speeds=Utils.getSpeedsRotation(eachVec3,Vec3.ZERO,dd,duration,getAxis());
+                        //entity.setDeltaMovement(speeds);
+                        entity.setOnGround(true);
+
+                    }
+                }
+
+            }*/
+            List< UUID> uuidList=new ArrayList<>();
+           for(int i=0;i<rotatedVec3List.size();i++) {
+            Vec3 eachVec3=rotatedVec3List.get(i);
+            BlockState eachState=blockStateList.get(i);
+            boolean floorMakeFlag=false;
+            if(!isExpectedState(eachState)) { //床が空気などではない場合
+                if (rotatedVec3List.contains(eachVec3.add(0D, 1D, 0D))) {
+                    int upperIndex = rotatedVec3List.indexOf(eachVec3.add(0D, 1D, 0D));
+                    BlockState upperState = blockStateList.get(upperIndex);
+                    if (isExpectedState(upperState)) { //床のひとつ上のブロックが空気など
+                        floorMakeFlag=true;
+                    }
+                }else{
+                    floorMakeFlag=true;
+                }
+            }
+            if(floorMakeFlag){
+                double s = 0.2D;
+                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x +0.5D, eachVec3.y +0.5D, eachVec3.z +0.5D);
+                AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x + s, eachVec3.y + s, eachVec3.z + s);
+               /* for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof SeatEntity);
+                })) {
+                    entity.moveTo(eachVec3);
+                }*/
+                double bigger=0.125D;
+                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D, 0.25D, 0D).inflate(bigger, bigger, bigger), (o) -> {
+                    return (o instanceof LivingEntity);
+                })) {
+                    if (!entity.isPassenger()&&!uuidList.contains(entity.getUUID())) {
+                        entity.fallDistance = 0f;
+                        Vec3 newPos2 = eachVec3;
+                        if (shouldRotate()) {
+                            Vec3 vec3 = originPosList.get(i) == getActualPos() ? entity.position() : rotatedOriginPosList.get(i);
+                            Vec3 differ = originPosList.get(i) == getActualPos() ? Vec3.ZERO : entity.position().add(-vec3.x, -vec3.y, -vec3.z);
+                            Vec3 vec31 = vec3;
+                            if (isLoopRotation()||(getTimeCount() <= (duration + startTick))) {
+                                vec31 = Utils.getRotatedEntityPosition(vec3, getActualPos(), getDegreeAngle(), duration, getAxis());
+                            }
+                            Vec3 newPos = vec31.add(differ);
+                            double entityPosX = entity.getX();
+                            double entityPosZ = entity.getZ();
+                            double entitySpeedX = entity.getDeltaMovement().x;
+                            double entitySpeedZ = entity.getDeltaMovement().z;
+                            double d = 0.000125D;
+                            double x = newPos.x;
+                            double y = newPos.y;
+                            double z = newPos.z;
+                            Vec3 vec32 = entity.getDeltaMovement();
+                            double d9 = vec32.horizontalDistanceSqr();
+                            double d11 = this.getDeltaMovement().horizontalDistanceSqr();
+                            if (d9 > 1.0E-4D && d11 < 0.01D) {
+                                //if (Mth.abs((float) entitySpeedX) > d) {
+                                x = entityPosX;
+                                //}
+                                //if (Mth.abs((float) entitySpeedZ) > d) {
+                                z = entityPosZ;
+                                // }
+                            }
+                            newPos2 = new Vec3(x, y, z);
+                        } else {
+                            BlockPos transition = getTransition();
+                            Vec3 offset = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
+                            newPos2 = entity.position().add(offset);
+                            /*if (duration > 0 && getTimeCount() == startTick + duration + 0) {
+                              newPos2=newPos2.add(0,0.05D,0D);
+                            }*/
+                        }
+                        /*if (duration > 0 && getTimeCount() >= startTick && getTimeCount() < startTick + duration) {
+                            Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
+                            setActualPos(pos);
+
+                            for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                                return !(o instanceof MovingBlockEntity);
+                            })) {
+
+                                entity.fallDistance=0f;
+                                Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
+                                entity.setDeltaMovement(speed);
+                                entity.setOnGround(true);
+                            }
+
+                        } else if (duration > 0 && getTimeCount() == startTick + duration + 0) {
+                            for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                                return !(o instanceof MovingBlockEntity);
+                            })) {
+                                entity.fallDistance=0f;
+                                entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,0D,entity.getDeltaMovement().z));
+                                entity.setOnGround(true);
+                            }
+                            if(getTimeCount()>3) {
+                                makeBlock();
+                            }
+                        }*/
+                        double collisionYOffset=-1.001D;
+                        if(!isLoopRotation()&&(getTimeCount()>(duration+startTick))) {
+                            collisionYOffset=-1D;
+                            if(getTimeCount()==duration+startTick+1&&shouldRotate()&&getAxis()!= Direction.Axis.Y){
+                                newPos2=newPos2.add(0D,0.5D,0D);
+                            }
+                        }
+                        if(!shouldRotate()){
+                            collisionYOffset=-1D;
+                        }
+                        if(isLoopRotation()||(getTimeCount()<=(duration+startTick)+1)) {
+                            entity.setPos(newPos2);
+                        }
+
+                        entity.setOnGround(true);
+                        CollisionEntity collisionEntity = new CollisionEntity(level(), newPos2.x + 0D, newPos2.y +collisionYOffset, newPos2.z + 0D, Blocks.AIR.defaultBlockState(), new CompoundTag());
+                        if(!level().isClientSide()) {
+                            level().addFreshEntity(collisionEntity);
+                        }
+                        uuidList.add(entity.getUUID());
+                    }
+                }
+            }
 
             }
 
         }
 
+    }
+    private boolean isExpectedState(BlockState state){
+        if(state.isAir()){
+            return true;
+        }else if(state.getBlock() instanceof DoorBlock||state.getBlock() instanceof FenceGateBlock){
+            return state.getValue(DoorBlock.OPEN);
+        }else if(state.getBlock() instanceof SeatBlock){
+            return true;
+        }else if(!state.isSolid()){
+            return true;
+        }
+        return false;
     }
     public void setTimeCount(int tick){
         entityData.set(DATA_TIME_COUNT_ID,tick);
@@ -760,19 +1026,6 @@ if(!shouldRotate()){
         return entityData.get(DATA_START_LOCATION_ID);
     }
 
-    private Quaternionf getLeftRotation(){
-        return entityData.get(DisplayMixin.getDataLeftRotation());
-    }
-
-    private Quaternionf getRightRotation(){
-        return entityData.get(DisplayMixin.getDataRightRotation());
-    }
-    public void setLeftRotation(Quaternionf quaternionf){
-        entityData.set(DisplayMixin.getDataLeftRotation(),quaternionf);
-    }
-    public void setRightRotation(Quaternionf quaternionf){
-        entityData.set(DisplayMixin.getDataRightRotation(),quaternionf);
-    }
     public void setDuration(int duration){
         entityData.set(DisplayMixin.getDataDuration(),duration);
     }
@@ -836,18 +1089,6 @@ if(!shouldRotate()){
     }
 
     private List<BlockPos> getPosListFirst(){
-      /*  CompoundTag entityTag=getCompoundTag();
-        if(!entityTag.contains("positionList")){
-            entityTag.put("positionList",new CompoundTag());
-        }
-        CompoundTag posTag=entityTag.getCompound("positionList");
-        List<BlockPos> posList=new ArrayList<>();
-        for(int i=0; i< posTag.size();i++){
-            if (posTag.contains("location_" + String.valueOf(i))) {
-                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
-            }
-        }
-        return posList;*/
         CompoundTag posTag=entityData.get(DATA_POSITION_TAG_ID);
         List<BlockPos> posList=new ArrayList<>();
         for(int i=0; i< posTag.size();i++){
@@ -874,19 +1115,6 @@ if(!shouldRotate()){
     }
 
     private List<BlockState> getStateListFirst(){
-       /* CompoundTag entityTag=getCompoundTag();
-        if(!entityTag.contains("stateList")){
-            entityTag.put("stateList",new CompoundTag());
-        }
-        CompoundTag stateTag=entityTag.getCompound("stateList");
-        List<BlockState> stateList=new ArrayList<>();
-        for(int i=0; i<getPosList().size();i++){
-            if (stateTag.contains("state_" + String.valueOf(i))) {
-                stateList.add(NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK),stateTag.getCompound("state_" + String.valueOf(i))));
-            }
-        }
-        return stateList;*/
-
         CompoundTag stateTag=entityData.get(DATA_STATE_TAG_ID);
         List<BlockState> stateList=new ArrayList<>();
         for(int i=0; i<getPosList().size();i++){
@@ -895,6 +1123,17 @@ if(!shouldRotate()){
             }
         }
         return stateList;
+    }
+    public void setStateList(){
+        stateList=new ArrayList<>();
+    }
+    public void setState(int i,BlockState state){
+        CompoundTag tag=entityData.get(DATA_STATE_TAG_ID);
+        if (tag.contains("state_" + String.valueOf(i))) {
+            tag.put("state_" + String.valueOf(i),NbtUtils.writeBlockState(state));
+            entityData.set(DATA_STATE_TAG_ID,tag);
+            setStateList();
+        }
     }
 
     public List<CompoundTag> getBlockEntityDataList() {
@@ -906,19 +1145,6 @@ if(!shouldRotate()){
     }
 
     private List<CompoundTag> getBlockEntityDataListFirst(){
-        /*CompoundTag entityTag=getCompoundTag();
-        if(!entityTag.contains("blockEntityList")){
-            entityTag.put("blockEntityList",new CompoundTag());
-        }
-        CompoundTag blockEntityTag=entityTag.getCompound("blockEntityList");
-        List<CompoundTag> blockEntityList=new ArrayList<>();
-        for(int i=0; i<getPosList().size();i++){
-            if (blockEntityTag.contains("blockEntity_" + String.valueOf(i))) {
-                blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
-            }
-        }
-        return blockEntityList;*/
-
         CompoundTag blockEntityTag=entityData.get(DATA_BLOCKENTITY_TAG_ID);
         List<CompoundTag> blockEntityList=new ArrayList<>();
         for(int i=0; i<getPosList().size();i++){
@@ -1029,7 +1255,21 @@ if(!shouldRotate()){
         }
         return stateList;
     }
-
+    public void setBasketStateList(){
+        basketStateList=new ArrayList<>();
+    }
+    public void setBasketState(int i,BlockState state){
+        CompoundTag entityTag=getCompoundTag();
+        CompoundTag basketTag=entityTag.getCompound("basketData");
+        CompoundTag stateTag=basketTag.getCompound("stateList");
+        if (stateTag.contains("state_" + String.valueOf(i))) {
+            stateTag.put("state_" + String.valueOf(i),NbtUtils.writeBlockState(state));
+            basketTag.put("stateList",stateTag);
+            entityTag.put("basketData",basketTag);
+            setCompoundTag(entityTag);
+            setBasketStateList();
+        }
+    }
     public List<CompoundTag> getBasketBlockEntityDataList() {
         if(basketBlockEntityDataList ==null|| basketBlockEntityDataList.isEmpty()){
             basketBlockEntityDataList =getBasketBlockEntityDataListFirst();
@@ -1056,7 +1296,81 @@ if(!shouldRotate()){
         }
         return blockEntityList;
     }
+    private List<BlockPos> getSeatPosListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("seatData")){
+            entityTag.put("seatData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("seatData");
+        if(!basketTag.contains("positionList")){
+            basketTag.put("positionList",new CompoundTag());
+        }
+        CompoundTag posTag=basketTag.getCompound("positionList");
+        List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< posTag.size();i++){
+            if (posTag.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;
+    }
 
+    public List<BlockPos> getSeatPosList() {
+        if(seatPosList==null||seatPosList.isEmpty()){
+            seatPosList=getSeatPosListFirst();
+        }
+        return seatPosList;
+    }
+    private List<BlockPos> getSeatOriginPosListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("seatData")){
+            entityTag.put("seatData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("seatData");
+        if(!basketTag.contains("originPositionList")){
+            basketTag.put("originPositionList",new CompoundTag());
+        }
+        CompoundTag posTag=basketTag.getCompound("originPositionList");
+        List<BlockPos> posList=new ArrayList<>();
+        for(int i=0; i< posTag.size();i++){
+            if (posTag.contains("location_" + String.valueOf(i))) {
+                posList.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+            }
+        }
+        return posList;
+    }
+
+    public List<BlockPos> getSeatOriginPosList() {
+        if(seatOriginPosList==null||seatOriginPosList.isEmpty()){
+            seatOriginPosList=getSeatOriginPosListFirst();
+        }
+        return seatOriginPosList;
+    }
+    private List<Boolean> getSeatIsInBasketListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("seatData")){
+            entityTag.put("seatData",new CompoundTag());
+        }
+        CompoundTag basketTag=entityTag.getCompound("seatData");
+        if(!basketTag.contains("isInBasketList")){
+            basketTag.put("isInBasketList",new CompoundTag());
+        }
+        CompoundTag tag=basketTag.getCompound("isInBasketList");
+        List<Boolean> list=new ArrayList<>();
+        for(int i=0; i< tag.size();i++){
+            if (tag.contains("isInBasket_" + String.valueOf(i))) {
+                list.add(tag.getBoolean("isInBasket_" + String.valueOf(i)));
+            }
+        }
+        return list;
+    }
+
+    public List<Boolean> getSeatIsInBasketList() {
+        if(seatIsInBasketList==null||seatIsInBasketList.isEmpty()){
+            seatIsInBasketList=getSeatIsInBasketListFirst();
+        }
+        return seatIsInBasketList;
+    }
     public int getVisualXRot(){
         return getAxis()== Direction.Axis.X? entityData.get(DATA_VISUAL_ROTATION_ID) : 0;
     }
@@ -1082,14 +1396,16 @@ if(!shouldRotate()){
         entityData.set(DATA_DISCARD_TIME_ID,tick);
     }
 
-    @Override
-    public boolean mayInteract(Level level, BlockPos poa) {
-        return true;
-    }
 
     @Override
     public void lerpTo(double p_297677_, double p_301293_, double p_301384_, float p_300635_, float p_299108_, int p_299659_,boolean b) {
         int i = this.getPosRotInterpolationDuration();
+        this.lerpX = p_297677_;
+        this.lerpY = p_301293_;
+        this.lerpZ = p_301384_;
+        this.lerpYRot = (double)p_300635_;
+        this.lerpXRot = (double)p_299108_;
+        this.lerpSteps = 10;
         this.posRotInterpolationTarget = new MovingBlockEntity.PosRotInterpolationTarget(i, p_297677_, p_301293_, p_301384_, (double)p_300635_, (double)p_299108_);
     }
 
@@ -1110,6 +1426,222 @@ if(!shouldRotate()){
             }
         }
     }
+
+    @Override
+    public double getPassengersRidingOffset() {
+        return super.getPassengersRidingOffset();
+    }
+
+    @Override
+    protected void positionRider(Entity entity, MoveFunction moveFunction) {
+        super.positionRider(entity, moveFunction);
+        int passengerIndex = this.getPassengers().indexOf(entity);
+        if(passengerIndex>=0) {
+            if(!getSeatPosList().isEmpty()&&!getSeatOriginPosList().isEmpty()) {
+                if (getSeatPosList().size() > passengerIndex&&getSeatOriginPosList().size()>passengerIndex) {
+                    BlockPos seatOldPos = getSeatPosList().get(passengerIndex);
+                    BlockPos seatOriginPos = getSeatOriginPosList().get(passengerIndex);
+                    int startTick = getStartTick();
+                    int duration = getDuration();
+                    boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
+                    if(shouldRotate()) {
+                        float thetaDegree = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
+                        float degreeCombined = thetaDegree /*+ getVisualRot()*/ + getStartRotation();
+                        if(!getSeatIsInBasketList().get(passengerIndex)){
+                            Vec3 vec3 =  entity.position();
+                            Vec3 differ = Vec3.ZERO;
+                            Vec3 vec31=vec3;
+                            if(isLoopRotation()||(getTimeCount()<(duration+startTick))) {
+                                vec31 = Utils.getRotatedEntityPosition(vec3, getActualPos(), getDegreeAngle(), duration, getAxis());
+                            }
+                            Vec3 newPos = vec31.add(differ);
+                            //moveFunction.accept(entity, newPos.x, newPos.y - 0.5D, newPos.z);
+                           // moveFunction.accept(entity, position().x, position().y+8D, position().z);
+                            Vec3 rotatedVec3 = Utils.rotateVec3SeatPos(seatOldPos, BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombined, BlockPos.ZERO,false);
+                            moveFunction.accept(entity, rotatedVec3.x, rotatedVec3.y - 0.5D, rotatedVec3.z);
+
+                        }else {
+                            Vec3 rotatedVec3 = Utils.rotateVec3SeatPos(seatOldPos, BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombined, seatOriginPos,true);
+                            moveFunction.accept(entity, rotatedVec3.x, rotatedVec3.y - 0.5D, rotatedVec3.z);
+
+                        }
+                    }else{
+                        Vec3 vec3=seatOldPos.getCenter().add(this.getActualPos());
+                        moveFunction.accept(entity, vec3.x-0.5D, vec3.y-1D, vec3.z-0.5D);
+                    }
+               }
+            }
+        }
+    }
+    private void tickLerp() {
+        if (this.isControlledByLocalInstance()) {
+            this.lerpSteps = 0;
+            this.syncPacketPositionCodec(this.getX(), this.getY(), this.getZ());
+        }
+
+        if (this.lerpSteps > 0) {
+            double d0 = this.getX() + (this.lerpX - this.getX()) / (double)this.lerpSteps;
+            double d1 = this.getY() + (this.lerpY - this.getY()) / (double)this.lerpSteps;
+            double d2 = this.getZ() + (this.lerpZ - this.getZ()) / (double)this.lerpSteps;
+           --this.lerpSteps;
+            this.setPos(d0, d1, d2);
+
+        }
+        if (this.isControlledByLocalInstance() && this.lerpSteps > 0) {
+            this.lerpSteps = 0;
+            this.absMoveTo(this.lerpX, this.lerpY, this.lerpZ, (float)this.lerpYRot, (float)this.lerpXRot);
+        }
+    }
+    @Override
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (this.isControlledByLocalInstance() && this.lerpSteps > 0) {
+            this.lerpSteps = 0;
+            this.absMoveTo(this.lerpX, this.lerpY, this.lerpZ, (float)this.lerpYRot, (float)this.lerpXRot);
+        }
+    }
+    protected boolean canAddPassenger(Entity p_248594_) {
+        return true;
+    }
+
+   /* @Override
+    public InteractionResult interactAt(Player player, Vec3 vec3, InteractionHand hand) {
+        int duration=getDuration();
+        if(duration>0) {
+            int startTick = getStartTick();
+            boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
+            float thetaDegreeF = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
+            float degreeCombinedF = thetaDegreeF + getVisualRot() + getStartRotation();
+            List<Vec3> rotatedVec3BasketList = Utils.rotateVec3BasketPosList(getBasketPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF, getBasketOriginPosList());
+            List<Vec3> rotatedVec3List = Utils.rotateVec3PosList(getPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF);
+            //rotatedVec3List.addAll(rotatedVec3BasketList);
+            List<BlockState> blockStateList = getStateList();
+            BlockPos pos = new BlockPos(Mth.floor(vec3.x), Mth.floor(vec3.y), Mth.floor(vec3.z));
+            for (int i = 0; i < rotatedVec3List.size(); i++) {
+                Vec3 eachVec3 = rotatedVec3List.get(i);
+                BlockState eachState = blockStateList.get(i);
+                double s = 0.2D;
+                BlockPos eachPos = new BlockPos(Mth.floor(eachVec3.x), Mth.floor(eachVec3.y), Mth.floor(eachVec3.z));
+                if (eachPos.equals(pos)) {
+                    setState(i, Blocks.DIAMOND_ORE.defaultBlockState());
+                    return InteractionResult.SUCCESS;
+                }
+            }
+        }
+        return InteractionResult.FAIL;
+    }*/
+
+    @Override
+    public boolean mayInteract(Level p_146843_, BlockPos p_146844_) {
+        //setState(1, Blocks.DIAMOND_ORE.defaultBlockState());
+
+        return false;
+    }
+
+   /* @Override
+    public InteractionResult interact(Player p_19978_, InteractionHand p_19979_) {
+        setState(1, Blocks.DIAMOND_ORE.defaultBlockState());
+        return InteractionResult.SUCCESS;
+    }*/
+    /* @Override
+    public boolean mayInteract(Level level, BlockPos pos) {
+        int duration=getDuration();
+        if(duration>0) {
+            int startTick = getStartTick();
+            boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
+            float thetaDegreeF = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
+            float degreeCombinedF = thetaDegreeF + getVisualRot() + getStartRotation();
+            List<Vec3> rotatedVec3BasketList = Utils.rotateVec3BasketPosList(getBasketPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF, getBasketOriginPosList());
+            List<Vec3> rotatedVec3List = Utils.rotateVec3PosList(getPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF);
+            //rotatedVec3List.addAll(rotatedVec3BasketList);
+            List<BlockState> blockStateList = getStateList();
+            //blockStateList.addAll(getBasketStateList());
+            *//*for(int i=0;i<rotatedVec3ListFloat.size();i++) {
+                Vec3 eachVec3 = rotatedVec3ListFloat.get(i);
+                double s = 0.4D;
+                AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x +s, eachVec3.y +s, eachVec3.z +s);
+                for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof SeatEntity);
+                })) {
+                    entity.moveTo(eachVec3);
+                }
+            }*//*
+            *//*for(int i=0;i<getPosList().size();i++) {
+                Vec3 eachVec3= getPosList().get(i).getCenter();
+                //s=0d;
+                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
+                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof LivingEntity);
+                })) {
+                    if(!entity.isPassenger()) {
+                        CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x + 0.5D, eachVec3.y - 0.5D, eachVec3.z + 0.5D, Blocks.AIR.defaultBlockState(), new CompoundTag());
+                        level().addFreshEntity(collisionEntity);
+
+                        if (entity.getY() != eachVec3.y + 0.55D) {
+                            //    entity.setPos(entity.getX(), eachVec3.y + 0.55D, entity.getZ());
+                        }
+
+                        entity.fallDistance = 0f;
+
+                        //Vec3 aimedPos=eachVec3.add(0D,0.5D,0D);
+                        //Vec3 currentEntityPos=entity.position();
+                        //Vec3 differ=aimedPos.add(-currentEntityPos.x,-currentEntityPos.y,-currentEntityPos.z);
+                        // Vec3 speeds=new Vec3();
+                        // entity.setDeltaMovement(differ);
+                        float dd=getDegreeAngle();
+                        Vec3 speeds=Utils.getSpeedsRotation(eachVec3,Vec3.ZERO,dd,duration,getAxis());
+                        entity.setDeltaMovement(speeds);
+                        entity.setOnGround(true);
+                    }
+                }
+
+            }*//*
+            for (int i = 0; i < rotatedVec3List.size(); i++) {
+                Vec3 eachVec3 = rotatedVec3List.get(i);
+                BlockState eachState = blockStateList.get(i);
+                double s = 0.2D;
+                BlockPos eachPos = new BlockPos(Mth.floor(eachVec3.x), Mth.floor(eachVec3.y), Mth.floor(eachVec3.z));
+                if (eachPos == pos) {
+                    setState(i, Blocks.DIAMOND_ORE.defaultBlockState());
+                    return true;
+                }
+              *//*  //s=0d;
+                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
+           *//**//* AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x +s, eachVec3.y +s, eachVec3.z +s);
+                for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof SeatEntity);
+                })) {
+                    entity.moveTo(eachVec3);
+                }*//**//*
+                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 0d, 0d), (o) -> {
+                    return (o instanceof LivingEntity);
+                })) {
+                    if(!entity.isPassenger()) {
+                        CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x + 0.5D, eachVec3.y - 0.5D, eachVec3.z + 0.5D, Blocks.AIR.defaultBlockState(), new CompoundTag());
+                        level().addFreshEntity(collisionEntity);
+
+                        if (entity.getY() != eachVec3.y + 0.55D) {
+                            entity.setPos(entity.getX(), eachVec3.y + 0.55D, entity.getZ());
+                        }
+
+                        entity.fallDistance = 0f;
+
+                        //Vec3 aimedPos=eachVec3.add(0D,0.5D,0D);
+                        //Vec3 currentEntityPos=entity.position();
+                        //Vec3 differ=aimedPos.add(-currentEntityPos.x,-currentEntityPos.y,-currentEntityPos.z);
+                        // Vec3 speeds=new Vec3();
+                        // entity.setDeltaMovement(differ);
+                        entity.setOnGround(true);
+                    }
+                }
+
+            }
+*//*
+            }
+        }
+            return false;
+    }*/
+
     public  enum AxisType {
         NONE((byte) 0, Direction.Axis.Y),
         X((byte) 1, Direction.Axis.X),
@@ -1118,7 +1650,7 @@ if(!shouldRotate()){
         Z((byte) 3, Direction.Axis.Z);
 
         private byte id;
-        private Direction.Axis axis;
+        public Direction.Axis axis;
 
         private AxisType(byte id, Direction.Axis axis) {
             this.id = id;

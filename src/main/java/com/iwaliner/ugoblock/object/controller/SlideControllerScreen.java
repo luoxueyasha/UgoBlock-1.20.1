@@ -2,6 +2,7 @@ package com.iwaliner.ugoblock.object.controller;
 
 import com.iwaliner.ugoblock.object.controller.SlideControllerMenu;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -149,8 +150,9 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
         p_282928_.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
     protected void renderLabels(GuiGraphics guiGraphics, int i, int j) {
+        Component mouse=Component.literal(" \uD83D\uDDB1↕").withStyle(ChatFormatting.BLUE);
         guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_start_time"), 110, 17, 8587492);
-        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_speed"), 110, 48, 8587492);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_speed").append(mouse), 110, 48, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getStartTime())), 110, 30, 16777215);
             //  guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDuration())), 110, 61, 16777215);
         guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getSpeed())), 110, 61, 16777215);

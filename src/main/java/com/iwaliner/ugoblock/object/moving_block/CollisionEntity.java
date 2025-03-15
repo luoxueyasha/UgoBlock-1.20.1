@@ -9,10 +9,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -70,7 +67,7 @@ public class CollisionEntity extends Entity {
 
     @Override
     public boolean canCollideWith(Entity entity) {
-        return true;
+        return false;
     }
 
     /**trueにすると、当たり判定内に入ったときにはじき出される*/
@@ -97,18 +94,14 @@ public class CollisionEntity extends Entity {
         BlockPos pos=blockPosition();
         BlockState state=entityData.get(DATA_BLOCK_STATE_ID);
         //if(tickCount>2){
-        for (Entity entity : level().getEntities((Entity) null, new AABB(pos).inflate(0d, 0.1d, 0d), (o) -> {
-            return o instanceof Player;
+       /* AABB aabb=new AABB(position().x-0.5D,position().y-0.5D,position().z-0.5D,position().x+0.5D,position().y+0.5D,position().z+0.5D);
+        for (Entity entity : level().getEntities((Entity) null,aabb.move(0D,0.5D,0D).inflate(0d, 2d, 0d), (o) -> {
+            return o instanceof LivingEntity;
         })) {
-            Player player= (Player) entity;
-            /*if(!player.tryToStartFallFlying()&& !player.getAbilities().flying) {
-                if (player.isShiftKeyDown() && !player.getAbilities().flying) {
-                    player.setForcedPose(Pose.CROUCHING);
-                } else{
-                    player.setForcedPose(Pose.STANDING);
-                }
-            }*/
-        }
+            if(entity.getY()<position().y+1D){
+                entity.setPos(position().add(0,1.01D,0));
+            }
+        }*/
             if(!state.isAir()) {
                 level.setBlockAndUpdate(pos, state);
                 if (!getBlockEntityData().isEmpty() && state.hasBlockEntity()) {
@@ -122,9 +115,9 @@ public class CollisionEntity extends Entity {
                 }
             }
 
-            if(tickCount>10) {
+            //if(tickCount>10) {
                 discard();
-            }
+         //   }
        // }
 
     }

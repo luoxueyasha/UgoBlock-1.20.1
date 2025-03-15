@@ -25,7 +25,7 @@ public class WirelessRedstoneReceiverRenderer implements BlockEntityRenderer<Wir
             poseStack.pushPose();
             poseStack.scale(1.005F, 1.005F, 1.005F);
             poseStack.translate(-0.0025F,-0.0025F,-0.0025F);
-            this.blockRenderDispatcher.renderSingleBlock(imitatingState,poseStack,bufferSource,16777215, OverlayTexture.NO_OVERLAY);
+            this.blockRenderDispatcher.renderSingleBlock(imitatingState,poseStack,bufferSource,i1, OverlayTexture.NO_OVERLAY);
             poseStack.popPose();
         }
     }

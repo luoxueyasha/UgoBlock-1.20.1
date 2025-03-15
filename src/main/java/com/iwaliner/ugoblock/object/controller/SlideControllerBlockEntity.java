@@ -310,4 +310,10 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
         this.setChanged();
         this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
     }
+    public boolean hasShapeCard(){
+        return !getItem(0).isEmpty()&&getItem(0).is(Register.shape_card.get());
+    }
+    public boolean hasVectorCard(){
+        return !getItem(1).isEmpty()&&getItem(1).is(Register.vector_card.get());
+    }
 }

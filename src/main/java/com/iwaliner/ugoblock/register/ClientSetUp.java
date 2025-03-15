@@ -5,7 +5,7 @@ import com.iwaliner.ugoblock.object.basket_maker.BasketMakerRenderer;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerScreen;
 import com.iwaliner.ugoblock.object.controller.RotationControllerRenderer;
 import com.iwaliner.ugoblock.object.controller.SlideControllerRenderer;
-import com.iwaliner.ugoblock.object.moving_block.CollisionEntityRenderer;
+import com.iwaliner.ugoblock.object.seat.InvisibleEntityRenderer;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockRenderer;
 import com.iwaliner.ugoblock.object.controller.RotationControllerScreen;
 import com.iwaliner.ugoblock.object.controller.SlideControllerScreen;
@@ -14,6 +14,7 @@ import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableWirele
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.WirelessRedstoneTransmitterRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.entity.FallingBlockRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
@@ -34,7 +35,10 @@ public class ClientSetUp {
     @SubscribeEvent
     public static void RegisterEntityRendererEvent(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Register.MoveableBlock.get(), MovingBlockRenderer::new);
-        event.registerEntityRenderer(Register.CollisionEntity.get(), CollisionEntityRenderer::new);
+        event.registerEntityRenderer(Register.CollisionEntity.get(), InvisibleEntityRenderer::new);
+        event.registerEntityRenderer(Register.SeatEntity.get(), InvisibleEntityRenderer::new);
+        event.registerEntityRenderer(Register.GravitateBlock.get(), FallingBlockRenderer::new);
+        event.registerEntityRenderer(Register.DoorEntity.get(), InvisibleEntityRenderer::new);
       //  event.registerEntityRenderer(Register.ControllableEntity.get(), ControllableEntityRenderer::new);
     }
 

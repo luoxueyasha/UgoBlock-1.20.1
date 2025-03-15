@@ -2,7 +2,11 @@ package com.iwaliner.ugoblock;
 
 import com.iwaliner.ugoblock.network.WirelessRedstoneData;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlock;
 import com.iwaliner.ugoblock.object.block_imitation_wand.BlockImitationWandDecoration;
+import com.iwaliner.ugoblock.object.controller.AbstractControllerBlockEntity;
+import com.iwaliner.ugoblock.object.controller.RotationControllerBlock;
+import com.iwaliner.ugoblock.object.controller.SlideControllerBlock;
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableWirelessRedstoneTransmitterItem;
 import com.iwaliner.ugoblock.register.ClientNonBusSetUp;
 import com.iwaliner.ugoblock.register.Register;
@@ -14,10 +18,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.RegisterItemDecorationsEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -28,6 +37,7 @@ import net.minecraftforge.event.ItemStackedOnOtherEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -55,6 +65,7 @@ public class ModCoreUgoBlock
     @SubscribeEvent
     public void CreativeTabEvent(BuildCreativeModeTabContentsEvent event){
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
+            event.accept(Register.seat.get());
             event.accept(Register.slide_controller_blockitem.get());
             event.accept(Register.rotation_controller_blockitem.get());
             event.accept(Register.basket_maker_blockitem.get());
@@ -62,6 +73,7 @@ public class ModCoreUgoBlock
             event.accept(Register.wireless_redstone_receiver_blockitem.get());
             event.accept(Register.portable_wireless_redstone_transmitter.get());
             event.accept(Register.block_imitation_wand.get());
+           // event.accept(Register.gravitate_piston_blockitem.get());
         }else if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(Register.smooth_crying_obsidian_blockitem.get());
             event.accept(Register.ender_infused_smooth_crying_obsidian_blockitem.get());
@@ -185,5 +197,31 @@ public class ModCoreUgoBlock
     public void RegisterCapabilities(RegisterCapabilitiesEvent event) {
         event.register(WirelessRedstoneData.class);
     }
-
+    @SubscribeEvent
+    public void denyOpenGUIEvent(PlayerInteractEvent.RightClickBlock event) {
+        if(event.getEntity() == null){
+            return;
+        }
+        BlockPos pos = event.getPos();
+        BlockState state=event.getLevel().getBlockState(pos);
+        Block block=state.getBlock();
+        LivingEntity livingEntity = (LivingEntity)event.getEntity();
+        ItemStack stack=livingEntity.getItemInHand(event.getHand());
+        if(stack.is(Register.shape_card.get())||stack.is(Register.vector_card.get())) {
+            if(state.getBlock() instanceof BasketMakerBlock||state.getBlock() instanceof RotationControllerBlock||state.getBlock() instanceof SlideControllerBlock){
+                if(event.getLevel().getBlockEntity(pos) instanceof AbstractControllerBlockEntity blockEntity){
+                    if(stack.is(Register.shape_card.get())&&blockEntity.hasShapeCard()){
+                        event.setUseItem(Event.Result.ALLOW);
+                        event.setUseBlock(Event.Result.DENY);
+                    }else if(stack.is(Register.vector_card.get())&&blockEntity.hasVectorCard()){
+                        event.setUseItem(Event.Result.ALLOW);
+                        event.setUseBlock(Event.Result.DENY);
+                    }
+                }
+            }else {
+                event.setUseItem(Event.Result.ALLOW);
+                event.setUseBlock(Event.Result.DENY);
+            }
+        }
+    }
 }

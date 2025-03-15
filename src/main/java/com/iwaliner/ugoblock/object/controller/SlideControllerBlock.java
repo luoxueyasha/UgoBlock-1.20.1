@@ -103,30 +103,37 @@ public class SlideControllerBlock extends BaseEntityBlock {
                         destroyOldBlock(level, eachPos); /**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*/
                     }
                 }
+                for (BlockPos eachPos : posList) {
+                    if(!blockEntity.getBlockPos().equals(eachPos)) {
+                        updateDestroyedPos(level, eachPos);
+                    }
+                }
                 blockEntity.setNotFirstTime(true);
             }
         }
     }
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
-
             if (flag != level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
                    if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
                        int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
+                       boolean makingEntitySuccess=false;
                        if(!blockEntity.getTransition().equals(Utils.errorPos())&&duration>0) {
                            BlockPos startPos=pos.relative(state.getValue(FACING));
                            List<BlockPos> posList=blockEntity.getPositionList();
                            if(posList!=null) {
-                                blockEntity.setMoving(true);
+
                                 /**↓移動の変位。座標ではないことに注意。*/
                                BlockPos transitionPos = blockEntity.getTransition();
                                /**ブロックをエンティティ化*/
-                               Utils.makeMoveableBlock(level,pos, startPos, start, duration,null,0,blockEntity.getPositionList(),0,false, transitionPos,0);
+                              makingEntitySuccess= Utils.makeMoveableBlock(level,pos, startPos, start, duration,null,0,blockEntity.getPositionList(),0,false, transitionPos,0);
+                              if(makingEntitySuccess) {
+                                  blockEntity.setMoving(true);
+                                  level.setBlock(pos, state.cycle(POWERED), 2);
 
-                               level.setBlock(pos, state.cycle(POWERED), 2);
-
-                               level.scheduleTick(pos, this, 2);
+                                  level.scheduleTick(pos, this, 2);
+                              }
                            }
 
                        }
@@ -134,9 +141,6 @@ public class SlideControllerBlock extends BaseEntityBlock {
 
                    }
             }
-
-
-
     }
 
 
@@ -211,7 +215,13 @@ public class SlideControllerBlock extends BaseEntityBlock {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 82);
         }
     }
-
+    public static void updateDestroyedPos(Level level,BlockPos pos){
+        BlockState state=level.getBlockState(pos);
+        if(!state.is(Register.TAG_DISABLE_MOVING)) {
+            level.removeBlockEntity(pos);
+            level.updateNeighborsAt(pos,state.getBlock());
+        }
+    }
     public RenderShape getRenderShape(BlockState p_49090_) {
         return RenderShape.MODEL;
     }
@@ -256,9 +266,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
     @Override
     public void appendHoverText(ItemStack stack, @org.jetbrains.annotations.Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
         list.add(Component.translatable("info.ugoblock.slide_controller").withStyle(ChatFormatting.GREEN));
-        list.add(Component.translatable("info.ugoblock.slide_controller_observer").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.slide_controller_scroll").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.block_imitatable").withStyle(ChatFormatting.GREEN));
     }
-
 }

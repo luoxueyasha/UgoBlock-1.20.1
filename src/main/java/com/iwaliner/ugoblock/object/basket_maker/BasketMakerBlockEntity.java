@@ -187,4 +187,10 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
         List<BlockPos> rotatedBasketPosList = Utils.rotateBasketPosList(posList,rotationControllerOriginPos,rotationControllerOriginPos,basketMakerState.getValue(BasketMakerBlock.FACING).getAxis(),degreeAngle,originPosList);
         Utils.setPositionList(getItem(0),rotatedBasketPosList);
     }
+    public boolean hasShapeCard(){
+        return !getItem(0).isEmpty()&&getItem(0).is(Register.shape_card.get());
+    }
+    public boolean hasVectorCard(){
+        return true;
+    }
 }

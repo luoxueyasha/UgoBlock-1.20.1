@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_receiver;
 
+import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -58,9 +59,7 @@ public class WirelessRedstoneReceiverBlock extends BaseEntityBlock {
         ItemStack stack=player.getItemInHand(hand);
         if(level.getBlockEntity(pos) instanceof WirelessRedstoneReceiverBlockEntity blockEntity) {
             Optional<Vec2> optional = getRelativeHitCoordinatesForBlockFace(result);
-            if (optional.isEmpty()||result.getDirection().getAxis()== Direction.Axis.Y) {
-                return InteractionResult.PASS;
-            } else {
+            if (!optional.isEmpty()&&result.getDirection().getAxis()!= Direction.Axis.Y) {
                 if(optional.get().x>0.125F&&optional.get().x<0.40625F){
                     if(stack.is(Items.WHITE_DYE)){
                         setColor1(level,pos,state,blockEntity,DyeColor.WHITE);
@@ -216,6 +215,9 @@ public class WirelessRedstoneReceiverBlock extends BaseEntityBlock {
             if(player.isSuppressingBounce()&&!blockEntity.getImitatingState().isAir()){
                 blockEntity.setImitatingState(Blocks.AIR.defaultBlockState());
                 level.playSound(player,pos, SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
+                return InteractionResult.SUCCESS;
+            }else{
+                player.displayClientMessage(Utils.getComponentFrequencyColors(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3()), true);
                 return InteractionResult.SUCCESS;
             }
         }

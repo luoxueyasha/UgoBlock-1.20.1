@@ -108,8 +108,9 @@ public class ShapeCardItem extends Item {
         BlockState state=level.getBlockState(pos);
         ItemStack stack=context.getItemInHand();
         List<BlockPos> list=new ArrayList<>();
+        Player player=context.getPlayer();
 
-        if(stack.getItem() instanceof ShapeCardItem) {
+        if(stack.getItem() instanceof ShapeCardItem&&player!=null) {
             CompoundTag tag =stack.getTag();
             if(tag==null){
                 tag=new CompoundTag();
@@ -152,8 +153,10 @@ public class ShapeCardItem extends Item {
                                             break;
                                         }
                                     }
-                                    if(ii2!=-1&&!level.getBlockState(pos2).isAir()&&!list.contains(pos2)) {
-                                        posTag.put("location_" + String.valueOf(ii2), NbtUtils.writeBlockPos(pos2));
+                                    if(ii2!=-1&&!list.contains(pos2)) {
+                                        if((player.isSuppressingBounce())||!level.getBlockState(pos2).isAir()) {
+                                            posTag.put("location_" + String.valueOf(ii2), NbtUtils.writeBlockPos(pos2));
+                                        }
                                     }
                                 }
                             }

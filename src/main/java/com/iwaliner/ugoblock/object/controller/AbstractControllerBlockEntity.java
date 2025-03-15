@@ -123,8 +123,12 @@ public abstract class AbstractControllerBlockEntity extends BaseContainerBlockEn
     public void setVisualDegree(int degree) {
 
     }
-
-
+    public boolean hasShapeCard(){
+        return false;
+    }
+    public boolean hasVectorCard(){
+        return false;
+    }
     public void load(CompoundTag tag) {
         super.load(tag);
         this.isNotFirstTime = tag.getBoolean("isNotFirstTime");

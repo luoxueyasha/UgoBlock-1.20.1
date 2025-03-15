@@ -1,6 +1,10 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import com.iwaliner.ugoblock.object.block_imitation_wand.ImitatableBlockEntity;
+import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlock;
+import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
@@ -11,6 +15,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -21,6 +26,8 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
     private DyeColor color2;
     private DyeColor color3;
     protected BlockState imitatingState;
+    private boolean disregardRedstoneInputChanging;
+    private int coolTime;
 
     public WirelessRedstoneTransmitterBlockEntity(BlockPos p_155077_, BlockState p_155078_) {
         super(Register.WirelessRedstoneTransmitterBlockEntity.get(), p_155077_, p_155078_);
@@ -46,6 +53,9 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
             HolderGetter<Block> holdergetter = (HolderGetter<Block>)(this.level != null ? this.level.holderLookup(Registries.BLOCK) : BuiltInRegistries.BLOCK.asLookup());
             this.imitatingState = NbtUtils.readBlockState(holdergetter, tag.getCompound("imitatingState"));
         }
+        if (tag.contains("disregardRedstoneInputChanging")) {
+            this.disregardRedstoneInputChanging=tag.getBoolean("disregardRedstoneInputChanging");
+        }
     }
 
     protected void saveAdditional(CompoundTag tag) {
@@ -56,6 +66,14 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
         if(imitatingState!=null) {
             tag.put("imitatingState", NbtUtils.writeBlockState(imitatingState));
         }
+        tag.putBoolean("disregardRedstoneInputChanging",disregardRedstoneInputChanging);
+    }
+    public boolean isDisregardRedstoneInputChanging(){
+        return disregardRedstoneInputChanging;
+    }
+
+    public void setDisregardRedstoneInputChanging(boolean disregardRedstoneInputChanging) {
+        this.disregardRedstoneInputChanging = disregardRedstoneInputChanging;
     }
 
     public void setColor1(DyeColor color1) {
@@ -111,4 +129,5 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
         this.setChanged();
         this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
     }
-}
+
+    }

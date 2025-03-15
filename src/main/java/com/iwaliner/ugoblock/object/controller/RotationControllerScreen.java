@@ -1,6 +1,7 @@
 package com.iwaliner.ugoblock.object.controller;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -140,7 +141,8 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
         p_282928_.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
     protected void renderLabels(GuiGraphics guiGraphics, int i, int j) {
-        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_angle"), 105, 17, 8587492);
+        Component mouse=Component.literal(" \uD83D\uDDB1↕").withStyle(ChatFormatting.BLUE);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_angle").append(mouse), 105, 17, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_duration"), 105, 48, 8587492);
         if(getMenu().getDegreeAngle()==181){
             guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.rotation_controller_loop_counter_clockwise"), 105, 30, 16777215);

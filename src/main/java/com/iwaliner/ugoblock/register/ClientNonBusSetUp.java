@@ -7,6 +7,7 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -89,6 +90,7 @@ public class ClientNonBusSetUp {
             MultiBufferSource multiBufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
             ItemStack stack = player.getMainHandItem();
             Vec3 vec3=event.getCamera().getPosition();
+            player.kill();
 
             CompoundTag tag = stack.getTag();
             if (stack.is(Register.vector_card.get())) {
@@ -203,30 +205,32 @@ public class ClientNonBusSetUp {
 
             }else if (stack.getItem() == Register.shape_card.get()) {
                 HitResult hitResult = Minecraft.getInstance().hitResult;
-                BlockPos hitPos = ((BlockHitResult) Objects.requireNonNull(hitResult)).getBlockPos();
-                List<BlockPos> list=new ArrayList<>();
-                if(tag!=null){
-                    if(!tag.contains("positionList")){
-                        tag.put("positionList",new CompoundTag());
-                    }
-                    CompoundTag posTag=tag.getCompound("positionList");
-                    int ii=-1;
-                    for(int i = 0; i< Utils.getMaxSize(); i++) {
-                        if(!posTag.contains("location_"+String.valueOf(i))){
-                            ii=i-1;
-                            break;
-                        }else{
-                            list.add(NbtUtils.readBlockPos(posTag.getCompound("location_"+String.valueOf(i))));
+                if (hitResult instanceof BlockHitResult) {
+                    BlockPos hitPos = ((BlockHitResult) Objects.requireNonNull(hitResult)).getBlockPos();
+                    List<BlockPos> list = new ArrayList<>();
+                    if (tag != null) {
+                        if (!tag.contains("positionList")) {
+                            tag.put("positionList", new CompoundTag());
                         }
-                    }
-                    if (ii!=-1) {
-                        int range=10;
-                         for(int i=-range;i<=range;i++) {
-                            for (int j = -range; j <= range; j++) {
-                                for (int k = -range; k <= range; k++) {
-                                    BlockPos offsetPos = hitPos.offset(i, j, k);
-                                    if(list.contains(offsetPos)&& !offsetPos.equals(Utils.errorPos())){
-                                        ClientNonBusSetUp.renderYellowOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), event.getCamera().getEntity(), event.getCamera().getPosition().x, event.getCamera().getPosition().y, event.getCamera().getPosition().z, offsetPos);
+                        CompoundTag posTag = tag.getCompound("positionList");
+                        int ii = -1;
+                        for (int i = 0; i < Utils.getMaxSize(); i++) {
+                            if (!posTag.contains("location_" + String.valueOf(i))) {
+                                ii = i - 1;
+                                break;
+                            } else {
+                                list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+                            }
+                        }
+                        if (ii != -1) {
+                            int range = 6;
+                            for (int i = -range; i <= range; i++) {
+                                for (int j = -range; j <= range; j++) {
+                                    for (int k = -range; k <= range; k++) {
+                                        BlockPos offsetPos = hitPos.offset(i, j, k);
+                                        if (list.contains(offsetPos) && !offsetPos.equals(Utils.errorPos())) {
+                                            ClientNonBusSetUp.renderYellowOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), event.getCamera().getEntity(), event.getCamera().getPosition().x, event.getCamera().getPosition().y, event.getCamera().getPosition().z, offsetPos);
+                                        }
                                     }
                                 }
                             }
@@ -248,6 +252,7 @@ public class ClientNonBusSetUp {
                 int width=window.getGuiScaledWidth();
                 int height=window.getGuiScaledHeight();
                 int centerWidth = width / 2;
+                int centerHeight = height / 2;
                 Font font=Minecraft.getInstance().font;
                 CompoundTag tag=stack.getTag();
                 PoseStack poseStack=guiGraphics.pose();
@@ -266,7 +271,40 @@ public class ClientNonBusSetUp {
                         guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.vector_card_select_finish").getString(),centerWidth,height-75, 7208704);
                     }
                 }else if(stack.is(Register.shape_card.get())){
-                       guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.shape_card_text").getString(),centerWidth,height-75, 16776960);
+                    guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.shape_card_text").getString(),centerWidth,height-85, 16776960);
+                    guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.shape_card_text2").getString(),centerWidth,height-75, 16776960);
+
+                }else if(stack.is(Register.basket_maker_blockitem.get())){
+                    guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.basket_maker_text").getString(),centerWidth,height-85, 58584);
+                    guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.basket_maker_text2").getString(),centerWidth,height-75, 58584);
+                }else if(stack.is(Register.slide_controller_blockitem.get())){
+                   /* Utils.displayImage(guiGraphics,"slide_controller_display",centerWidth-200,height-200,0.8F);
+                    Utils.displayCenteredString(guiGraphics,Component.translatable("info.ugoblock.shape_card_display_text"),centerWidth-110,height-173,0.9F,16758272);
+                    Utils.displayCenteredString(guiGraphics,Component.translatable("info.ugoblock.vector_card_display_text"),centerWidth-110,height-100,0.9F,4123655);
+                   */
+                    Utils.displayImage(guiGraphics,"slide_controller_display",centerWidth-200,centerHeight-90,0.8F);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.shape_card_display_text"),centerWidth-130,centerHeight-55,0.8F,16766976);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.vector_card_display_text"),centerWidth-135,centerHeight+30,0.8F,4123655);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text1"),centerWidth-160,centerHeight+78,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text2"),centerWidth-160,centerHeight+90,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.seat_display_text"),centerWidth-160,centerHeight+119,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.oneway_display_text"),centerWidth-192,centerHeight+145,0.8F,8587492);
+
+                }else if(stack.is(Register.rotation_controller_blockitem.get())){
+                   /* Utils.displayImage(guiGraphics,"slide_controller_display",centerWidth-200,height-200,0.8F);
+                    Utils.displayCenteredString(guiGraphics,Component.translatable("info.ugoblock.shape_card_display_text"),centerWidth-110,height-173,0.9F,16758272);
+                    Utils.displayCenteredString(guiGraphics,Component.translatable("info.ugoblock.vector_card_display_text"),centerWidth-110,height-100,0.9F,4123655);
+                   */
+                    Utils.displayImage(guiGraphics,"rotation_controller_display",centerWidth-200,centerHeight-70,0.8F);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.shape_card_display_text"),centerWidth-130,centerHeight-35,0.8F,16766976);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.rotation_direction_display_text1"),centerWidth-130,centerHeight-15,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.rotation_direction_display_text2"),centerWidth-130,centerHeight-5,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.basket_maker_display_text1"),centerWidth-160,centerHeight+24,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.basket_maker_display_text2"),centerWidth-160,centerHeight+34,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text1"),centerWidth-160,centerHeight+60,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text2"),centerWidth-160,centerHeight+70,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.seat_display_text"),centerWidth-160,centerHeight+101,0.8F,16777215);
+
 
                 }
 
