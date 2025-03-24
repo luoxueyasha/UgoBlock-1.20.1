@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "III",
+    "ROR",
+    "IXI"
+  ],
+  "key": {
+    "O": {
+     "item": "ugoblock:ender_infused_smooth_crying_obsidian"
+    },
+    "R": {
+     "item": "minecraft:redstone"
+    },
+    "X": {
+     "item": "minecraft:redstone_torch"
+    },
+    "I": {
+    "tag": "forge:ingots/copper"
+    }
+  },
+  "result": {
+    "item": "ugoblock:wireless_redstone_receiver",
+    "count": 1
+  }
+}

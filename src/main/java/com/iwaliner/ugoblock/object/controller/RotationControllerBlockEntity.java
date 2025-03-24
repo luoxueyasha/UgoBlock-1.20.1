@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.controller;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.block_imitation_wand.ImitatableBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
@@ -278,15 +279,15 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
                 level.setBlock(pos,state.setValue(RotationControllerBlock.MOVING,false),2);
             }
 
-            if(blockEntity.isLoop()&&!state.getValue(RotationControllerBlock.POWERED)){
-                /*boolean flag=false;
+            /*if(blockEntity.isLoop()&&!state.getValue(RotationControllerBlock.POWERED)){
+                *//*boolean flag=false;
                 for (Entity entity : level.getEntities((Entity) null, new AABB(pos.relative(state.getValue(RotationControllerBlock.FACING))).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                     return (o instanceof MovingBlockEntity);
                 })) {
                     MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
                     movingBlock.setDiscardTime(-1);
-                }*/
-            }
+                }*//*
+            }*/
             if (blockEntity.getMoveTick() > 0) {
                 if (blockEntity.isMoving()) {
                   if (blockEntity.getTickCount() > blockEntity.getMoveTick()+2) {

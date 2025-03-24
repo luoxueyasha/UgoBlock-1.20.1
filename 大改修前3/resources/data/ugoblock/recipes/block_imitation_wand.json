@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  P",
+    " S ",
+    "D  "
+  ],
+  "key": {
+    "S": {
+    "tag": "forge:rods/wooden"
+    },
+    "P": {
+     "item": "minecraft:carved_pumpkin"
+    },
+    "D": {
+    "tag": "forge:gems/diamond"
+    }
+  },
+  "result": {
+    "item": "ugoblock:block_imitation_wand",
+    "count": 1
+  }
+}

@@ -2,22 +2,6 @@
   "multipart": [
     {
       "when": {
-        "powered": "false", "facing": "north"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_off"
-      }
-    },
-    {
-      "when": {
-        "powered": "true", "facing": "north"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_on"
-      }
-    },
-    {
-      "when": {
         "moving": "false","powered": "false","counter_clockwise": "true", "facing": "north"
       },
       "apply": {
@@ -89,24 +73,6 @@
       }
     },
     
-    {
-      "when": {
-        "powered": "false", "facing": "down"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_off",
-      "x": 90
-      }
-    },
-    {
-      "when": {
-        "powered": "true", "facing": "down"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_on",
-      "x": 90
-      }
-    },
     {
       "when": {
         "moving": "false","powered": "false","counter_clockwise": "true", "facing": "down"
@@ -189,24 +155,6 @@
       }
     },
     
-     {
-      "when": {
-        "powered": "false", "facing": "east"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_off",
-      "y": 90
-      }
-    },
-    {
-      "when": {
-        "powered": "true", "facing": "east"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_on",
-      "y": 90
-      }
-    },
     {
       "when": {
         "moving": "false","powered": "false","counter_clockwise": "true", "facing": "east"
@@ -289,24 +237,6 @@
       }
     },
     
-     {
-      "when": {
-        "powered": "false", "facing": "up"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_off",
-      "x": 270
-      }
-    },
-    {
-      "when": {
-        "powered": "true", "facing": "up"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_on",
-      "x": 270
-      }
-    },
     {
       "when": {
         "moving": "false","powered": "false","counter_clockwise": "true", "facing": "up"
@@ -391,24 +321,6 @@
     
     {
       "when": {
-        "powered": "false", "facing": "south"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_off",
-      "y": 180
-      }
-    },
-    {
-      "when": {
-        "powered": "true", "facing": "south"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_on",
-      "y": 180
-      }
-    },
-    {
-      "when": {
         "moving": "false","powered": "false","counter_clockwise": "true", "facing": "south"
       },
       "apply": {
@@ -489,24 +401,6 @@
       }
     },
     
-    {
-      "when": {
-        "powered": "false", "facing": "west"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_off",
-      "y": 270
-      }
-    },
-    {
-      "when": {
-        "powered": "true", "facing": "west"
-      },
-      "apply": {
-        "model": "ugoblock:block/rotation_controller_on",
-      "y": 270
-      }
-    },
     {
       "when": {
         "moving": "false","powered": "false","counter_clockwise": "true", "facing": "west"

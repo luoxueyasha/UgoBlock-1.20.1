@@ -1,0 +1,19 @@
+{
+	"parent": "block/block",
+	"render_type": "minecraft:cutout",
+	"textures": {
+		"color": "ugoblock:block/color_red_3"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 16, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#color"},
+				"east": {"uv": [0, 0, 16, 16],  "texture": "#color"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#color"},
+				"west": {"uv": [0, 0, 16, 16],  "texture": "#color"}
+			}
+		}
+	]
+}

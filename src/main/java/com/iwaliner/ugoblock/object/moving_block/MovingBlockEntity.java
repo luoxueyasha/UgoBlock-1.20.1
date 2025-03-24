@@ -308,69 +308,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
 
     public boolean isPickable() {
-       // return true;
         return !isLoopRotation();
-    }
-
-    @Override
-    protected @NotNull AABB makeBoundingBox() {
-        super.makeBoundingBox();
-       /* if(!shouldRotate()) {
-            if (minX == 0 && minY == 0 && minZ == 0 && maxX == 0 && maxY == 0 && maxZ == 0) {
-                makeBoundingBoxFirst();
-            }
-            AABB aabb = new AABB(position().x - 0.5D + minX, position().y - 0.5D + minY, position().z - 0.5D + minZ, position().x - 0.5D + maxX + 1D, position().y - 0.5D + maxY + 1D, position().z - 0.5D + maxZ + 1D);
-            return aabb;
-        }else{*/
-            return new AABB(getActualBlockPos());
-       // }
-    }
-    private  void makeBoundingBoxFirst() {
-        if(getPosList().size()==getStateList().size()) {
-            boolean flag = true;
-            for (int i = 0; i < getPosList().size(); i++) {
-                BlockPos eachPos = getPosList().get(i);
-                BlockState eachState = getStateList().get(i);
-                VoxelShape shape = eachState.getCollisionShape(level(), this.blockPosition());
-                if (flag && !shape.isEmpty()) {
-                    minX = eachPos.getX();
-                    minY = eachPos.getY();
-                    minZ = eachPos.getZ();
-                    maxX = eachPos.getX();
-                    maxY = eachPos.getY();
-                    maxZ = eachPos.getZ();
-                    flag = false;
-                    break;
-                }
-            }
-            for (int i = 0; i < getPosList().size(); i++) {
-                BlockPos eachPos = getPosList().get(i);
-                BlockState eachState = getStateList().get(i);
-                VoxelShape shape = eachState.getCollisionShape(level(), this.blockPosition());
-                if (minX > eachPos.getX() && !shape.isEmpty()) {
-                    minX = eachPos.getX();
-                }
-                if (maxX < eachPos.getX() && !shape.isEmpty()) {
-                    maxX = eachPos.getX();
-                }
-                if (minY > eachPos.getY() && !shape.isEmpty()) {
-                    minY = eachPos.getY();
-                }
-                if (maxY < eachPos.getY() && !shape.isEmpty()) {
-                    maxY = eachPos.getY();
-                }
-                if (minZ > eachPos.getZ() && !shape.isEmpty()) {
-                    minZ = eachPos.getZ();
-                }
-                if (maxZ < eachPos.getZ() && !shape.isEmpty()) {
-                    maxZ = eachPos.getZ();
-                }
-            }
-        }
-    }
-    @Override
-    public @NotNull AABB getBoundingBoxForCulling() {
-        return makeBoundingBox();
     }
     @Override
     public void tick() {
@@ -394,7 +332,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                     }
                 }
 
-                    //movingBlock.discard();
             }
         }
         super.tick();

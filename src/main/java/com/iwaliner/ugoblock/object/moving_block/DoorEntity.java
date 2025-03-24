@@ -156,15 +156,13 @@ public class DoorEntity extends Entity {
     }
     @Override
     public void lerpTo(double p_297677_, double p_301293_, double p_301384_, float p_300635_, float p_299108_, int p_299659_,boolean b) {
-       // int i = this.getPosRotInterpolationDuration();
-        this.lerpX = p_297677_;
+       this.lerpX = p_297677_;
         this.lerpY = p_301293_;
         this.lerpZ = p_301384_;
         this.lerpYRot = (double)p_300635_;
         this.lerpXRot = (double)p_299108_;
         this.lerpSteps = 10;
-        //this.posRotInterpolationTarget = new MovingBlockEntity.PosRotInterpolationTarget(i, p_297677_, p_301293_, p_301384_, (double)p_300635_, (double)p_299108_);
-    }
+     }
     private void tickLerp() {
         if (this.isControlledByLocalInstance()) {
             this.lerpSteps = 0;
@@ -175,13 +173,8 @@ public class DoorEntity extends Entity {
             double d0 = this.getX() + (this.lerpX - this.getX()) / (double)this.lerpSteps;
             double d1 = this.getY() + (this.lerpY - this.getY()) / (double)this.lerpSteps;
             double d2 = this.getZ() + (this.lerpZ - this.getZ()) / (double)this.lerpSteps;
-            double d3 = Mth.wrapDegrees(this.lerpYRot - (double)this.getYRot());
-            //this.setYRot(this.getYRot() + (float)d3 / (float)this.lerpSteps);
-            //this.setXRot(this.getXRot() + (float)(this.lerpXRot - (double)this.getXRot()) / (float)this.lerpSteps);
-            --this.lerpSteps;
+             --this.lerpSteps;
             this.setPos(d0, d1, d2);
-            // this.setYRot(this.getYRot() % 360.0F);
-
         }
         if (this.isControlledByLocalInstance() && this.lerpSteps > 0) {
             this.lerpSteps = 0;

@@ -79,10 +79,6 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
             if (slot == 0 && !flag) {
                 this.setChanged();
             }
-            if(slot==0&&stack.getItem()==Register.shape_card.get()){
-               // this.setPositionList(Utils.getPositionList(stack.getTag()));
-            }
-
     }
 
     public boolean stillValid(Player p_70300_1_) {
@@ -169,7 +165,6 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
                         }
                     }
                 }
-                //blockEntity.setNotFirstTime(true);
             }
         }
     }

@@ -99,17 +99,6 @@ public class SeatBlock extends Block {
                     return InteractionResult.SUCCESS;
                 }
             }
-           /* for (Entity entity : level.getEntities((Entity) null, aabb.move(0D, 0D, 0D).inflate(0d, 0d, 0d), (o) -> {
-                return (o instanceof SeatEntity);
-            })) {
-                flag = true;
-                if(!player.isPassenger()&&entity.getPassengers().isEmpty()){
-                    player.startRiding(entity);
-                    level.playSound(player, pos, SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    return InteractionResult.SUCCESS;
-                }
-                break;
-            }*/
             if (!flag) {
                 SeatEntity seatEntity2 = new SeatEntity(level, pos,false);
                 if(!level.isClientSide()){

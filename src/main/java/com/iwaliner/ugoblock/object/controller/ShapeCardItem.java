@@ -2,6 +2,7 @@ package com.iwaliner.ugoblock.object.controller;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -27,80 +28,6 @@ public class ShapeCardItem extends Item {
         super(p_41383_);
     }
 
-/*    @Override
-    public boolean onBlockStartBreak(ItemStack stack, BlockPos pos, Player player) {
-        if(stack.getItem() instanceof ShapeCardItem) {
-            List<BlockPos> list=new ArrayList<>();
-            Level level=player.level();
-            BlockState state=level.getBlockState(pos);
-            CompoundTag tag = stack.getTag();
-            if (tag == null) {
-                tag = new CompoundTag();
-            }
-            if(!tag.contains("positionList")){
-                tag.put("positionList",new CompoundTag());
-            }
-            CompoundTag posTag=tag.getCompound("positionList");
-            *//**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*//*
-            if(!tag.contains("select")){
-                tag.putBoolean("select",false);
-            }
-            tag.putBoolean("select",!tag.getBoolean("select"));
-         //   if(!(state.getBlock() instanceof SlideControllerBlock)) {
-                int ii = -1;
-                for (int i = 0; i < Utils.getMaxSize(); i++) {
-                    if (!posTag.contains("location_" + String.valueOf(i))) {
-                        ii = i;
-                        break;
-                    } else {
-                        list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
-                    }
-                }
-                if (ii != -1) {
-                    if (tag.getBoolean("select")) {
-                        *//**範囲選択の始点を登録*//*
-                        tag.put("edge_A", NbtUtils.writeBlockPos(pos));
-
-                        stack.setTag(tag);
-                        return true;
-                    } else {
-                        *//**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*//*
-                        BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
-                        List<BlockPos> removeList = new ArrayList<>();
-                        List<BlockPos> newList = new ArrayList<>();
-                        for (int i = 0; i <= Math.abs(edgeA.getX() - pos.getX()); i++) {
-                            for (int j = 0; j <= Math.abs(edgeA.getY() - pos.getY()); j++) {
-                                for (int k = 0; k <= Math.abs(edgeA.getZ() - pos.getZ()); k++) {
-                                    BlockPos pos2 = pos.offset(edgeA.getX() - pos.getX() >= 0 ? i : -i, edgeA.getY() - pos.getY() >= 0 ? j : -j, edgeA.getZ() - pos.getZ() >= 0 ? k : -k);
-                                    if (list.contains(pos2)) {
-                                        removeList.add(pos2);
-                                    }
-                                }
-                            }
-                        }
-                        for (int i = 0; i < list.size(); i++) {
-                            if (!removeList.contains(list.get(i))) {
-                                newList.add(list.get(i));
-                            }
-                        }
-                        CompoundTag newTag = new CompoundTag();
-                        for (int i = 0; i < newList.size(); i++) {
-                            newTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(newList.get(i)));
-                        }
-                        tag.put("positionList",newTag);
-                        stack.setTag(tag);
-                    }
-                } else {
-                    stack.setTag(tag);
-                }
-          //  }
-            level.playSound(player,pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS,1F,1F);
-
-        }
-
-        return true;
-    }*/
-
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level=context.getLevel();
@@ -109,6 +36,7 @@ public class ShapeCardItem extends Item {
         ItemStack stack=context.getItemInHand();
         List<BlockPos> list=new ArrayList<>();
         Player player=context.getPlayer();
+        int size=stack.getCount();
 
         if(stack.getItem() instanceof ShapeCardItem&&player!=null) {
             CompoundTag tag =stack.getTag();
@@ -125,7 +53,6 @@ public class ShapeCardItem extends Item {
             }
             tag.putBoolean("select",!tag.getBoolean("select"));
 
-         //   if(!(state.getBlock() instanceof SlideControllerBlock)){
                 int ii=-1;
                 for(int i=0;i<Utils.getMaxSize();i++){
                     if(!posTag.contains("location_"+String.valueOf(i))){
@@ -176,10 +103,17 @@ public class ShapeCardItem extends Item {
             }else {
                 stack.setTag(tag);
             }
+            if(stack.getCount()>1){
+               ItemStack newStack=new ItemStack(Register.shape_card.get(),size-1);
+                stack=stack.copyWithCount(1);
+                if (!player.getInventory().add(newStack)) {
+                    player.drop(newStack, false);
+                }
+            }
+            player.setItemInHand(context.getHand(),stack);
                 level.playSound(context.getPlayer(),pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
             }
-       // }
         return InteractionResult.FAIL;
     }
 

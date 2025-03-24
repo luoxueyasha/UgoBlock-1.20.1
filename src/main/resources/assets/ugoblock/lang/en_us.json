@@ -22,7 +22,8 @@
    "block.ugoblock.smooth_crying_obsidian": "Smooth Crying Obsidian",
    "block.ugoblock.ender_infused_smooth_crying_obsidian": "Ender-Infused Smooth Crying Obsidian",
    "info.ugoblock.slide_controller_denyed_opening_gui": "You can only open the GUI when it is not moving!",
-   "info.ugoblock.rotation_controller_denyed_opening_gui": "You can only open the GUI when it is not moving and the red indicator is off!",
+   "info.ugoblock.moving_rotation_controller_denyed_opening_gui":"Unable to open the GUI because it is moving!",
+   "info.ugoblock.idle_rotation_controller_denyed_opening_gui":"You can open the GUI if it moves again.",
    "info.ugoblock.rotation_controller_scroll": "The angle can also be set by scrolling the mouse wheel on the GUI.",
    "info.ugoblock.is_oneway": "☐Reciprocate",
    "info.ugoblock.is_not_oneway": "☑Reciprocate",
@@ -88,5 +89,8 @@
    "info.ugoblock.seat2": "Mob other than the player can also be seated.",
    "info.ugoblock.basket_maker_text": "Select each block of the gondola with a Shape Card and insert it.",
    "info.ugoblock.basket_maker_text2": "Also, select the Gondola Maker with the Shape Card of the Rotation Controller.",
-   "info.ugoblock.frequency_colors": "Current Frequency：[%s, %s, %s]"
+   "info.ugoblock.frequency_colors": "Current Frequency：[%s, %s, %s]",
+   "info.ugoblock.reset_setting_text": "Also, setting can be reset by single crafting.",
+   "info.ugoblock.obtain_card_display_text1": "Place",
+   "info.ugoblock.obtain_card_display_text2": "to obtain"
 }

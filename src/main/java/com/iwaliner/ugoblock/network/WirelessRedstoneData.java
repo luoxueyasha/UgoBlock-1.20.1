@@ -54,14 +54,5 @@ public class WirelessRedstoneData {
        }else {
            remoteRedstoneTag = nbt.getCompound("wirelessRedstoneData");
        }
-       /* if(remoteRedstoneTag.isEmpty()){
-            for(int color1=0;color1<16;color1++){
-                for(int color2=0;color2<16;color2++){
-                    for(int color3=0;color3<16;color3++){
-                        remoteRedstoneTag.putBoolean("signal["+color1+","+color2+","+color3+"]",false);
-                    }
-                }
-            }
-        }*/
     }
 }

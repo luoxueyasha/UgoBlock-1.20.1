@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "ugoblock:block/basket_maker",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "ugoblock:block/basket_maker",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "ugoblock:block/basket_maker"
+    },
+    "facing=south": {
+      "model": "ugoblock:block/basket_maker",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "ugoblock:block/basket_maker",
+      "x": 270
+    },
+    "facing=west": {
+      "model": "ugoblock:block/basket_maker",
+      "y": 270
+    }
+  }
+}

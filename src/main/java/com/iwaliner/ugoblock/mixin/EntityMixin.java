@@ -27,10 +27,10 @@ public abstract class EntityMixin {
 
     @Inject(method = "isNoGravity",at = @At("HEAD"), cancellable = true)
     private void isNoGravityInject(CallbackInfoReturnable<Boolean> cir){
-        for (Entity entity : level().getEntities((Entity) null,getBoundingBox(), (o) -> {
+       /* for (Entity entity : level().getEntities((Entity) null,getBoundingBox(), (o) -> {
             return (o instanceof MovingBlockEntity);
         })) {
             cir.setReturnValue(true);
-        }
+        }*/
     }
 }

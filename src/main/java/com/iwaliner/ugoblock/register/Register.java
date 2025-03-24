@@ -48,7 +48,6 @@ public class Register {
     public static final RegistryObject<Block> slide_controller_block =BLOCKS.register("slide_controller",() -> {return new SlideControllerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F));});
     public static final RegistryObject<Item> slide_controller_blockitem =ITEMS.register("slide_controller",() -> {return new BlockItem( Objects.requireNonNull(slide_controller_block.get()), (new Item.Properties()));});
     public static final RegistryObject<Item> shape_card =ITEMS.register("shape_card",() -> {return new ShapeCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
-    public static final RegistryObject<Item> end_location_card =ITEMS.register("end_position_card",() -> {return new EndLocationCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
     public static final RegistryObject<Item> vector_card =ITEMS.register("vector_card",() -> {return new VectorCardItem(  (new Item.Properties())/*.stacksTo(1)*/);});
     public static final RegistryObject<Block> rotation_controller_block =BLOCKS.register("rotation_controller",() -> {return new RotationControllerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().strength(1F, 1200.0F).noOcclusion());});
     public static final RegistryObject<Item> rotation_controller_blockitem =ITEMS.register("rotation_controller",() -> {return new BlockItem( Objects.requireNonNull(rotation_controller_block.get()), (new Item.Properties()));});

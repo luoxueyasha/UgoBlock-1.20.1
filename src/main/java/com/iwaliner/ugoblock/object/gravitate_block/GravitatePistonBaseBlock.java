@@ -273,10 +273,7 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                 BlockState blockstate5 = level.getBlockState(blockpos3);
                 blockpos3 = blockpos3.relative(direction);
                 map.remove(blockpos3);
-                //BlockState blockstate8 = Blocks.MOVING_PISTON.defaultBlockState().setValue(FACING, direction0);
-                //level.setBlock(blockpos3, blockstate8, 68);
-                //level.setBlockEntity(MovingPistonBlock.newMovingBlockEntity(blockpos3, blockstate8, list1.get(l), direction0, flag, false));
-                GravitateBlockEntity gravitateBlockEntity2=new GravitateBlockEntity(level,blockpos3,level.getBlockState(blockpos3));
+                  GravitateBlockEntity gravitateBlockEntity2=new GravitateBlockEntity(level,blockpos3,level.getBlockState(blockpos3));
                 gravitateBlockEntity2.setDeltaMovement(vec3);
                 level.addFreshEntity(gravitateBlockEntity2);
                 level.setBlockAndUpdate(blockpos3, Blocks.AIR.defaultBlockState());
@@ -296,34 +293,6 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                 level.setBlock(blockpos, blockstate6, 68);
                 level.setBlockEntity(MovingPistonBlock.newMovingBlockEntity(blockpos, blockstate6, blockstate4, direction0, true, true));
             }
-
-            BlockState blockstate3 = Blocks.AIR.defaultBlockState();
-
-            /*for(BlockPos blockpos4 : map.keySet()) {
-                level.setBlock(blockpos4, blockstate3, 82);
-            }
-
-            for(Map.Entry<BlockPos, BlockState> entry : map.entrySet()) {
-                BlockPos blockpos5 = entry.getKey();
-                BlockState blockstate2 = entry.getValue();
-                blockstate2.updateIndirectNeighbourShapes(level, blockpos5, 2);
-                blockstate3.updateNeighbourShapes(level, blockpos5, 2);
-                blockstate3.updateIndirectNeighbourShapes(level, blockpos5, 2);
-            }
-
-            j = 0;
-
-            for(int i1 = list2.size() - 1; i1 >= 0; --i1) {
-                BlockState blockstate7 = ablockstate[j++];
-                BlockPos blockpos6 = list2.get(i1);
-                blockstate7.updateIndirectNeighbourShapes(level, blockpos6, 2);
-                level.updateNeighborsAt(blockpos6, blockstate7.getBlock());
-            }
-
-            for(int j1 = list.size() - 1; j1 >= 0; --j1) {
-                level.updateNeighborsAt(list.get(j1), ablockstate[j++].getBlock());
-            }*/
-
             if (flag) {
                 level.updateNeighborsAt(blockpos, getHeadBlock());
             }

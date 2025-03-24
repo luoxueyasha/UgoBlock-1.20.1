@@ -71,10 +71,7 @@ public class GravitateBlockEntity extends FallingBlockEntity {
         return true;
     }
 
-    /*@Override
-    public boolean canCollideWith(Entity p_20303_) {
-        return true;
-    }*/
+
 
     @Override
     protected boolean canRide(Entity p_20339_) {
@@ -138,7 +135,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
 
                 if (!this.onGround() && !flag1) {
                     if(getFirstPassenger()!=null) {
-                        //this.stopRiding();
                         getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
                     }
                     if (!this.level().isClientSide && (this.time > 100 && (blockpos.getY() <= this.level().getMinBuildHeight() || blockpos.getY() > this.level().getMaxBuildHeight()) || this.time > 600)) {
@@ -150,7 +146,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                     }
                 } else if(shouldMakeBlock()){
                     if(getFirstPassenger()!=null) {
-                        //this.stopRiding();
                         getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
                     }
                     BlockState blockstate = this.level().getBlockState(blockpos);
@@ -162,11 +157,9 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                             boolean flag4 = this.getBlockState().canSurvive(this.level(), blockpos) && !flag3;
                             if (flag2 && flag4) {
                                 if (this.getBlockState().hasProperty(BlockStateProperties.WATERLOGGED) && this.level().getFluidState(blockpos).getType() == Fluids.WATER) {
-                                   // this.blockState = this.getBlockState().setValue(BlockStateProperties.WATERLOGGED, Boolean.valueOf(true));
                                     ((FallingBlockMixin) this).setBlockState(this.getBlockState().setValue(BlockStateProperties.WATERLOGGED, Boolean.valueOf(true)));
                                 }
                                 if(getFirstPassenger()!=null) {
-                                   // this.stopRiding();
                                     getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
                                 }
 
@@ -197,7 +190,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                                     }
                                 }else if (this.dropItem && this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
                                     if(getFirstPassenger()!=null) {
-                                        //this.stopRiding();
                                         getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
                                     }
                                     this.discard();
@@ -206,8 +198,7 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                                 }
                             } else {
                                 if(getFirstPassenger()!=null) {
-                                    //this.stopRiding();
-                                    getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
+                                     getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
                                 }
                                 this.discard();
                                 if (this.dropItem && this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
@@ -217,7 +208,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                             }
                         } else {
                             if(getFirstPassenger()!=null) {
-                                //this.stopRiding();
                                 getFirstPassenger().setPos(position().add(0D, offsetY, 0D));
                             }
                             this.discard();

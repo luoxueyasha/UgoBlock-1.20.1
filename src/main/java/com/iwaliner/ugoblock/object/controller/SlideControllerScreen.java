@@ -154,7 +154,6 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
         guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_start_time"), 110, 17, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.slide_controller_speed").append(mouse), 110, 48, 8587492);
         guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getStartTime())), 110, 30, 16777215);
-            //  guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getDuration())), 110, 61, 16777215);
         guiGraphics.drawCenteredString(this.font, Component.literal(String.valueOf(getMenu().getSpeed())), 110, 61, 16777215);
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 16766976, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 16766976, false);

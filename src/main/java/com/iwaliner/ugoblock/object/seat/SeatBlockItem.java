@@ -28,16 +28,6 @@ public class SeatBlockItem extends BlockItem {
             })) {
                 level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Register.seat.get().defaultBlockState()),seat.getX(),seat.getY()+0.35D,seat.getZ(),0D,0D,0D);
             }
-            /*for(int i=-size;i<=size;i++){
-                for(int j=-size;j<=size;j++){
-                    for(int k=-size;k<=size;k++){
-                        BlockPos eachPos=entity.blockPosition().offset(i,j,k);
-                        if(level.getBlockState(eachPos).is(Register.seat.get())){
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Register.seat.get().defaultBlockState()),eachPos.getX()+0.5D,eachPos.getY()+0.35D,eachPos.getZ()+0.5D,0D,0D,0D);
-                        }
-                    }
-                }
-            }*/
         }
     }
 }

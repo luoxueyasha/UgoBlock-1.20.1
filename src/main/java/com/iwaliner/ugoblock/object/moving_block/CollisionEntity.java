@@ -93,15 +93,6 @@ public class CollisionEntity extends Entity {
         Level level=level();
         BlockPos pos=blockPosition();
         BlockState state=entityData.get(DATA_BLOCK_STATE_ID);
-        //if(tickCount>2){
-       /* AABB aabb=new AABB(position().x-0.5D,position().y-0.5D,position().z-0.5D,position().x+0.5D,position().y+0.5D,position().z+0.5D);
-        for (Entity entity : level().getEntities((Entity) null,aabb.move(0D,0.5D,0D).inflate(0d, 2d, 0d), (o) -> {
-            return o instanceof LivingEntity;
-        })) {
-            if(entity.getY()<position().y+1D){
-                entity.setPos(position().add(0,1.01D,0));
-            }
-        }*/
             if(!state.isAir()) {
                 level.setBlockAndUpdate(pos, state);
                 if (!getBlockEntityData().isEmpty() && state.hasBlockEntity()) {
@@ -114,11 +105,7 @@ public class CollisionEntity extends Entity {
                     }
                 }
             }
-
-            //if(tickCount>10) {
                 discard();
-         //   }
-       // }
 
     }
 }

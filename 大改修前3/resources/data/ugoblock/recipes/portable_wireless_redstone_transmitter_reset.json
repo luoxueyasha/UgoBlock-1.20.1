@@ -1,0 +1,49 @@
+{
+
+
+
+  "type": "minecraft:crafting_shapeless",
+
+
+
+  "ingredients": [
+
+
+
+   
+
+
+
+    {
+
+
+
+      "item": "ugoblock:portable_wireless_redstone_transmitter"
+
+
+
+    }
+
+
+
+  ],
+
+
+
+  "result": {
+
+
+
+    "item": "ugoblock:portable_wireless_redstone_transmitter",
+
+
+
+    "count": 1
+
+
+
+  }
+
+
+
+}

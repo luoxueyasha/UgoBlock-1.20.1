@@ -88,7 +88,6 @@ public class BasketMakerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof BasketMakerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()) {
                 blockEntity.setItem(0,stack);
-                //blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
@@ -175,6 +174,7 @@ public class BasketMakerBlock extends BaseEntityBlock {
                         }
                         movingBlock.discard();
                     }
+                    break;
             }
             level.removeBlockEntity(pos);
         }

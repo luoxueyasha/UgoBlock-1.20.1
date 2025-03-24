@@ -11,7 +11,7 @@ public class VectorCardSlot extends Slot {
     }
 
     public boolean mayPlace(ItemStack itemStack) {
-        return itemStack.getItem()== Register.vector_card.get()||itemStack.getItem()==Register.end_location_card.get();
+        return itemStack.getItem()== Register.vector_card.get();
     }
 
     public int getMaxStackSize(ItemStack stack) {

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  I",
+    "IOI",
+    "S S"
+  ],
+  "key": {
+    "O": {
+     "item": "ugoblock:smooth_crying_obsidian"
+    },
+    "S": {
+      "tag": "forge:rods/wooden"
+    },
+    "I": {
+    "tag": "forge:ingots/copper"
+    }
+  },
+  "result": {
+    "item": "ugoblock:seat",
+    "count": 4
+  }
+}

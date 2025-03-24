@@ -22,7 +22,8 @@
    "block.ugoblock.smooth_crying_obsidian": "滑らかな泣く黒曜石",
    "block.ugoblock.ender_infused_smooth_crying_obsidian": "エンダー化した滑らかな泣く黒曜石",
    "info.ugoblock.slide_controller_denyed_opening_gui": "動いていないときしかGUIを開けません！",
-   "info.ugoblock.rotation_controller_denyed_opening_gui": "側面の赤い表示がOFFかつ動いていないときしかGUIを開けません！",
+   "info.ugoblock.moving_rotation_controller_denyed_opening_gui":"動作の最中なためGUIを開けません！",
+   "info.ugoblock.idle_rotation_controller_denyed_opening_gui":"もう一度動作させるとGUIを開けるようになります。",
    "info.ugoblock.rotation_controller_scroll": "GUIを開いてマウスをスクロールすることでも動かす角度を設定できる。",
    "info.ugoblock.is_oneway": "☐往復移動",
    "info.ugoblock.is_not_oneway": "☑往復移動",
@@ -88,6 +89,9 @@
    "info.ugoblock.seat2": "プレイヤー以外のMobも座らせることができる。",
    "info.ugoblock.basket_maker_text": "設置後はゴンドラを構成する各ブロックをシェイプカードで選択して挿入してください。",
    "info.ugoblock.basket_maker_text2": "また、回転制御機のシェイプカードでゴンドラ作成機を選択してください。",
-   "info.ugoblock.frequency_colors": "設定されている周波数：[%s, %s, %s]"
+   "info.ugoblock.frequency_colors": "設定されている周波数：[%s, %s, %s]",
+   "info.ugoblock.reset_setting_text": "なお、単体クラフトで設定をリセットできます。",
+   "info.ugoblock.obtain_card_display_text1": "設置して",
+   "info.ugoblock.obtain_card_display_text2": "入手"
    
 }

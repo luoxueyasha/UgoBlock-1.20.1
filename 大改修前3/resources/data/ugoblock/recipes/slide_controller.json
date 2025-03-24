@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "III",
+    "ROR",
+    "III"
+  ],
+  "key": {
+    "O": {
+     "item": "ugoblock:smooth_crying_obsidian"
+    },
+    "R": {
+     "item": "minecraft:redstone"
+    },
+    "I": {
+    "tag": "forge:ingots/copper"
+    }
+  },
+  "result": {
+    "item": "ugoblock:slide_controller",
+    "count": 1
+  }
+}

@@ -2,6 +2,7 @@ package com.iwaliner.ugoblock.object.controller;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
+import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlock;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
@@ -46,13 +47,14 @@ public class RotationControllerBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty MOVING = BooleanProperty.create("moving");
     public static final BooleanProperty COUNTER_CLOCKWISE = BooleanProperty.create("counter_clockwise");
+    public static final BooleanProperty IGNORE = BooleanProperty.create("ignore");
     public RotationControllerBlock(Properties p_49795_) {
         super(p_49795_);
-        this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false).setValue(FACING, Direction.NORTH).setValue(MOVING,false).setValue(COUNTER_CLOCKWISE,false));
+        this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false).setValue(FACING, Direction.NORTH).setValue(MOVING,false).setValue(COUNTER_CLOCKWISE,false).setValue(IGNORE,false));
     }
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49915_) {
-        p_49915_.add(POWERED,FACING,MOVING,COUNTER_CLOCKWISE);
+        p_49915_.add(POWERED,FACING,MOVING,COUNTER_CLOCKWISE,IGNORE);
     }
     protected void openContainer(Level level, BlockPos pos, Player player) {
         BlockEntity blockentity = level.getBlockEntity(pos);
@@ -86,9 +88,12 @@ public class RotationControllerBlock extends BaseEntityBlock {
                 }
             }
         }
-
-        player.displayClientMessage(Component.translatable("info.ugoblock.rotation_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
-        return InteractionResult.PASS;
+        if(state.getValue(MOVING)){
+            player.displayClientMessage(Component.translatable("info.ugoblock.moving_rotation_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
+        }else{
+            player.displayClientMessage(Component.translatable("info.ugoblock.idle_rotation_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
+        }
+         return InteractionResult.PASS;
     }
     public Direction.Axis getAxis(BlockState state){
         Direction facing=state.getValue(FACING);
@@ -138,16 +143,19 @@ public class RotationControllerBlock extends BaseEntityBlock {
                      BlockPos eachBasketPos=basketPosList.get(i).offset(startPos.getX(),startPos.getY(),startPos.getZ());
                      updateDestroyedPos(level,eachBasketPos);
                  }
-              //   blockEntity.setBasketPosList(new CompoundTag());
             }
         }
     }
 
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
-            if (flag != level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
-                BlockPos startPos = pos.relative(state.getValue(FACING));
+            if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
+                  BlockPos startPos = pos.relative(state.getValue(FACING));
                 Direction controllerDirection=state.getValue(BlockStateProperties.FACING);
+                if(state.getValue(IGNORE)){
+                    level.setBlock(pos, state.setValue(IGNORE,false), 2);
+                    return;
+                }
                 if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
                       int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
@@ -242,10 +250,10 @@ public class RotationControllerBlock extends BaseEntityBlock {
                          }
 
                       }
-                   }else if(blockEntity.hasCards()&&blockEntity.isLoop()&&blockEntity.getTickCount()>2){
+                   }else if(blockEntity.hasCards()&&blockEntity.isLoop()&&blockEntity.getTickCount()>2&&state.getValue(POWERED)){
                     //removeBlocks(level,startPos,blockEntity,state);
                            blockEntity.setMoving(false);
-                           level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,false), 2);
+                           level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true), 2);
                        //    level.scheduleTick(pos, this, 2);
                        for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                            return (o instanceof MovingBlockEntity);
@@ -256,6 +264,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
                            }
                            movingBlock.setDiscardTime(-1);
                        }
+                    blockEntity.setTickCount(0);
                    }
             }
 
@@ -462,10 +471,11 @@ public class RotationControllerBlock extends BaseEntityBlock {
                 return (o instanceof MovingBlockEntity);
             })) {
                 MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
-              //  if (movingBlock.tickCount > movingBlock.getStartTick() + movingBlock.getDuration() + 2) {
-                    List<BlockState> stateList = movingBlock.getStateList();
+                List<BlockPos> posList=movingBlock.getPosList();
+                posList.addAll(movingBlock.getBasketPosList());
                     if(movingBlock.shouldRotate()) {
-                        for (BlockState movingState : stateList) {
+                        for (int i=0;i<posList.size();i++) {
+                            BlockState movingState=movingBlock.getStateList().get(i);
                             LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level)).withParameter(LootContextParams.ORIGIN, pos.getCenter()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, movingBlock);
                             for (ItemStack itemStack : movingState.getDrops(lootparams$builder)) {
                                 ItemEntity itemEntity = new ItemEntity(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, itemStack);
@@ -473,11 +483,10 @@ public class RotationControllerBlock extends BaseEntityBlock {
                                     level.addFreshEntity(itemEntity);
                                 }
                             }
-
                         }
                         movingBlock.discard();
-                        //       }
                     }
+                    break;
             }
             level.removeBlockEntity(pos);
         }

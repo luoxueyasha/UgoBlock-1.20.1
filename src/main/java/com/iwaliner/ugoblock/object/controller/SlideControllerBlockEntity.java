@@ -142,12 +142,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
             if (slot == 0 && !flag) {
                 this.setChanged();
             }
-            if(slot==0&&stack.getItem()==Register.shape_card.get()){
-                //this.setPositionList(Utils.getPositionList(stack.getTag()));
-            }else if(slot==1&&stack.getItem()==Register.vector_card.get()&&stack.getTag()!=null){
-                // this.setEndPos(EndLocationCardItem.getEndPos(stack.getTag()));
-            }
-
     }
 
     public boolean stillValid(Player p_70300_1_) {
@@ -165,11 +159,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
     public void load(CompoundTag tag) {
         super.load(tag);
-        /*List<BlockPos> list=new ArrayList<>();
-        CompoundTag posTag=tag.getCompound("positionList");
-        for(String s : posTag.getAllKeys()){
-                list.add(NbtUtils.readBlockPos(posTag.getCompound(s)));
-            }*/
         this.oneway=tag.getBoolean("oneway");
         if(tag.contains("speedx10")) {
             this.speedx10 = tag.getInt("speedx10");
@@ -184,7 +173,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean("oneway",oneway);
-        //tag.putInt("duration",duration);
         tag.putInt("speedx10",speedx10);
         ContainerHelper.saveAllItems(tag, this.items);
     }
@@ -195,21 +183,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
         }
         return getBlockPos();
     }
-
-
-
-   /* public BlockPos getEndPos() {
-        if(getItem(1).getItem()==Register.vector_card.get()&&getItem(1).getTag()!=null){
-            return EndLocationCardItem.getEndPos(getItem(1).getTag());
-        }
-       return Utils.errorPos();
-    }
-
-    public void setEndPos(BlockPos endPos) {
-        if(getItem(1).getItem()==Register.vector_card.get()&&getItem(1).getTag()!=null){
-             EndLocationCardItem.setEndPos(getItem(1),endPos);
-        }
-   }*/
    public BlockPos getTransition() {
        if(getItem(1).getItem()==Register.vector_card.get()&&getItem(1).getTag()!=null){
            return VectorCardItem.getTransition(getItem(1));
@@ -241,23 +214,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
     public static void tick(Level level, BlockPos pos, BlockState state, SlideControllerBlockEntity blockEntity) {
         if(state.getBlock() instanceof SlideControllerBlock) {
-
-            if(blockEntity.getItem(1).is(Register.end_location_card.get())){
-                CompoundTag endLocationCardTag=blockEntity.getItem(1).getTag();
-                if(endLocationCardTag!=null&&endLocationCardTag.contains("end_location")) {
-                    BlockPos originPos = pos.relative(state.getValue(SlideControllerBlock.FACING));
-                    BlockPos endPos=NbtUtils.readBlockPos(endLocationCardTag.getCompound("end_location"));
-                    ItemStack vectorCardStack=new ItemStack(Register.vector_card.get());
-                    CompoundTag vectorCardTag=new CompoundTag();
-                    vectorCardTag.putBoolean("select",false);
-                    vectorCardTag.put("originPosition",NbtUtils.writeBlockPos(endPos));
-                    vectorCardTag.put("endPosition",NbtUtils.writeBlockPos(originPos));
-                    vectorCardStack.setTag(vectorCardTag);
-                    blockEntity.setItem(1,vectorCardStack);
-                }
-
-            }
-
             if(blockEntity.isMoving()&&!state.getValue(SlideControllerBlock.MOVING)){
                 level.setBlock(pos,state.setValue(SlideControllerBlock.MOVING,true),2);
             }else if(!blockEntity.isMoving()&&state.getValue(SlideControllerBlock.MOVING)){
@@ -286,7 +242,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
             }
 
-          //  level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
         }
 
        }
