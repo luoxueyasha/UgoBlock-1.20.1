@@ -1,0 +1,11 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "ugoblock:item/portable_alternate_wireless_redstone_transmitter_off"
+    },
+    "overrides": [
+        
+        { "predicate": { "ugoblock:powered": 0 }, "model": "ugoblock:item/portable_alternate_wireless_redstone_transmitter_off" },
+        { "predicate": { "ugoblock:powered": 1 }, "model": "ugoblock:item/portable_alternate_wireless_redstone_transmitter_on" }
+        ]
+}

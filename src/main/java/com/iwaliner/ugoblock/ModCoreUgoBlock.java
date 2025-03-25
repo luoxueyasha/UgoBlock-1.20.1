@@ -7,26 +7,18 @@ import com.iwaliner.ugoblock.object.block_imitation_wand.BlockImitationWandDecor
 import com.iwaliner.ugoblock.object.controller.AbstractControllerBlockEntity;
 import com.iwaliner.ugoblock.object.controller.RotationControllerBlock;
 import com.iwaliner.ugoblock.object.controller.SlideControllerBlock;
-import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableWirelessRedstoneTransmitterItem;
-import com.iwaliner.ugoblock.register.ClientNonBusSetUp;
+import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableAlternateWirelessRedstoneTransmitterItem;
 import com.iwaliner.ugoblock.register.Register;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.RegisterItemDecorationsEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -34,8 +26,6 @@ import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.ItemStackedOnOtherEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -71,7 +61,7 @@ public class ModCoreUgoBlock
             event.accept(Register.basket_maker_blockitem.get());
             event.accept(Register.wireless_redstone_transmitter_blockitem.get());
             event.accept(Register.wireless_redstone_receiver_blockitem.get());
-            event.accept(Register.portable_wireless_redstone_transmitter.get());
+            event.accept(Register.portable_alternate_wireless_redstone_transmitter.get());
             event.accept(Register.block_imitation_wand.get());
            // event.accept(Register.gravitate_piston_blockitem.get());
         }else if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
@@ -87,23 +77,23 @@ public class ModCoreUgoBlock
     public void ItemStackedOnOtherEvent(ItemStackedOnOtherEvent event){
         ItemStack transmitterStack=event.getCarriedItem();
         ItemStack dyeStack=event.getStackedOnItem();
-        if(dyeStack.getItem()instanceof DyeItem&&transmitterStack.is(Register.portable_wireless_redstone_transmitter.get())) {
+        if(dyeStack.getItem()instanceof DyeItem&&transmitterStack.is(Register.portable_alternate_wireless_redstone_transmitter.get())) {
             DyeColor dyeColor=((DyeItem) dyeStack.getItem()).getDyeColor();
-            if (PortableWirelessRedstoneTransmitterItem.isColor1Null(transmitterStack)) {
+            if (PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(transmitterStack)) {
                 event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
-                PortableWirelessRedstoneTransmitterItem.setColor1(transmitterStack,dyeColor);
+                PortableAlternateWirelessRedstoneTransmitterItem.setColor1(transmitterStack,dyeColor);
                 event.setCanceled(true);
-            }else if (PortableWirelessRedstoneTransmitterItem.isColor2Null(transmitterStack)) {
+            }else if (PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(transmitterStack)) {
                 event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
-                PortableWirelessRedstoneTransmitterItem.setColor2(transmitterStack,dyeColor);
+                PortableAlternateWirelessRedstoneTransmitterItem.setColor2(transmitterStack,dyeColor);
                 event.setCanceled(true);
-            }else if (PortableWirelessRedstoneTransmitterItem.isColor3Null(transmitterStack)) {
+            }else if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(transmitterStack)) {
                 event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
-                PortableWirelessRedstoneTransmitterItem.setColor3(transmitterStack,dyeColor);
+                PortableAlternateWirelessRedstoneTransmitterItem.setColor3(transmitterStack,dyeColor);
                 event.getPlayer().level().getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-                    boolean alreadyExist=!data.isSignalNull(PortableWirelessRedstoneTransmitterItem.getColor1(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor2(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor3(transmitterStack));
+                    boolean alreadyExist=!data.isSignalNull(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStack));
                     if(alreadyExist&&event.getPlayer().level().isClientSide){
-                        event.getPlayer().displayClientMessage(Utils.getComponentFrequencyAlreadyExists(PortableWirelessRedstoneTransmitterItem.getColor1(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor2(transmitterStack),PortableWirelessRedstoneTransmitterItem.getColor3(transmitterStack)), false);
+                        event.getPlayer().displayClientMessage(Utils.getComponentFrequencyAlreadyExists(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStack)), false);
                     }
                 });
                 event.setCanceled(true);

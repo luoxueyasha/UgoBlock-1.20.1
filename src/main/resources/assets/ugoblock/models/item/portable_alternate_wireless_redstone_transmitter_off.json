@@ -3,7 +3,7 @@
 	"gui_light": "front",
 	"textures": {
 		"1": "ugoblock:item/portable_wireless_redstone_transmitter_color",
-		"layer0": "ugoblock:item/portable_wireless_redstone_transmitter_off",
+		"layer0": "ugoblock:item/portable_alternate_wireless_redstone_transmitter_off",
 		"particle": "ugoblock:item/portable_wireless_redstone_transmitter_color"
 	},
 	"elements": [

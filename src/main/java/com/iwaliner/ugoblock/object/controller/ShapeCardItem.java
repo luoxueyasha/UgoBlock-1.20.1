@@ -47,6 +47,7 @@ public class ShapeCardItem extends Item {
                 tag.put("positionList",new CompoundTag());
             }
             CompoundTag posTag=tag.getCompound("positionList");
+            CompoundTag backup=posTag.copy();
             /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
             if(!tag.contains("select")){
                 tag.putBoolean("select",false);
@@ -99,6 +100,7 @@ public class ShapeCardItem extends Item {
                 }
                 CompoundTag tag1=new CompoundTag();
                 tag1.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
+                tag1.put("positionList",backup);
                 stack.setTag(tag1);
             }else {
                 stack.setTag(tag);

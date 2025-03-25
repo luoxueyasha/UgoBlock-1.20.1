@@ -1,6 +1,5 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
-import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import net.minecraft.ChatFormatting;
@@ -17,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PortableWirelessRedstoneTransmitterItem extends Item {
-    public PortableWirelessRedstoneTransmitterItem(Properties p_41383_) {
+public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
+    public PortableAlternateWirelessRedstoneTransmitterItem(Properties p_41383_) {
         super(p_41383_);
     }
 
@@ -27,7 +26,7 @@ public class PortableWirelessRedstoneTransmitterItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
       ItemStack stack=player.getItemInHand(hand);
-        if(stack.getItem() instanceof PortableWirelessRedstoneTransmitterItem) {
+        if(stack.getItem() instanceof PortableAlternateWirelessRedstoneTransmitterItem) {
             if (!isColor1Null(stack) && !isColor2Null(stack) && !isColor3Null(stack)) {
                 level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
                     data.setSignal(getColor1(stack), getColor2(stack), getColor3(stack), !isPowered(stack));
