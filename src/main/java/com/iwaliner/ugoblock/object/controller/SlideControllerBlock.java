@@ -63,7 +63,6 @@ public class SlideControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()&&!player.isSuppressingBounce()) {
                 blockEntity.setItem(0,stack);
-                //blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
@@ -93,25 +92,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
         player.displayClientMessage(Component.translatable("info.ugoblock.slide_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
         return InteractionResult.PASS;
     }
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
 
-        if(level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity&&blockEntity.hasCards()) {
-            List<BlockPos> posList=blockEntity.getPositionList();
-            if(posList!=null) {
-                for (BlockPos eachPos : posList) {
-                    if(!blockEntity.getBlockPos().equals(eachPos)) {
-                        destroyOldBlock(level, eachPos); /**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*/
-                    }
-                }
-                for (BlockPos eachPos : posList) {
-                    if(!blockEntity.getBlockPos().equals(eachPos)) {
-                        updateDestroyedPos(level, eachPos);
-                    }
-                }
-                blockEntity.setNotFirstTime(true);
-            }
-        }
-    }
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
         if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof SlideControllerBlockEntity blockEntity) {
@@ -132,7 +113,27 @@ public class SlideControllerBlock extends BaseEntityBlock {
                                   blockEntity.setMoving(true);
                                   level.setBlock(pos, state.cycle(POWERED), 2);
 
-                                  level.scheduleTick(pos, this, 2);
+
+
+                                  if(blockEntity.hasCards()) {
+                                      if(posList!=null) {
+                                          for (BlockPos eachPos : posList) {
+                                              if(!blockEntity.getBlockPos().equals(eachPos)) {
+                                                  destroyOldBlock(level, eachPos);
+                                              }
+                                          }
+                                          for (BlockPos eachPos : posList) {
+                                              if(!blockEntity.getBlockPos().equals(eachPos)) {
+                                                  updateDestroyedPos(level, eachPos);
+                                              }
+                                          }
+                                          blockEntity.setNotFirstTime(true);
+                                      }
+                                  }
+
+
+
+
                               }
                            }
 

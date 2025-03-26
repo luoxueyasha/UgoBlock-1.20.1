@@ -59,15 +59,21 @@ public class ClientSetUp {
                 ItemProperties.register(Register.portable_alternate_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color3"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor3(itemStack).getId());
                 ItemProperties.register(Register.portable_alternate_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "powered"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.isPowered(itemStack)? 1 : 0);
 
+                ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color1"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor1(itemStack).getId());
+                ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color2"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor2(itemStack).getId());
+                ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color3"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor3(itemStack).getId());
+                ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "powered"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.isPowered(itemStack)? 1 : 0);
+
             });
 
          }
     @SubscribeEvent
     public static void registerItemColorEvent(RegisterColorHandlersEvent.Item event) {
         event.register(ClientSetUp::getColorPortableWirelessRedstoneTransmitter,Register.portable_alternate_wireless_redstone_transmitter.get());
+        event.register(ClientSetUp::getColorPortableWirelessRedstoneTransmitter,Register.portable_momentary_wireless_redstone_transmitter.get());
     }
     private static int getColorPortableWirelessRedstoneTransmitter(ItemStack stack,int index){
-        if(stack.is(Register.portable_alternate_wireless_redstone_transmitter.get())){
+        if(stack.is(Register.portable_alternate_wireless_redstone_transmitter.get())||stack.is(Register.portable_momentary_wireless_redstone_transmitter.get())){
             int color1 = PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(stack)? -1 : PortableAlternateWirelessRedstoneTransmitterItem.getColor1(stack).getId();
             int color2 = PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(stack)? -1 : PortableAlternateWirelessRedstoneTransmitterItem.getColor2(stack).getId();
             int color3 = PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(stack)? -1 : PortableAlternateWirelessRedstoneTransmitterItem.getColor3(stack).getId();

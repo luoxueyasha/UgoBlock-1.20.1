@@ -290,17 +290,16 @@ public class ClientNonBusSetUp {
                     Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text1"),centerWidth-80,centerHeight+3,0.8F,16777215);
                     Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text2"),centerWidth-80,centerHeight+13,0.8F,16777215);
                 }else if(stack.is(Register.rotation_controller_blockitem.get())){
-                    Utils.displayImage(guiGraphics,"rotation_controller_display",centerWidth-200,centerHeight-70,0.8F);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.shape_card_display_text"),centerWidth-130,centerHeight-35,0.8F,16766976);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.rotation_direction_display_text1"),centerWidth-130,centerHeight-15,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.rotation_direction_display_text2"),centerWidth-130,centerHeight-5,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.basket_maker_display_text1"),centerWidth-160,centerHeight+24,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.basket_maker_display_text2"),centerWidth-160,centerHeight+34,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text1"),centerWidth-160,centerHeight+60,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text2"),centerWidth-160,centerHeight+70,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.seat_display_text"),centerWidth-160,centerHeight+101,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text1"),centerWidth-80,centerHeight-58,0.8F,16777215);
-                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text2"),centerWidth-80,centerHeight-48,0.8F,16777215);
+                    Utils.displayImage(guiGraphics,"rotation_controller_display",centerWidth-200,centerHeight-90,0.8F);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.shape_card_display_text"),centerWidth-130,centerHeight-55,0.8F,16766976);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.rotation_direction_display_text1"),centerWidth-130,centerHeight-35,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.rotation_direction_display_text2"),centerWidth-130,centerHeight-25,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.basket_maker_display_text"),centerWidth-197,centerHeight+70,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text1"),centerWidth-160,centerHeight+93,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obserber_display_text2"),centerWidth-160,centerHeight+103,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.seat_display_text"),centerWidth-160,centerHeight+134,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text1"),centerWidth-80,centerHeight-78,0.8F,16777215);
+                    Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text2"),centerWidth-80,centerHeight-68,0.8F,16777215);
 
                 }
 

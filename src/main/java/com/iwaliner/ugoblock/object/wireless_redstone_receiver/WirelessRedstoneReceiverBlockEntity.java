@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_receiver;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import com.iwaliner.ugoblock.object.block_imitation_wand.ImitatableBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
@@ -17,6 +18,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WirelessRedstoneReceiverBlockEntity extends BlockEntity implements ImitatableBlockEntity {
     private DyeColor color1;
@@ -83,6 +86,8 @@ public class WirelessRedstoneReceiverBlockEntity extends BlockEntity implements 
     }
 
     public void setRemotePowered(boolean remotePowered) {
+        level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(WirelessRedstoneReceiverBlock.POWERED,remotePowered));
+        markUpdated();
         this.remotePowered = remotePowered;
     }
 
@@ -121,13 +126,12 @@ public class WirelessRedstoneReceiverBlockEntity extends BlockEntity implements 
         super.onDataPacket(net, pkt);
     }
     public static void tick(Level level, BlockPos pos, BlockState state, WirelessRedstoneReceiverBlockEntity blockEntity) {
-        if (state.getBlock() instanceof WirelessRedstoneReceiverBlock) {
+        if (state.getBlock() instanceof WirelessRedstoneReceiverBlock && !level.isClientSide()) {
             boolean blockSignal=blockEntity.isRemotePowered();
             level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
                 boolean savedSignal=data.getSignal(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3());
                 if(blockSignal!=savedSignal){
                     blockEntity.setRemotePowered(savedSignal);
-                    level.scheduleTick(pos, state.getBlock(), 2);
                 }
             });
         }

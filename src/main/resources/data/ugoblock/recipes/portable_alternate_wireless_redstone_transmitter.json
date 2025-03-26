@@ -1,0 +1,85 @@
+{
+
+
+
+  "type": "minecraft:crafting_shapeless",
+
+
+
+  "ingredients": [
+
+
+
+   
+
+
+
+    {
+
+
+
+      "item": "ugoblock:wireless_redstone_transmitter"
+
+
+
+    },
+
+
+
+    {
+
+
+
+      "tag": "minecraft:signs"
+
+
+
+    },
+
+
+
+    {
+
+
+
+      "item": "minecraft:redstone_torch"
+
+
+
+    },
+
+
+
+    {
+
+
+
+      "item": "minecraft:lever"
+
+
+
+    }
+
+
+
+  ],
+
+
+
+  "result": {
+
+
+
+    "item": "ugoblock:portable_alternate_wireless_redstone_transmitter",
+
+
+
+    "count": 1
+
+
+
+  }
+
+
+
+}

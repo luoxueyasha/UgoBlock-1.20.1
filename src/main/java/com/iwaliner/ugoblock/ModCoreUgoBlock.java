@@ -62,6 +62,7 @@ public class ModCoreUgoBlock
             event.accept(Register.wireless_redstone_transmitter_blockitem.get());
             event.accept(Register.wireless_redstone_receiver_blockitem.get());
             event.accept(Register.portable_alternate_wireless_redstone_transmitter.get());
+            event.accept(Register.portable_momentary_wireless_redstone_transmitter.get());
             event.accept(Register.block_imitation_wand.get());
            // event.accept(Register.gravitate_piston_blockitem.get());
         }else if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
@@ -77,7 +78,7 @@ public class ModCoreUgoBlock
     public void ItemStackedOnOtherEvent(ItemStackedOnOtherEvent event){
         ItemStack transmitterStack=event.getCarriedItem();
         ItemStack dyeStack=event.getStackedOnItem();
-        if(dyeStack.getItem()instanceof DyeItem&&transmitterStack.is(Register.portable_alternate_wireless_redstone_transmitter.get())) {
+        if(dyeStack.getItem()instanceof DyeItem&& (transmitterStack.is(Register.portable_alternate_wireless_redstone_transmitter.get()) || transmitterStack.is(Register.portable_momentary_wireless_redstone_transmitter.get()) )) {
             DyeColor dyeColor=((DyeItem) dyeStack.getItem()).getDyeColor();
             if (PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(transmitterStack)) {
                 event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);

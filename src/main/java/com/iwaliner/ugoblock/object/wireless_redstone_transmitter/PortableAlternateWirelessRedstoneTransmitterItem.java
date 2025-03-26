@@ -33,7 +33,7 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
                 });
                 setPowered(stack, !isPowered(stack));
                 level.playSound(player, player.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
-                return InteractionResultHolder.consume(stack);
+                return InteractionResultHolder.fail(stack);
             }else{
                 player.displayClientMessage(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter_color_not_set").withStyle(ChatFormatting.YELLOW), true);
 

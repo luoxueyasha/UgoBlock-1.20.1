@@ -68,7 +68,6 @@ public class RotationControllerBlock extends BaseEntityBlock {
         if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
             if (stack.getItem() == Register.shape_card.get()&&blockEntity.getItem(0).isEmpty()&&!player.isSuppressingBounce()) {
                 blockEntity.setItem(0,stack);
-                //blockEntity.setPositionList(Utils.getPositionList(stack.getTag()));
                 player.setItemInHand(hand,ItemStack.EMPTY);
                 player.level().playSound(player,pos, SoundEvents.ENDER_CHEST_OPEN, SoundSource.BLOCKS,1F,1F);
                 return InteractionResult.SUCCESS;
@@ -149,7 +148,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
-            if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
+             if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
                   BlockPos startPos = pos.relative(state.getValue(FACING));
                 Direction controllerDirection=state.getValue(BlockStateProperties.FACING);
                 if(state.getValue(IGNORE)){
@@ -173,8 +172,9 @@ public class RotationControllerBlock extends BaseEntityBlock {
                               }
                           }
                           if(makingEntitySuccess) {
+                              removeBlocks(level,startPos,blockEntity,state);
                               level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
-                              level.scheduleTick(pos, this, 2);
+                              level.scheduleTick(pos, this, 0);
                           }
                       }else{
 
@@ -220,7 +220,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
                                   if(makingEntitySuccess) {
                                       blockEntity.setMoving(true);
                                       level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
-                                      level.scheduleTick(pos, this, 2);
+                                      level.scheduleTick(pos, this, 0);
                                   }
                               }else{
                                   removeBlocks(level,startPos,blockEntity,state);
@@ -266,6 +266,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
                        }
                     blockEntity.setTickCount(0);
                    }
+
             }
 
     }

@@ -46,6 +46,18 @@
 
 
 
+    },
+
+
+
+    {
+
+
+
+     "tag": "minecraft:buttons"
+
+
+
     }
 
 
@@ -58,7 +70,7 @@
 
 
 
-    "item": "ugoblock:portable_wireless_redstone_transmitter",
+    "item": "ugoblock:portable_momentary_wireless_redstone_transmitter",
 
 
 

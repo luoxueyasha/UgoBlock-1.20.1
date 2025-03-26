@@ -41,7 +41,7 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
                             data.setSignal(getColor1(stack), getColor2(stack), getColor3(stack), false);
                         });
                         setPowered(stack, false);
-                        level.playSound(entity, entity.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
+                       // level.playSound(entity, entity.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
                     }
                 }
                 tag.putInt("coolTime",coolTime-1);
@@ -60,10 +60,11 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
                 });
                 setPowered(stack, true);
                 CompoundTag tag=stack.getTag();
-                tag.putInt("coolTime",60);
+                tag.putInt("coolTime",4);
                 stack.setTag(tag);
                 level.playSound(player, player.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
-                return InteractionResultHolder.consume(stack);
+                //return InteractionResultHolder.consume(stack);
+                return InteractionResultHolder.fail(stack);
             }else{
                 player.displayClientMessage(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter_color_not_set").withStyle(ChatFormatting.YELLOW), true);
 

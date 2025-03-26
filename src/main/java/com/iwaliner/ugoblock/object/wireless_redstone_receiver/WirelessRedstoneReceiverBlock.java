@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_receiver;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.ChatFormatting;
@@ -19,6 +20,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -306,12 +308,7 @@ public class WirelessRedstoneReceiverBlock extends BaseEntityBlock {
         return true;
     }
 
-    @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
-        if(level.getBlockEntity(pos) instanceof WirelessRedstoneReceiverBlockEntity blockEntity) {
-            level.setBlock(pos, state.setValue(POWERED,blockEntity.isRemotePowered()), 3);
-        }
-    }
+
     @Override
     public void appendHoverText(ItemStack stack, @org.jetbrains.annotations.Nullable BlockGetter p_49817_, List<Component> list, TooltipFlag p_49819_) {
         list.add(Component.translatable("info.ugoblock.wireless_redstone_frequency").withStyle(ChatFormatting.GREEN));
@@ -322,4 +319,5 @@ public class WirelessRedstoneReceiverBlock extends BaseEntityBlock {
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
+
 }
