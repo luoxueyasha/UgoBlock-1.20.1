@@ -313,7 +313,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     @Override
     public void tick() {
         this.tickLerp();
-
+        makeCollisionEntity();
         for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos()).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
             return (o instanceof MovingBlockEntity);
         })) {
@@ -398,7 +398,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             rotate();
             //makeCollisionEntity();
         }
-        makeCollisionEntity();
+        //makeCollisionEntity();
         addTimeCount(1);
     }
 
@@ -735,7 +735,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         }
         boolean flag= getTimeCount() >= startTick && getTimeCount() < startTick + duration;
         float thetaDegreeF= (flag||isLoopRotation())? (getTimeCount()-startTick)*getDegreeAngle()/(float)duration : getDegreeAngle();
-        float degreeCombinedF=thetaDegreeF/*+getVisualRot()*/+getStartRotation();
+        float degreeCombinedF=thetaDegreeF+getVisualRot()+getStartRotation();
+
         if(!shouldRotate()){
             degreeCombinedF=0f;
         }
@@ -814,6 +815,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                     entity.moveTo(eachVec3);
                 }*/
                 double bigger=0.125D;
+                bigger=0.125D*3D;
+                bigger=0.18D;
                 for (Entity entity : level().getEntities((Entity) null, aabb.move(0D, 0.25D, 0D).inflate(bigger, bigger, bigger), (o) -> {
                     return (o instanceof LivingEntity);
                 })) {
@@ -846,6 +849,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                                 //if (Mth.abs((float) entitySpeedZ) > d) {
                                 z = entityPosZ;
                                 // }
+                            }
+                            if(getTimeCount()-getStartTick()<1){
+                                y+=0.1D;
                             }
                             newPos2 = new Vec3(x, y, z);
                         } else {
@@ -889,7 +895,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                                 newPos2=newPos2.add(0D,0.5D,0D);
                             }
                         }
-                        if(!shouldRotate()){
+                        if(!shouldRotate()||getAxis()== Direction.Axis.Y){
+                            //newPos2=newPos2.add(0D,0.005D,0D);
                             collisionYOffset=-1D;
                         }
                         if(isLoopRotation()||(getTimeCount()<=(duration+startTick)+1)) {
