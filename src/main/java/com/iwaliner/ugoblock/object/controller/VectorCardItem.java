@@ -70,6 +70,19 @@ public class VectorCardItem extends Item {
                 level.playSound(context.getPlayer(),pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS,1F,1F);
                 stack.setTag(tag);
             }
+            Player player=context.getPlayer();
+          if(player!=null) {
+              if (stack.getCount() > 1) {
+                  int size = stack.getCount();
+
+                  ItemStack newStack = new ItemStack(Register.vector_card.get(), size - 1);
+                  stack = stack.copyWithCount(1);
+                  if (!player.getInventory().add(newStack)) {
+                      player.drop(newStack, false);
+                  }
+              }
+              player.setItemInHand(context.getHand(), stack);
+          }
                 return InteractionResult.SUCCESS;
         }
         return InteractionResult.FAIL;

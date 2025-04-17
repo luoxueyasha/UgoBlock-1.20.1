@@ -94,29 +94,60 @@ public class RotationControllerBlock extends BaseEntityBlock {
         }
          return InteractionResult.PASS;
     }
-    public Direction.Axis getAxis(BlockState state){
+    public static Direction.Axis getAxis(BlockState state){
         Direction facing=state.getValue(FACING);
         return facing.getAxis();
     }
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {/**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*/
-        /*if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&blockEntity.hasCards()) {
+    /*public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {*//**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*//*
+        *//*if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&blockEntity.hasCards()) {
             BlockPos startPos = pos.relative(state.getValue(FACING));
             List<BlockPos> posList=state.getValue(POWERED)? blockEntity.getPositionList() :  Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),blockEntity.getDegreeAngle());
 
             if(posList!=null) {
                 for (BlockPos eachPos : posList) {
                     if(!blockEntity.getBlockPos().equals(eachPos)) {
-                        destroyOldBlock(level, eachPos); *//**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*//*
+                        destroyOldBlock(level, eachPos); *//**//**neighborChangedでエンティティ化したら、その2tickあとにここでエンティティ化済みのブロックを除去する。時間をあけるのは一瞬何も表示されなくなる(=一瞬消えることでちらつく)のを軽減するため。*//**//*
                     }
                 }
                 blockEntity.setNotFirstTime(true);
             }
-        }*/
+        }*//*
         if(level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&state.getBlock() instanceof RotationControllerBlock){
             removeBlocks(level,pos.relative(state.getValue(FACING)),blockEntity,state);
         }
+    }*/
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource randomSource) {
+        if (level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&state.getBlock() instanceof RotationControllerBlock) {
+            removeBlocks(level,pos.relative(state.getValue(FACING)),blockEntity,state);
+            /*if(blockEntity.isLoop()&&state.getValue(MOVING)&& state.getValue(POWERED)) {
+                if (blockEntity.hasCards() && blockEntity.isLoop() *//*&& blockEntity.getTickCount() > 2 && state.getValue(POWERED)*//*) {
+                    BlockPos startPos = pos.relative(state.getValue(FACING));
+                    //removeBlocks(level,startPos,blockEntity,state);
+                    //blockEntity.setMoving(false);
+                    //       level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true), 82);
+                    //    level.scheduleTick(pos, this, 2);
+                    for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                        return (o instanceof MovingBlockEntity);
+                    })) {
+                        MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
+                        //  if(movingBlock.getTimeCount()<10){
+                        removeBlocks(level, startPos, blockEntity, state);
+                        //   }
+                        movingBlock.setDiscardTime(-1);
+                    }
+                    blockEntity.setTickCount(0);
+                    blockEntity.setMoving(false);
+                    //level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true), 2);
+                    blockEntity.setNotFirstTime(false);
+                    level.setBlockAndUpdate(pos, state.setValue(POWERED, false).setValue(MOVING, false)*//*.setValue(IGNORE, true)*//*);
+                }
+            }else{
+                   // removeBlocks(level,pos.relative(state.getValue(FACING)),blockEntity,state);
+
+            }*/
+        }
     }
-    private void removeBlocks (Level level,BlockPos startPos,RotationControllerBlockEntity blockEntity, BlockState state){
+    public static void removeBlocks(Level level, BlockPos startPos, RotationControllerBlockEntity blockEntity, BlockState state){
         if(blockEntity.hasCards()) {
             List<BlockPos> posList=state.getValue(POWERED)? blockEntity.getPositionList() :  Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
             if(posList!=null) {
@@ -148,33 +179,218 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
         boolean flag = state.getValue(POWERED);
-             if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity) {
+        boolean signal=level.hasNeighborSignal(pos);
+        int signalVolume=level.getBestNeighborSignal(pos);
+        if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&blockEntity.isPreRedstoneSignalON()!=signal&&!level.isClientSide()) {
+            blockEntity.setPreRedstoneSignal(signal);
+            BlockPos startPos = pos.relative(state.getValue(FACING));
+            Direction controllerDirection=state.getValue(BlockStateProperties.FACING);
+            if(state.getValue(IGNORE)){
+                level.setBlock(pos, state.setValue(IGNORE,false), 2);
+                return;
+            }
+            int start=blockEntity.getStartTime();
+            int duration=blockEntity.getDuration();
+            boolean makingEntitySuccess=false;
+            if(blockEntity.hasCards()&&blockEntity.isLoop()){
+                if(!flag){
+                    if(blockEntity.isIgnore()){
+                        blockEntity.setIgnore(false);
+                        return;
+                    }
+                    if (duration > 0) {
+                        List<BlockPos> posList = blockEntity.getPositionList();
+
+                        if (posList != null) {
+
+                            blockEntity.setMoving(true);
+                            /**ブロックをエンティティ化*/
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0);
+                            if(makingEntitySuccess) {
+                                //removeBlocks(level,startPos,blockEntity,state);
+                                blockEntity.setMoving(true);
+                                level.setBlock(pos, state.setValue(POWERED,true).setValue(MOVING, true), 2);
+                                level.scheduleTick(pos, this, 0);
+                            }
+                        }
+                    }
+                }else{
+                    for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                        return (o instanceof MovingBlockEntity);
+                    })) {
+                        MovingBlockEntity movingBlock= (MovingBlockEntity) entity;
+                        movingBlock.setDiscardTime(-1);
+                        //blockEntity.setNotFirstTime(false);
+                        blockEntity.setMoving(false);
+                        blockEntity.setIgnore(true);
+                        int angle=blockEntity.getDegreeAngleAndLoop();
+                        ItemStack card=blockEntity.getItem(0);
+
+                        RotationControllerBlockEntity newBlockEntity=new RotationControllerBlockEntity(pos,state);
+                        newBlockEntity.setDegreeAngle(angle);
+                        newBlockEntity.setDuration(duration);
+                        newBlockEntity.setItem(0,card);
+                        newBlockEntity.setMoving(false);
+                        newBlockEntity.setIgnore(true);
+                        level.removeBlockEntity(pos);
+                        level.setBlockEntity(newBlockEntity);
+                        level.setBlock(pos,state.setValue(RotationControllerBlock.POWERED,false).setValue(RotationControllerBlock.MOVING,false),2);
+                    }
+                }
+
+            } else if(!blockEntity.isMoving()&&blockEntity.hasCards()&&!blockEntity.isLoop()) { /**動いている最中は赤石入力の変化を無視する*/
+
+                if(!flag) {
+                    if (duration > 0) {
+                        List<BlockPos> posList = blockEntity.getPositionList();
+
+                        if (posList != null) {
+
+                            blockEntity.setMoving(true);
+                            /**ブロックをエンティティ化*/
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0);
+
+                        }
+                    }
+                    if(makingEntitySuccess) {
+                        //removeBlocks(level,startPos,blockEntity,state);
+                        level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
+                        level.scheduleTick(pos, this, 0);
+                    }
+                }else{
+
+                    boolean b1=false;
+                    for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                        return (o instanceof MovingBlockEntity);
+                    })) {
+                        b1=true;
+                        MovingBlockEntity movingBlock= (MovingBlockEntity) entity;
+                        CompoundTag tag=movingBlock.getCompoundTag();
+                        int angle=movingBlock.getDegreeAngle();
+//                              makeMoveableBlockReverse(level,pos,startPos,start,duration,getAxis(state),angle,tag);
+//                              ((MovingBlockEntity) entity).setDiscardTime(2);
+                        makeMoveableBlockReverse(level,pos,movingBlock);
+                    }
+                    if(!b1){
+                        int degree=-getDegreeAngle(state,blockEntity);
+                              /*if(degree>=180){
+                                  degree=-180;
+                              }else if(degree<=-180){
+                                  degree=180;
+                              }*/
+                        boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
+                        int degree0=degree;
+                        // int visualDegree0=blockEntity.getVisualDegree();
+
+                        if(invertRotation&&(degree0%90)==0){
+                            //  degree0=-degree0;
+                            //  visualDegree0=-visualDegree0;
+                        }
+                        List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
+                        List<BlockPos> rotatedBasketPosList = Utils.rotateBasketPosList(blockEntity.getBasketPosList(),BlockPos.ZERO,startPos,state.getValue(FACING).getAxis(),-getDegreeAngle(state,blockEntity),blockEntity.getBasketOriginPosList());
+                              /*List<BlockPos> rotatedBasketPosList = blockEntity.getBasketPosList();
+                              for(int j=0;j<rotatedBasketPosList.size();j++){
+                                  rotatedBasketPosList.set(j,rotatedBasketPosList.get(j).offset(startPos.getX(),startPos.getY(),startPos.getZ()));
+                              }*/
+                        rotatedPosList.addAll(rotatedBasketPosList);
+                        if(!blockEntity.isLoop()){
+                            //  int visualDegree= blockEntity.getVisualDegree();
+
+                            /**ブロックをエンティティ化*/
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, getVisualDegreeAngle(state,blockEntity),true,BlockPos.ZERO,0);
+                            if(makingEntitySuccess) {
+                                blockEntity.setMoving(true);
+                                level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
+                                level.scheduleTick(pos, this, 0);
+                            }
+                        }else{
+                            removeBlocks(level,startPos,blockEntity,state);
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), 0,true,BlockPos.ZERO,0);
+                            //removeBlocks(level,startPos,blockEntity,state);
+
+                        }
+                    }else{
+                        blockEntity.setMoving(true);
+                        level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,true), 2);
+                    }
+                         /*if(!blockEntity.isLoop()){
+                              blockEntity.setMoving(true);
+                              level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,true), 2);
+                                  level.scheduleTick(pos, this, 2);
+                          }else{
+                             removeBlocks(level,startPos,blockEntity,state);
+                             blockEntity.setMoving(false);
+                             level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,false), 2);
+                             //level.scheduleTick(pos, this, 2);
+
+                         }*/
+                   /* if(blockEntity.isLoop()){
+                        removeBlocks(level,startPos,blockEntity,state);
+                        blockEntity.setMoving(false);
+                        level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,false), 2);
+                    }*/
+
+                }
+            }/*else if(blockEntity.hasCards()&&blockEntity.isLoop()&&blockEntity.getTickCount()>2&&state.getValue(POWERED)){
+                //removeBlocks(level,startPos,blockEntity,state);
+                blockEntity.setMoving(false);
+                level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false)*//*.setValue(IGNORE,true)*//*, 2);
+                //    level.scheduleTick(pos, this, 2);
+                for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                    return (o instanceof MovingBlockEntity);
+                })) {
+                    MovingBlockEntity movingBlock= (MovingBlockEntity) entity;
+                    if(movingBlock.getTimeCount()<10){
+                        removeBlocks(level,startPos,blockEntity,state);
+                    }
+                    movingBlock.setDiscardTime(-1);
+                }
+                blockEntity.setTickCount(0);
+            }*/
+            blockEntity.setPreRedstoneSignal(signal);
+        }
+
+    }
+   /* public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos2, boolean b) {
+        boolean flag = state.getValue(POWERED);
+             if (level.hasNeighborSignal(pos)&&level.getBlockEntity(pos) instanceof RotationControllerBlockEntity blockEntity&&blockEntity.isPreRedstoneSignalON()==false) {
                   BlockPos startPos = pos.relative(state.getValue(FACING));
                 Direction controllerDirection=state.getValue(BlockStateProperties.FACING);
                 if(state.getValue(IGNORE)){
                     level.setBlock(pos, state.setValue(IGNORE,false), 2);
+                    ModCoreUgoBlock.logger.info("BBB");
                     return;
                 }
-                if(!blockEntity.isMoving()&&blockEntity.hasCards()) { /**動いている最中は赤石入力の変化を無視する*/
+                 if(blockEntity.hasCards()&&blockEntity.isLoop()&&blockEntity.getTickCount()>2&&state.getValue(POWERED)) {
+                     //  level.setBlockAndUpdate(pos, state.setValue(IGNORE, true));
+                     level.scheduleTick(pos, this, 0);
+                     return;
+                 }
+                     if(!blockEntity.isMoving()&&blockEntity.hasCards()) { *//**動いている最中は赤石入力の変化を無視する*//**//*
                       int start=blockEntity.getStartTime();
                       int duration=blockEntity.getDuration();
                     boolean makingEntitySuccess=false;
                       if(!flag) {
                           if (duration > 0) {
                               List<BlockPos> posList = blockEntity.getPositionList();
-
                               if (posList != null) {
-
                                   blockEntity.setMoving(true);
-                                  /**ブロックをエンティティ化*/
+                                  //**ブロックをエンティティ化*//**//*
                                   makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0);
 
                               }
                           }
                           if(makingEntitySuccess) {
-                              removeBlocks(level,startPos,blockEntity,state);
-                              level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
+                              //removeBlocks(level,startPos,blockEntity,state);
                               level.scheduleTick(pos, this, 0);
+                              if(blockEntity.isLoop()){
+                                  level.setBlock(pos, state.setValue(POWERED,true).setValue(MOVING, true), 2);
+                              }else{
+                                  level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
+                              }
+
+                              //level.scheduleTick(pos, this, 0);
+                              //removeBlocks(level,pos.relative(state.getValue(FACING)),blockEntity,state);
                           }
                       }else{
 
@@ -192,11 +408,11 @@ public class RotationControllerBlock extends BaseEntityBlock {
                           }
                           if(!b1){
                               int degree=-getDegreeAngle(state,blockEntity);
-                              /*if(degree>=180){
+                              if(degree>=180){
                                   degree=-180;
                               }else if(degree<=-180){
                                   degree=180;
-                              }*/
+                              }
                               boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
                               int degree0=degree;
                              // int visualDegree0=blockEntity.getVisualDegree();
@@ -207,32 +423,33 @@ public class RotationControllerBlock extends BaseEntityBlock {
                               }
                               List<BlockPos> rotatedPosList = Utils.rotatePosList(blockEntity.getPositionList(),startPos,startPos,state.getValue(FACING).getAxis(),getDegreeAngle(state,blockEntity));
                               List<BlockPos> rotatedBasketPosList = Utils.rotateBasketPosList(blockEntity.getBasketPosList(),BlockPos.ZERO,startPos,state.getValue(FACING).getAxis(),-getDegreeAngle(state,blockEntity),blockEntity.getBasketOriginPosList());
-                              /*List<BlockPos> rotatedBasketPosList = blockEntity.getBasketPosList();
+                              List<BlockPos> rotatedBasketPosList = blockEntity.getBasketPosList();
                               for(int j=0;j<rotatedBasketPosList.size();j++){
                                   rotatedBasketPosList.set(j,rotatedBasketPosList.get(j).offset(startPos.getX(),startPos.getY(),startPos.getZ()));
-                              }*/
+                              }
                               rotatedPosList.addAll(rotatedBasketPosList);
                               if(!blockEntity.isLoop()){
                                 //  int visualDegree= blockEntity.getVisualDegree();
 
-                                  /**ブロックをエンティティ化*/
-                                  makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, getVisualDegreeAngle(state,blockEntity),true,BlockPos.ZERO,0);
+                                  /**ブロックをエンティティ化*//*
+                                 boolean makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, getVisualDegreeAngle(state,blockEntity),true,BlockPos.ZERO,0);
                                   if(makingEntitySuccess) {
                                       blockEntity.setMoving(true);
                                       level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
+                                      //removeBlocks(level,pos.relative(state.getValue(FACING)),blockEntity,state);
                                       level.scheduleTick(pos, this, 0);
                                   }
                               }else{
-                                  removeBlocks(level,startPos,blockEntity,state);
+                                  //removeBlocks(level,startPos,blockEntity,state);
                                   makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), 0,true,BlockPos.ZERO,0);
                                   //removeBlocks(level,startPos,blockEntity,state);
-
+                                  level.scheduleTick(pos, this, 0);
                               }
                           }else{
                               blockEntity.setMoving(true);
                               level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,true), 2);
                           }
-                         /*if(!blockEntity.isLoop()){
+                         if(!blockEntity.isLoop()){
                               blockEntity.setMoving(true);
                               level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,true), 2);
                                   level.scheduleTick(pos, this, 2);
@@ -242,35 +459,43 @@ public class RotationControllerBlock extends BaseEntityBlock {
                              level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,false), 2);
                              //level.scheduleTick(pos, this, 2);
 
-                         }*/
-                         if(blockEntity.isLoop()){
-                             removeBlocks(level,startPos,blockEntity,state);
+                         }
+                        if(blockEntity.isLoop()){
+                             level.scheduleTick(pos, this, 0);
+                             //removeBlocks(level,startPos,blockEntity,state);
                              blockEntity.setMoving(false);
                              level.setBlock(pos, state.cycle(POWERED).setValue(MOVING,false), 2);
                          }
 
                       }
                    }else if(blockEntity.hasCards()&&blockEntity.isLoop()&&blockEntity.getTickCount()>2&&state.getValue(POWERED)){
+                  //  level.setBlockAndUpdate(pos, state.setValue(IGNORE, true));
+                    level.scheduleTick(pos, this, 0);
+                   ModCoreUgoBlock.logger.info("AAAA");
                     //removeBlocks(level,startPos,blockEntity,state);
-                           blockEntity.setMoving(false);
-                           level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true), 2);
+                           //blockEntity.setMoving(false);
+                    //       level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true), 82);
                        //    level.scheduleTick(pos, this, 2);
                        for (Entity entity : level.getEntities((Entity) null, new AABB(startPos).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
                            return (o instanceof MovingBlockEntity);
                        })) {
                            MovingBlockEntity movingBlock= (MovingBlockEntity) entity;
-                           if(movingBlock.getTimeCount()<10){
+                         //  if(movingBlock.getTimeCount()<10){
                                removeBlocks(level,startPos,blockEntity,state);
-                           }
+                        //   }
                            movingBlock.setDiscardTime(-1);
                        }
                     blockEntity.setTickCount(0);
-                   }
+                    blockEntity.setMoving(false);
+                    //level.setBlock(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true), 2);
+                    blockEntity.setNotFirstTime(false);
+                    level.setBlockAndUpdate(pos, state.setValue(POWERED,false).setValue(MOVING,false).setValue(IGNORE,true));
+                }
 
             }
 
-    }
-    public int getDegreeAngle(BlockState state,RotationControllerBlockEntity blockEntity){
+    }*/
+    public static int getDegreeAngle(BlockState state, RotationControllerBlockEntity blockEntity){
         Direction controllerDirection=state.getValue(FACING);
         boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
         if(invertRotation){
@@ -278,7 +503,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
         }
         return blockEntity.getDegreeAngle();
     }
-    public int getVisualDegreeAngle(BlockState state,RotationControllerBlockEntity blockEntity){
+    public static int getVisualDegreeAngle(BlockState state, RotationControllerBlockEntity blockEntity){
         Direction controllerDirection=state.getValue(FACING);
         boolean invertRotation=controllerDirection==Direction.NORTH||controllerDirection==Direction.WEST||controllerDirection==Direction.DOWN;
         /*if(invertRotation){
@@ -402,7 +627,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
     }*/
 
-    private void makeMoveableBlockReverse(Level level, BlockPos controllerPos,MovingBlockEntity movingBlock){
+    public static void makeMoveableBlockReverse(Level level, BlockPos controllerPos, MovingBlockEntity movingBlock){
         if(level.getBlockEntity(controllerPos) instanceof RotationControllerBlockEntity rotationControllerBlockEntity&&rotationControllerBlockEntity.getItem(0).getItem()==Register.shape_card.get()&&rotationControllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             movingBlock.setTimeCount(0);
             movingBlock.setDuration(movingBlock.getDuration());

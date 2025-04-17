@@ -3,6 +3,7 @@ package com.iwaliner.ugoblock;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlock;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerBlockEntity;
 import com.iwaliner.ugoblock.object.controller.*;
+import com.iwaliner.ugoblock.object.moving_block.CollisionEntity;
 import com.iwaliner.ugoblock.object.moving_block.DoorEntity;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.object.seat.SeatBlock;
@@ -678,7 +679,12 @@ public class Utils {
         guiGraphics.drawString(font, component.getString(),width, height, color, true);
         guiGraphics.pose().popPose();
     }
-
+    public static boolean isUnableToMove(Entity entity){
+        if(entity instanceof CollisionEntity||entity instanceof MovingBlockEntity){
+            return true;
+        }
+        return false;
+    }
 
 
 }

@@ -54,6 +54,9 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         ItemStack stack=player.getItemInHand(hand);
         if(level.getBlockEntity(pos) instanceof WirelessRedstoneTransmitterBlockEntity blockEntity) {
+            if(stack.getItem()==Register.block_imitation_wand.get()){
+                return InteractionResult.PASS;
+            }
             Optional<Vec2> optional = getRelativeHitCoordinatesForBlockFace(result);
             if (!optional.isEmpty()&&result.getDirection().getAxis()!= Direction.Axis.Y) {
                 if(/*optional.get().x>0.125F&&*/optional.get().x<0.40625F){

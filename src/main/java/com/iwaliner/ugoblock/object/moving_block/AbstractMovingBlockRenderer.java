@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.moving_block;
 
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -51,7 +52,6 @@ import java.util.List;
     private final ModelPart doubleRightBottom;
     private final ModelPart doubleRightLock;*/
     private final BlockRenderDispatcher blockRenderer;
-
     protected AbstractMovingBlockRenderer(EntityRendererProvider.Context context) {
             super(context);
         this.blockRenderer = context.getBlockRenderDispatcher();
@@ -238,10 +238,15 @@ import java.util.List;
                         }*/
 
                     poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
+                    BlockState placedState=level.getBlockState(movingBlock.blockPosition());
                     int blockLightLevel = block.getLightEmission(eachState, level, eachPos);
                     int skyLightLevel = this.getSkyLightLevel((T) movingBlock,eachPos);
+
+                    if(placedState.isAir()){
+                        movingBlock.setPreBlockLightLevel(i0);
+                    }
                    //this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
-                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(blockLightLevel,skyLightLevel,i0), OverlayTexture.NO_OVERLAY);
+                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY);
 
                    /* poseStack.translate(0.4999D, 0.4999D, 0.4999D);
                     if (movingBlock.getAxis() == Direction.Axis.X) {
@@ -303,7 +308,8 @@ import java.util.List;
 
         private int brightness(int blockLightLevel,int skyLightLevel, int i0){
         if(blockLightLevel==0){
-            return i0;
+            ModCoreUgoBlock.logger.info("level:"+i0);
+            return 15728640;
         }
         return Math.max(i0,LightTexture.pack(blockLightLevel,skyLightLevel));
         }

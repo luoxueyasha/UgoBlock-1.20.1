@@ -93,6 +93,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public static final EntityDataAccessor<CompoundTag> DATA_POSITION_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DATA_STATE_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<Integer> DATA_PRE_BLOCK_LIGHT_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.INT);
 
      @Nullable
     private MovingBlockEntity.PosRotInterpolationTarget posRotInterpolationTarget;
@@ -143,10 +144,11 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     int maxZ=0;
 
 
+
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
         this.noPhysics = false;
-        this.noCulling = false;
+        this.noCulling = true;
         this.blocksBuilding=false;
     }
 
@@ -159,7 +161,8 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.set(DisplayMixin.getDataDuration(),duration);
         this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
         this.noPhysics = false;
-        this.noCulling = false;
+        this.noCulling = true;
+        //this.noCulling = false;
         this.entityData.set(DATA_TIME_COUNT_ID,0);
         if(axis==null){
             this.entityData.set(DATA_TRANSITION_POSITION_ID,endPos);
@@ -202,6 +205,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_POSITION_TAG_ID,new CompoundTag());
         this.entityData.define(DATA_STATE_TAG_ID,new CompoundTag());
         this.entityData.define(DATA_BLOCKENTITY_TAG_ID,new CompoundTag());
+        this.entityData.define(DATA_PRE_BLOCK_LIGHT_ID,0);
       }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
@@ -267,7 +271,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("teleport_duration")) {
             this.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID,tag.getInt("teleport_duration"));
         }
-
+        if (tag.contains("blockLightLevel")) {
+            this.entityData.set(DATA_PRE_BLOCK_LIGHT_ID,tag.getInt("blockLightLevel"));
+        }
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -289,6 +295,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.put("stateList",entityData.get(DATA_STATE_TAG_ID));
         tag.put("blockEntityList",entityData.get(DATA_BLOCKENTITY_TAG_ID));
         tag.putInt("teleport_duration",entityData.get(DATA_POS_ROT_INTERPOLATION_DURATION_ID));
+        tag.putInt("blockLightLevel",entityData.get(DATA_PRE_BLOCK_LIGHT_ID));
     }
 
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -314,7 +321,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public void tick() {
         this.tickLerp();
         makeCollisionEntity();
-        for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos()).move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+        for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos())/*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0d, 0.1d, 0d)*/, (o) -> {
             return (o instanceof MovingBlockEntity);
         })) {
             MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
@@ -350,7 +357,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 }
             }
         }
-        setBoundingBox(makeBoundingBox());
+        //setBoundingBox(makeBoundingBox());
         BlockPos transition= getTransition();
         int duration=getDuration();
         int startTick=getStartTick();
@@ -369,7 +376,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
                setActualPos(pos);
 
-                /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+                /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling()*//*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0.1d, 1d, 0.1d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
 
@@ -377,14 +384,24 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                         Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
                         entity.setDeltaMovement(speed);
                         entity.setOnGround(true);
+                  *//* if(getTimeCount() == startTick + duration-2){
+                        double y=2D;
+                        entity.setPos(entity.position().add(0D,y,0D));
+                         }*//*
                 }*/
 
-            } else if (duration > 0 && getTimeCount() == startTick + duration + 0) {
-                /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
+            } else if (duration > 0 && getTimeCount() == startTick + duration) {
+               /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling()*//*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0.1d, 1d, 0.1d), (o) -> {
                     return !(o instanceof MovingBlockEntity);
                 })) {
+                    double y=0D;
+                 //   if(transition.getY()!=0){
+                        y=5D;
+                      //  entity.moveTo(entity.position().add(0D,y,0D));
+                  //  }
+
                     entity.fallDistance=0f;
-                    entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,0D,entity.getDeltaMovement().z));
+                    entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,y,entity.getDeltaMovement().z));
                     entity.setOnGround(true);
                 }*/
                 if(getTimeCount()>3) {
@@ -818,7 +835,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 bigger=0.125D*3D;
                 bigger=0.18D;
                 for (Entity entity : level().getEntities((Entity) null, aabb.move(0D, 0.25D, 0D).inflate(bigger, bigger, bigger), (o) -> {
-                    return (o instanceof LivingEntity);
+                    return !Utils.isUnableToMove(o);
                 })) {
                     if (!entity.isPassenger()&&!uuidList.contains(entity.getUUID())) {
                         entity.fallDistance = 0f;
@@ -854,13 +871,15 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                                 y+=0.1D;
                             }
                             newPos2 = new Vec3(x, y, z);
-                        } else {
+                        } else if(flag){
                             BlockPos transition = getTransition();
                             Vec3 offset = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
                             newPos2 = entity.position().add(offset);
                             /*if (duration > 0 && getTimeCount() == startTick + duration + 0) {
                               newPos2=newPos2.add(0,0.05D,0D);
                             }*/
+                        }else{
+                            newPos2 = entity.position();
                         }
                         /*if (duration > 0 && getTimeCount() >= startTick && getTimeCount() < startTick + duration) {
                             Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
@@ -891,15 +910,21 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                         double collisionYOffset=-1.001D;
                         if(!isLoopRotation()&&(getTimeCount()>(duration+startTick))) {
                             collisionYOffset=-1D;
-                            if(getTimeCount()==duration+startTick+1&&shouldRotate()&&getAxis()!= Direction.Axis.Y){
+                            if(getTimeCount()==duration+startTick+1/*&&shouldRotate()*/&&getAxis()!= Direction.Axis.Y){
                                 newPos2=newPos2.add(0D,0.5D,0D);
                             }
                         }
                         if(!shouldRotate()||getAxis()== Direction.Axis.Y){
                             //newPos2=newPos2.add(0D,0.005D,0D);
                             collisionYOffset=-1D;
+                            if(shouldRotate()&&getTransition().getY()==0) {
+                                if (getTimeCount() == startTick + duration) {
+                                    newPos2 = newPos2.add(0D, 0.25D, 0D);
+                                }
+                            }
                         }
-                        if(isLoopRotation()||(getTimeCount()<=(duration+startTick)+1)) {
+                        if(isLoopRotation()||(getTimeCount()<=(duration+startTick)+1)&&getTimeCount()>=startTick/*&&shouldRotate()*/) {
+
                             entity.setPos(newPos2);
                         }
 
@@ -1339,7 +1364,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public void setDiscardTime(int tick){
         entityData.set(DATA_DISCARD_TIME_ID,tick);
     }
-
+    public int getPreBlockLightLevel(){
+        return entityData.get(DATA_PRE_BLOCK_LIGHT_ID);
+    }
+    public void setPreBlockLightLevel(int i){
+        entityData.set(DATA_PRE_BLOCK_LIGHT_ID,i);
+    }
 
     @Override
     public void lerpTo(double p_297677_, double p_301293_, double p_301384_, float p_300635_, float p_299108_, int p_299659_,boolean b) {

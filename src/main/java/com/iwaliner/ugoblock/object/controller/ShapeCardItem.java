@@ -120,7 +120,6 @@ public class ShapeCardItem extends Item {
             }else{
                 level.playSound(context.getPlayer(), pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
             }
-                ModCoreUgoBlock.logger.info("ShapeCardItemUseOn, side:" + level.isClientSide());
                // level.playSound(context.getPlayer(), pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
                 return InteractionResult.SUCCESS;
             }

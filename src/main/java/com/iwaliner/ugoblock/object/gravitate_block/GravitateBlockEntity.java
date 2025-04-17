@@ -182,8 +182,7 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                                             try {
                                                 blockentity.load(compoundtag);
                                             } catch (Exception exception) {
-                                                ModCoreUgoBlock.logger.error("Failed to load block entity from gravitite block", (Throwable)exception);
-                                            }
+                                           }
 
                                             blockentity.setChanged();
                                         }

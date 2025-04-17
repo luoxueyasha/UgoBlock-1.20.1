@@ -259,7 +259,7 @@ public class ClientNonBusSetUp {
                 MultiBufferSource multiBufferSource=event.getGuiGraphics().bufferSource();
 
 
-                if(stack.is(Register.vector_card.get())){
+                if(stack.is(Register.vector_card.get())&&stack.hasTag()){
                     BlockPos startLocation= NbtUtils.readBlockPos(tag.getCompound("originPosition"));
                     ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), player, player.position().x,  player.position().y,  player.position().z, startLocation);
 

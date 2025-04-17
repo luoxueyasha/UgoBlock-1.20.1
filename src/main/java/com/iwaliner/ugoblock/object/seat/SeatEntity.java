@@ -1,9 +1,13 @@
 package com.iwaliner.ugoblock.object.seat;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -16,19 +20,20 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 
 import java.util.List;
 
 public class SeatEntity extends Entity {
     public static final EntityDataAccessor<Boolean> DATA_ROTATING_ID = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final ImmutableMap<Pose, ImmutableList<Integer>> POSE_DISMOUNT_HEIGHTS = ImmutableMap.of(Pose.STANDING, ImmutableList.of(0, 1, -1), Pose.CROUCHING, ImmutableList.of(0, 1, -1), Pose.SWIMMING, ImmutableList.of(0, 1));
 
     public SeatEntity(EntityType<?> p_270360_, Level p_270280_) {
         super(Register.SeatEntity.get(), p_270280_);
@@ -85,14 +90,14 @@ public class SeatEntity extends Entity {
         if(!level().isClientSide()&&this.getPassengers().isEmpty()){
             if(!list.isEmpty()) {
                 for (LivingEntity entity : list) {
-                    if (entity instanceof Player) {
-                    } else {
-                    if(!entity.isPassenger()) {
+                 //   if (entity instanceof Player) {
+                 //   } else {
+                    if(!entity.isPassenger()&&!entity.isSuppressingBounce()) {
                         entity.startRiding(this);
                         level().playSound((Player) null, this.blockPosition(), SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                         return;
                               }
-                    }
+                 //   }
                 }
             }
         }
@@ -193,6 +198,56 @@ public class SeatEntity extends Entity {
         if (this.isControlledByLocalInstance() && this.lerpSteps > 0) {
             this.lerpSteps = 0;
             this.absMoveTo(this.lerpX, this.lerpY, this.lerpZ, (float)this.lerpYRot, (float)this.lerpXRot);
+        }
+    }
+    public Vec3 getDismountLocationForPassenger(LivingEntity p_38145_) {
+        Direction direction = this.getMotionDirection();
+        if (direction.getAxis() == Direction.Axis.Y) {
+            return super.getDismountLocationForPassenger(p_38145_);
+        } else {
+            int[][] aint = DismountHelper.offsetsForDirection(direction);
+            BlockPos blockpos = this.blockPosition();
+            BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+            ImmutableList<Pose> immutablelist = p_38145_.getDismountPoses();
+
+            for(Pose pose : immutablelist) {
+                EntityDimensions entitydimensions = p_38145_.getDimensions(pose);
+                float f = Math.min(entitydimensions.width, 1.0F) / 2.0F;
+
+                for(int i : POSE_DISMOUNT_HEIGHTS.get(pose)) {
+                    for(int[] aint1 : aint) {
+                        blockpos$mutableblockpos.set(blockpos.getX() + aint1[0], blockpos.getY() + i, blockpos.getZ() + aint1[1]);
+                        double d0 = this.level().getBlockFloorHeight(DismountHelper.nonClimbableShape(this.level(), blockpos$mutableblockpos), () -> {
+                            return DismountHelper.nonClimbableShape(this.level(), blockpos$mutableblockpos.below());
+                        });
+                        if (DismountHelper.isBlockFloorValid(d0)) {
+                            AABB aabb = new AABB((double)(-f), 0.0D, (double)(-f), (double)f, (double)entitydimensions.height, (double)f);
+                            Vec3 vec3 = Vec3.upFromBottomCenterOf(blockpos$mutableblockpos, d0);
+                            if (DismountHelper.canDismountTo(this.level(), p_38145_, aabb.move(vec3))) {
+                                p_38145_.setPose(pose);
+                                return vec3;
+                            }
+                        }
+                    }
+                }
+            }
+
+            double d1 = this.getBoundingBox().maxY;
+            blockpos$mutableblockpos.set((double)blockpos.getX(), d1, (double)blockpos.getZ());
+
+            for(Pose pose1 : immutablelist) {
+                double d2 = (double)p_38145_.getDimensions(pose1).height;
+                int j = Mth.ceil(d1 - (double)blockpos$mutableblockpos.getY() + d2);
+                double d3 = DismountHelper.findCeilingFrom(blockpos$mutableblockpos, j, (p_289495_) -> {
+                    return this.level().getBlockState(p_289495_).getCollisionShape(this.level(), p_289495_);
+                });
+                if (d1 + d2 <= d3) {
+                    p_38145_.setPose(pose1);
+                    break;
+                }
+            }
+
+            return super.getDismountLocationForPassenger(p_38145_);
         }
     }
 }
