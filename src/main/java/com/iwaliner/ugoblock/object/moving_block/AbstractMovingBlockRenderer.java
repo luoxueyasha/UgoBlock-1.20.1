@@ -131,7 +131,10 @@ import java.util.List;
         List<BlockState> stateList = movingBlock.getStateList();
         Level level = movingBlock.level();
 
-
+        BlockState placedState=level.getBlockState(movingBlock.blockPosition());
+        if(placedState.isAir()){
+            movingBlock.setPreBlockLightLevel(i0);
+        }
        /* poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotationDegrees((float) movingBlock.getVisualXRot()));
         poseStack.mulPose(Axis.YP.rotationDegrees((float) movingBlock.getVisualYRot()));
@@ -238,13 +241,7 @@ import java.util.List;
                         }*/
 
                     poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
-                    BlockState placedState=level.getBlockState(movingBlock.blockPosition());
-                    int blockLightLevel = block.getLightEmission(eachState, level, eachPos);
-                    int skyLightLevel = this.getSkyLightLevel((T) movingBlock,eachPos);
 
-                    if(placedState.isAir()){
-                        movingBlock.setPreBlockLightLevel(i0);
-                    }
                    //this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
                     this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY);
 
@@ -300,7 +297,7 @@ import java.util.List;
                    }
                 poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
                 poseStack.translate(eachBasketOffset.getX(), eachBasketOffset.getY(), eachBasketOffset.getZ());
-                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, brightness(lightLevel,skyLightLevel,i0), OverlayTexture.NO_OVERLAY);
+                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY);
             }
             poseStack.popPose();
         }
@@ -308,7 +305,6 @@ import java.util.List;
 
         private int brightness(int blockLightLevel,int skyLightLevel, int i0){
         if(blockLightLevel==0){
-            ModCoreUgoBlock.logger.info("level:"+i0);
             return 15728640;
         }
         return Math.max(i0,LightTexture.pack(blockLightLevel,skyLightLevel));
