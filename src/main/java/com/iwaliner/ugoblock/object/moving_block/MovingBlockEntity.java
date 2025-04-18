@@ -1420,7 +1420,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                     boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
                     if(shouldRotate()) {
                         float thetaDegree = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
-                        float degreeCombined = thetaDegree /*+ getVisualRot()*/ + getStartRotation();
+                        float degreeCombined = thetaDegree + getVisualRot() + getStartRotation();
                         if(!getSeatIsInBasketList().get(passengerIndex)){
                             Vec3 vec3 =  entity.position();
                             Vec3 differ = Vec3.ZERO;

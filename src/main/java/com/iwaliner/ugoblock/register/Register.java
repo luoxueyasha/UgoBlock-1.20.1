@@ -15,6 +15,7 @@ import com.iwaliner.ugoblock.object.seat.SeatBlockItem;
 import com.iwaliner.ugoblock.object.seat.SeatEntity;
 import com.iwaliner.ugoblock.object.moving_block.CollisionEntity;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
+import com.iwaliner.ugoblock.object.seat.StandingSeatEntity;
 import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlock;
 import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverBlockEntity;
 import com.iwaliner.ugoblock.object.wireless_redstone_transmitter.PortableAlternateWirelessRedstoneTransmitterItem;
@@ -80,6 +81,7 @@ public class Register {
     public static final RegistryObject<EntityType<SeatEntity>> SeatEntity =Entities.register("seat", () -> EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.95F, 0.0625F).clientTrackingRange(16).build(new ResourceLocation(ModCoreUgoBlock.MODID,"seat").toString()));
     public static final RegistryObject<EntityType<com.iwaliner.ugoblock.object.moving_block.DoorEntity>> DoorEntity =Entities.register("door", () -> EntityType.Builder.<DoorEntity>of(DoorEntity::new, MobCategory.MISC).sized(1F, 1F).clientTrackingRange(16).build(new ResourceLocation(ModCoreUgoBlock.MODID,"door").toString()));
     public static final RegistryObject<EntityType<GravitateBlockEntity>> GravitateBlock=Entities.register("gravitate_block", () -> EntityType.Builder.<GravitateBlockEntity>of(GravitateBlockEntity::new, MobCategory.MISC).sized(1f, 1f).clientTrackingRange(16).build(new ResourceLocation(ModCoreUgoBlock.MODID,"gravitate_block").toString()));
+    public static final RegistryObject<EntityType<StandingSeatEntity>> StandingSeatEntity =Entities.register("standing_seat", () -> EntityType.Builder.<StandingSeatEntity>of(StandingSeatEntity::new, MobCategory.MISC).sized(0.95F, 0.0625F).clientTrackingRange(16).build(new ResourceLocation(ModCoreUgoBlock.MODID,"standing_seat").toString()));
 
 
 

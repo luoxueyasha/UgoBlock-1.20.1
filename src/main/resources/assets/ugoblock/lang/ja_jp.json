@@ -92,5 +92,6 @@
    "info.ugoblock.frequency_colors": "設定されている周波数：[%s, %s, %s]",
    "info.ugoblock.reset_setting_text": "なお、単体クラフトで設定をリセットできます。",
    "info.ugoblock.obtain_card_display_text1": "設置して",
-   "info.ugoblock.obtain_card_display_text2": "入手"
+   "info.ugoblock.obtain_card_display_text2": "入手",
+   "entity.ugoblock.standing_seat": "動いている最中のブロック"
 }

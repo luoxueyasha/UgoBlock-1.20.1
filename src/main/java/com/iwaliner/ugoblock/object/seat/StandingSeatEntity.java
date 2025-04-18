@@ -2,9 +2,6 @@ package com.iwaliner.ugoblock.object.seat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.iwaliner.ugoblock.ModCoreUgoBlock;
-import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
@@ -25,19 +22,20 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
+import org.joml.Vector3f;
 
 import java.util.List;
 
-public class SeatEntity extends Entity {
-    public static final EntityDataAccessor<Boolean> DATA_ROTATING_ID = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.BOOLEAN);
+public class StandingSeatEntity extends Entity {
+    public static final EntityDataAccessor<Boolean> DATA_ROTATING_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.BOOLEAN);
     private static final ImmutableMap<Pose, ImmutableList<Integer>> POSE_DISMOUNT_HEIGHTS = ImmutableMap.of(Pose.STANDING, ImmutableList.of(0, 1, -1), Pose.CROUCHING, ImmutableList.of(0, 1, -1), Pose.SWIMMING, ImmutableList.of(0, 1));
+    public static final EntityDataAccessor<Vector3f> DATA_OFFSET_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.VECTOR3);
 
-    public SeatEntity(EntityType<?> p_270360_, Level p_270280_) {
-        super(Register.SeatEntity.get(), p_270280_);
+    public StandingSeatEntity(EntityType<?> p_270360_, Level p_270280_) {
+        super(Register.StandingSeatEntity.get(), p_270280_);
     }
     private int lerpSteps;
     private double lerpX;
@@ -45,8 +43,9 @@ public class SeatEntity extends Entity {
     private double lerpZ;
     private double lerpYRot;
     private double lerpXRot;
-    public SeatEntity(Level level,BlockPos pos,boolean flag) {
-        super(Register.SeatEntity.get(), level);
+
+    public StandingSeatEntity(Level level, BlockPos pos, boolean flag) {
+        super(Register.StandingSeatEntity.get(), level);
         this.setPos(pos.getX()+0.5D, pos.getY(), pos.getZ()+0.5D);
         this.noPhysics = false;
         this.noCulling = false;
@@ -56,6 +55,7 @@ public class SeatEntity extends Entity {
     @Override
     protected void defineSynchedData() {
         this.entityData.define(DATA_ROTATING_ID,false);
+        this.entityData.define(DATA_OFFSET_ID,new Vector3f());
     }
     @Override
     public  Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -66,10 +66,22 @@ public class SeatEntity extends Entity {
         if (tag.contains("rotatable")) {
             this.entityData.set(DATA_ROTATING_ID,tag.getBoolean("rotatable"));
         }
+        if (tag.contains("offsetX")&&tag.contains("offsetY")&&tag.contains("offsetZ")) {
+            this.entityData.set(DATA_OFFSET_ID,new Vector3f(tag.getFloat("offsetX"),tag.getFloat("offsetY"),tag.getFloat("offsetZ")));
+        }
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putBoolean("rotatable",entityData.get(DATA_ROTATING_ID));
+        tag.putFloat("offsetX",entityData.get(DATA_OFFSET_ID).x);
+        tag.putFloat("offsetY",entityData.get(DATA_OFFSET_ID).y);
+        tag.putFloat("offsetZ",entityData.get(DATA_OFFSET_ID).z);
+    }
+    public Vector3f getOffset(){
+        return entityData.get(DATA_OFFSET_ID);
+    }
+    public void setOffset(float x,float y,float z){
+        entityData.set(DATA_OFFSET_ID,new Vector3f(x,y,z));
     }
     public boolean isRotating(){
         return entityData.get(DATA_ROTATING_ID);
@@ -251,33 +263,28 @@ public class SeatEntity extends Entity {
             return super.getDismountLocationForPassenger(p_38145_);
         }
     }
-   /* @Override
+    @Override
     protected void positionRider(Entity entity, MoveFunction moveFunction) {
       //  super.positionRider(entity, moveFunction);
         int passengerIndex = this.getPassengers().indexOf(entity);
         if(passengerIndex>=0) {
-                        Vec3 vec3=entity.position();
-                        double vx=0D;
-                        double vy=0D;
-                        double vz=0D;
-                        double i=0.25D;
-                        if(entity instanceof Player player){
-                           // ModCoreUgoBlock.logger.info("xOld:"+player.xOld);
-                            if(player.getDeltaMovement().x!=0D) {
-                                vx += player.getDeltaMovement().x * 10D;
-                            }
-                            if(player.getDeltaMovement().z!=0D){
-                                vz+=player.getDeltaMovement().z*10D;
-                            }
-                           *//* if(player.getDeltaMovement().z>0D){
-                                ++vz;
-                            }else if(player.getDeltaMovement().z<0D){
-                                --vz;
-                            }*//*
-                        }
-                        moveFunction.accept(entity, vec3.x+vx,vec3.y,vec3.z+vz);
-                    }
+            Vec3 vec3=this.position();
+            double vx=getOffset().x;
+            double vy=getOffset().y;
+            double vz=getOffset().z;
+            if(entity.getDeltaMovement().x!=0D) {
+                vx += entity.getDeltaMovement().x * 10D;
+            }
+            if(entity.getDeltaMovement().z!=0D){
+                vz+=entity.getDeltaMovement().z*10D;
+            }
+            moveFunction.accept(entity, vec3.x+vx,vec3.y+1D,vec3.z+vz);
+            setOffset((float) vx, (float) vy, (float) vz);
+        }
     }
-*/
 
+    @Override
+    public boolean shouldRiderSit() {
+        return false;
+    }
 }

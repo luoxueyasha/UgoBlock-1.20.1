@@ -39,6 +39,7 @@ public class ClientSetUp {
         event.registerEntityRenderer(Register.SeatEntity.get(), InvisibleEntityRenderer::new);
         event.registerEntityRenderer(Register.GravitateBlock.get(), FallingBlockRenderer::new);
         event.registerEntityRenderer(Register.DoorEntity.get(), InvisibleEntityRenderer::new);
+        event.registerEntityRenderer(Register.StandingSeatEntity.get(), InvisibleEntityRenderer::new);
       //  event.registerEntityRenderer(Register.ControllableEntity.get(), ControllableEntityRenderer::new);
     }
 

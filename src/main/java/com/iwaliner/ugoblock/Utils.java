@@ -8,6 +8,7 @@ import com.iwaliner.ugoblock.object.moving_block.DoorEntity;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.object.seat.SeatBlock;
 import com.iwaliner.ugoblock.object.seat.SeatEntity;
+import com.iwaliner.ugoblock.object.seat.StandingSeatEntity;
 import com.iwaliner.ugoblock.register.Register;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -48,8 +49,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Utils {
     public static int getMaxSize(){
@@ -324,12 +324,26 @@ public class Utils {
             List<BlockPos> fullPosList=new ArrayList<>();
             int basketPosAmount=0;
             int seatPosAmount=0;
+            Map<BlockPos, Entity> containedEntity = new HashMap<>();
+            List<UUID> entityUUIDList=new ArrayList<>();
             Direction controllerDirection=controllerState.getValue(BlockStateProperties.FACING);
             for(int i=0; i<posList.size();i++) {
-
                 BlockPos eachPos = positionList.get(i);
                 BlockState eachState = level.getBlockState(eachPos);
                 BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
+                List<Entity> entityList = level.getEntitiesOfClass(Entity.class, new AABB(eachPos).inflate(0.1D));
+                CompoundTag posNBT = NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ()));
+                for(Entity entity : entityList){
+                    if(!entityUUIDList.contains(entity.getUUID())&&!isUnableToMove(entity)&& !eachState.getCollisionShape(level,eachPos).isEmpty()&&!isDisableForStandingSeat(eachState)) {
+                        containedEntity.put(eachPos, entity);
+                        seatPosList.add(posList.get(i));
+                        seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), false);
+                        seatPosTag.put("location_" + String.valueOf(seatPosAmount), posNBT);
+                        seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(BlockPos.ZERO));
+                        ++seatPosAmount;
+                        entityUUIDList.add(entity.getUUID());
+                    }
+                }
                 if (eachBlockEntity != null && i != positionList.indexOf(controllerPos) && !(eachBlockEntity instanceof PistonMovingBlockEntity)) {
                     if (eachBlockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && VectorCardItem.isSelectionFinished(slideControllerBlockEntity2.getItem(1))) {
 
@@ -357,6 +371,18 @@ public class Utils {
                             BlockPos eachBasketComponentPos = basketPosList.get(j - basketPosAmount);
                             BlockState eachBasketComponentState = level.getBlockState(eachBasketComponentPos);
                             BlockEntity eachBasketComponentBlockEntity = level.getBlockEntity(eachBasketComponentPos);
+                            List<Entity> entityList2 = level.getEntitiesOfClass(Entity.class, new AABB(eachBasketComponentPos).inflate(0.1D));
+                             for(Entity entity : entityList2){
+                                if(!entityUUIDList.contains(entity.getUUID())&&!isUnableToMove(entity)&& !eachBasketComponentState.getCollisionShape(level,eachBasketComponentPos).isEmpty()&&!isDisableForStandingSeat(eachBasketComponentState)) {
+                                    containedEntity.put(eachBasketComponentPos, entity);
+                                    seatPosList.add(posList.get(i));
+                                    seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), true);
+                                    seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(basketOriginPos.getX() - startPos.getX(), basketOriginPos.getY() - startPos.getY(), basketOriginPos.getZ() - startPos.getZ())));
+                                    seatPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
+                                    ++seatPosAmount;
+                                    entityUUIDList.add(entity.getUUID());
+                                }
+                            }
                                 if (eachBasketComponentBlockEntity != null) {
                                     if (eachBasketComponentBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
                                         eachBasketComponentState = pistonMovingBlockEntity.getMovedState();
@@ -540,8 +566,7 @@ public class Utils {
                 }
 
                 eachState = eachState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachPos).isEmpty() ? eachState : Blocks.AIR.defaultBlockState();
-                CompoundTag posNBT = NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ()));
-                if (eachState.getBlock() instanceof SeatBlock || eachState.getBlock() instanceof DoorBlock || eachState.getBlock() instanceof FenceGateBlock) {
+                 if (eachState.getBlock() instanceof SeatBlock || eachState.getBlock() instanceof DoorBlock || eachState.getBlock() instanceof FenceGateBlock) {
                     seatPosList.add(posList.get(i));
                     seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), false);
                     seatPosTag.put("location_" + String.valueOf(seatPosAmount), posNBT);
@@ -557,6 +582,7 @@ public class Utils {
                 stateList.add(eachState);
                 fullPosList.add(posList.get(i));
             }
+
             /*entityTag.put("positionList",posTag);
             entityTag.put("stateList",stateTag);
             entityTag.put("blockEntityList",blockEntityTag);*/
@@ -614,6 +640,20 @@ public class Utils {
                     }
 
                 }
+                for(Map.Entry<BlockPos, Entity> entry : containedEntity.entrySet()){
+                    BlockPos entityPos=entry.getKey();
+                    Entity entity=entry.getValue();
+                    if(!entity.isPassenger()){
+                        StandingSeatEntity standingSeatEntity=new StandingSeatEntity(level,entityPos,true);
+                        if(!level.isClientSide()){
+                            level.addFreshEntity(standingSeatEntity);
+                        }
+                        entity.startRiding(standingSeatEntity);
+                        standingSeatEntity.startRiding(moveableBlock);
+                    }
+
+                }
+
                 if (axis != null) {
                     controllerBlockEntity.setVisualDegree(degree);
                 }
@@ -681,6 +721,13 @@ public class Utils {
     }
     public static boolean isUnableToMove(Entity entity){
         if(entity instanceof CollisionEntity||entity instanceof MovingBlockEntity){
+            return true;
+        }
+        return false;
+    }
+    public static boolean isDisableForStandingSeat(BlockState state){
+        Block block=state.getBlock();
+        if(block instanceof DoorBlock||block instanceof FenceGateBlock||block instanceof SeatBlock){
             return true;
         }
         return false;
