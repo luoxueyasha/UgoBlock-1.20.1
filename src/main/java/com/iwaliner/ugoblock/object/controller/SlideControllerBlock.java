@@ -89,7 +89,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
             }
         }
 
-        player.displayClientMessage(Component.translatable("info.ugoblock.slide_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
+        player.displayClientMessage(Component.translatable("info.ugoblock.controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
         return InteractionResult.PASS;
     }
 

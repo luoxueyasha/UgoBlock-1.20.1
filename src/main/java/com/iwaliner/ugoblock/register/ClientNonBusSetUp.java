@@ -88,12 +88,15 @@ public class ClientNonBusSetUp {
         if (event.getStage() == stage&&event.getCamera().getEntity() instanceof Player player) {
             PoseStack poseStack = event.getPoseStack();
             MultiBufferSource multiBufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-            ItemStack stack = player.getMainHandItem();
+            ItemStack mainStack = player.getMainHandItem();
+            ItemStack offStack = player.getOffhandItem();
             Vec3 vec3=event.getCamera().getPosition();
             player.kill();
 
-            CompoundTag tag = stack.getTag();
-            if (stack.is(Register.vector_card.get())) {
+
+            if (mainStack.is(Register.vector_card.get())||offStack.is(Register.vector_card.get())) {
+                ItemStack stack=mainStack.is(Register.vector_card.get())? mainStack : offStack;
+                CompoundTag tag=stack.getTag();
                 if(tag!=null) {
                     if(tag.contains("originPosition")) {
                         BlockPos startLocation = NbtUtils.readBlockPos(tag.getCompound("originPosition"));
@@ -203,7 +206,9 @@ public class ClientNonBusSetUp {
                     }
                 }
 
-            }else if (stack.getItem() == Register.shape_card.get()) {
+            }else if (mainStack.getItem() == Register.shape_card.get()||offStack.getItem() == Register.shape_card.get()) {
+                ItemStack stack=mainStack.is(Register.shape_card.get())? mainStack : offStack;
+                CompoundTag tag=stack.getTag();
                 HitResult hitResult = Minecraft.getInstance().hitResult;
                 if (hitResult instanceof BlockHitResult) {
                     BlockPos hitPos = ((BlockHitResult) Objects.requireNonNull(hitResult)).getBlockPos();

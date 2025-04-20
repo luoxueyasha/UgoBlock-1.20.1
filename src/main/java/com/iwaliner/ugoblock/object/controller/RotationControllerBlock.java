@@ -88,7 +88,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
             }
         }
         if(state.getValue(MOVING)){
-            player.displayClientMessage(Component.translatable("info.ugoblock.moving_rotation_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
+            player.displayClientMessage(Component.translatable("info.ugoblock.controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
         }else{
             player.displayClientMessage(Component.translatable("info.ugoblock.idle_rotation_controller_denyed_opening_gui").withStyle(ChatFormatting.YELLOW), true);
         }
@@ -710,6 +710,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
                                 }
                             }
                         }
+                        movingBlock.getPassengers().forEach(Entity::discard);
                         movingBlock.discard();
                     }
                     break;

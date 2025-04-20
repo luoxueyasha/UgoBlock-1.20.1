@@ -4,9 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ugoblock.refmap.json",
   "mixins": [
-    "BlockDisplayMixin",
     "DisplayMixin",
-    "EntityMixin",
     "FallingBlockMixin",
     "PistonMovingBlockEntityMixin"
   ],

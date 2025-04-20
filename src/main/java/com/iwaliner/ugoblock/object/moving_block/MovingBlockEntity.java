@@ -3,12 +3,10 @@ package com.iwaliner.ugoblock.object.moving_block;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
-import com.iwaliner.ugoblock.mixin.BlockDisplayMixin;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
 import com.iwaliner.ugoblock.object.seat.SeatBlock;
 import com.iwaliner.ugoblock.object.seat.SeatEntity;
 import com.iwaliner.ugoblock.register.Register;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -21,8 +19,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -39,10 +35,7 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Math;
-import org.joml.Quaternionf;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -147,21 +140,21 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
-        this.noPhysics = false;
+        this.noPhysics = true;
         this.noCulling = true;
-        this.blocksBuilding=false;
+        this.blocksBuilding=true;
+
     }
+
 
     public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag posNBT, CompoundTag stateNBT, CompoundTag blockentityNBT, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState,BlockPos endPos) {
         super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
-        this.entityData.set(BlockDisplayMixin.getData(),state);
+      //  this.entityData.set(BlockDisplayMixin.getData(),state);
         this.entityData.set(DATA_START_LOCATION_ID,startPos);
         this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
         this.entityData.set(DisplayMixin.getDataDuration(),duration);
         this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
-        this.noPhysics = false;
-        this.noCulling = true;
         //this.noCulling = false;
         this.entityData.set(DATA_TIME_COUNT_ID,0);
         if(axis==null){
@@ -182,9 +175,14 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.set(DATA_STATE_TAG_ID,stateNBT);
         this.entityData.set(DATA_BLOCKENTITY_TAG_ID,blockentityNBT);
         this.blocksBuilding=false;
+        this.noPhysics = true;
+        this.noCulling = true;
     }
 
-
+    @Override
+    public InteractionResult interact(Player p_19978_, InteractionHand p_19979_) {
+        return InteractionResult.PASS;
+    }
 
     @Override
     protected void defineSynchedData() {
@@ -210,11 +208,11 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
         super.onSyncedDataUpdated(p_277476_);
-        if (p_277476_.equals(BlockDisplayMixin.getData())) {
+      //  if (p_277476_.equals(BlockDisplayMixin.getData())) {
             this.updateRenderState = true;
             this.setBoundingBox(this.makeBoundingBox());
 
-        }
+     //   }
     }
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
@@ -297,11 +295,52 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.putInt("teleport_duration",entityData.get(DATA_POS_ROT_INTERPOLATION_DURATION_ID));
         tag.putInt("blockLightLevel",entityData.get(DATA_PRE_BLOCK_LIGHT_ID));
     }
-
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
     }
-
+    @Override
+    protected @NotNull AABB makeBoundingBox() {
+        super.makeBoundingBox();
+        if(getTimeCount()-getStartTick()<5) {
+            if (minX == 0 && minY == 0 && minZ == 0 && maxX == 0 && maxY == 0 && maxZ == 0) {
+                makeBoundingBoxFirst();
+            }
+            AABB aabb = new AABB(position().x - 0.5D + minX, position().y - 0.5D + minY, position().z - 0.5D + minZ, position().x - 0.5D + maxX + 1D, position().y - 0.5D + maxY + 1D, position().z - 0.5D + maxZ + 1D);
+            return aabb;
+        }else{
+            return new AABB(getActualPos().x-0.5D,getActualPos().y-0.5D,getActualPos().z-0.5D,getActualPos().x+0.5D,getActualPos().y+0.5D,getActualPos().z+0.5D);
+        }
+    }
+    private  void makeBoundingBoxFirst() {
+        for(BlockPos eachPos : getPosList()){
+            if(minX>eachPos.getX()){
+                minX=eachPos.getX();
+            }
+            if(maxX<eachPos.getX()){
+                maxX=eachPos.getX();
+            }
+            if(minY>eachPos.getY()){
+                minY=eachPos.getY();
+            }
+            if(maxY<eachPos.getY()){
+                maxY=eachPos.getY();
+            }
+            if(minZ>eachPos.getZ()){
+                minZ=eachPos.getZ();
+            }
+            if(maxZ<eachPos.getZ()){
+                maxZ=eachPos.getZ();
+            }
+        }
+    }
+    @Override
+    public @NotNull AABB getBoundingBoxForCulling() {
+        if (minX == 0 && minY == 0 && minZ == 0 && maxX == 0 && maxY == 0 && maxZ == 0) {
+            makeBoundingBoxFirst();
+        }
+        AABB aabb = new AABB(position().x - 0.5D + minX, position().y - 0.5D + minY, position().z - 0.5D + minZ, position().x - 0.5D + maxX + 1D, position().y - 0.5D + maxY + 1D, position().z - 0.5D + maxZ + 1D);
+return aabb.inflate(1.1F);
+    }
     @Override
     public boolean canCollideWith(Entity entity) {
         return !isLoopRotation();
@@ -313,12 +352,24 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         return false;
     }
 
-
     public boolean isPickable() {
-        return !isLoopRotation();
+        return false;
     }
+
+    @Override
+    public boolean shouldRender(double p_20296_, double p_20297_, double p_20298_) {
+        ModCoreUgoBlock.logger.info("shouldRender in Entity");
+        return true;
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double p_270991_) {
+        return true;
+    }
+
     @Override
     public void tick() {
+        setBoundingBox(makeBoundingBox());
         this.tickLerp();
         makeCollisionEntity();
         for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos())/*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0d, 0.1d, 0d)*/, (o) -> {
@@ -326,19 +377,33 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         })) {
             MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
             if(movingBlock!=this) {
-                for(int i=0;i<this.posList.size();i++){
-                    BlockPos eachPos=posList.get(i).offset(this.getStartLocation());
-                    if(movingBlock.posList.contains(eachPos.offset(-movingBlock.getStartLocation().getX(),-movingBlock.getStartLocation().getY(),-movingBlock.getStartLocation().getZ()))){
-                        movingBlock.discard();
-                    }
-                }
+                boolean flag=false;
                 for(int i=0;i<movingBlock.posList.size();i++){
                     BlockPos eachPos=movingBlock.posList.get(i).offset(movingBlock.getStartLocation());
+
                     if(this.posList.contains(eachPos.offset(-this.getStartLocation().getX(),-this.getStartLocation().getY(),-this.getStartLocation().getZ()))){
-                        movingBlock.discard();
+                       flag=true;
+                       break;
                     }
                 }
+                if(flag) {
+                    for (int i = 0; i < movingBlock.posList.size(); i++) {
+                        BlockPos eachPos = movingBlock.posList.get(i).offset(movingBlock.getStartLocation());
 
+                        if (!this.posList.contains(eachPos.offset(-this.getStartLocation().getX(), -this.getStartLocation().getY(), -this.getStartLocation().getZ()))) {
+                            BlockState movingState = movingBlock.getStateList().get(i);
+                            LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel) level())).withParameter(LootContextParams.ORIGIN, movingBlock.getActualPos()).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withOptionalParameter(LootContextParams.THIS_ENTITY, movingBlock);
+                            for (ItemStack itemStack : movingState.getDrops(lootparams$builder)) {
+                                ItemEntity itemEntity = new ItemEntity(level(), movingBlock.getActualPos().x, movingBlock.getActualPos().y, movingBlock.getActualPos().z, itemStack);
+                                if (!level().isClientSide) {
+                                    level().addFreshEntity(itemEntity);
+                                }
+                            }
+                        }
+                    }
+                    movingBlock.getPassengers().forEach(Entity::discard);
+                    movingBlock.discard();
+                }
             }
         }
         super.tick();
@@ -417,6 +482,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         }
         //makeCollisionEntity();
         addTimeCount(1);
+        /*for(int i=0;i<getPassengers().size();i++){
+            Entity entity=getPassengers().get(i);
+            if(entity instanceof StandingSeatEntity standingSeatEntity){
+                standingSeatEntity.addCoolTime(1);
+            }
+        }*/
     }
 
     private void makeBlock(){ /**移動し終わってブロック化する*/
@@ -825,7 +896,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             if(floorMakeFlag){
                 double s = 0.2D;
                 AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x +0.5D, eachVec3.y +0.5D, eachVec3.z +0.5D);
-                AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x + s, eachVec3.y + s, eachVec3.z + s);
+                //AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x + s, eachVec3.y + s, eachVec3.z + s);
                /* for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
                     return (o instanceof SeatEntity);
                 })) {
@@ -834,7 +905,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
                 double bigger=0.125D;
                 bigger=0.125D*3D;
                 bigger=0.18D;
-                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D, 0.25D, 0D).inflate(bigger, bigger, bigger), (o) -> {
+
+                AABB aabb2=aabb.move(0D, 0.25D, 0D).inflate(bigger, bigger, bigger);
+                for (Entity entity : level().getEntities((Entity) null, aabb2, (o) -> {
                     return !Utils.isUnableToMove(o);
                 })) {
                     if (!entity.isPassenger()&&!uuidList.contains(entity.getUUID())) {
@@ -979,12 +1052,12 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         setPos(blockPos.getCenter());
     }
 
-    public BlockState getState(){
-        return entityData.get(BlockDisplayMixin.getData());
-    }
-    public void setState(BlockState state){
-         entityData.set(BlockDisplayMixin.getData(),state);
-    }
+//    public BlockState getState(){
+//        return entityData.get(BlockDisplayMixin.getData());
+//    }
+//    public void setState(BlockState state){
+//         entityData.set(BlockDisplayMixin.getData(),state);
+//    }
     public int getStartTick(){
         return entityData.get(DisplayMixin.getDataStartTick());
     }
@@ -1395,7 +1468,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if(!isLoopRotation()) {
             if (getTimeCount() == getDuration() + 1) {
                 rotateAndMakeBlock(transitionDegree);
-            } else if (getTimeCount() == getDuration() + 2) {
+            //} else if (getTimeCount() == getDuration() + 2) {
                 discardAfterRotate( transitionDegree);
             }
         }
@@ -1507,114 +1580,10 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     @Override
     public boolean mayInteract(Level p_146843_, BlockPos p_146844_) {
-        //setState(1, Blocks.DIAMOND_ORE.defaultBlockState());
-
-        return false;
+       return false;
     }
 
-   /* @Override
-    public InteractionResult interact(Player p_19978_, InteractionHand p_19979_) {
-        setState(1, Blocks.DIAMOND_ORE.defaultBlockState());
-        return InteractionResult.SUCCESS;
-    }*/
-    /* @Override
-    public boolean mayInteract(Level level, BlockPos pos) {
-        int duration=getDuration();
-        if(duration>0) {
-            int startTick = getStartTick();
-            boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
-            float thetaDegreeF = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
-            float degreeCombinedF = thetaDegreeF + getVisualRot() + getStartRotation();
-            List<Vec3> rotatedVec3BasketList = Utils.rotateVec3BasketPosList(getBasketPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF, getBasketOriginPosList());
-            List<Vec3> rotatedVec3List = Utils.rotateVec3PosList(getPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF);
-            //rotatedVec3List.addAll(rotatedVec3BasketList);
-            List<BlockState> blockStateList = getStateList();
-            //blockStateList.addAll(getBasketStateList());
-            *//*for(int i=0;i<rotatedVec3ListFloat.size();i++) {
-                Vec3 eachVec3 = rotatedVec3ListFloat.get(i);
-                double s = 0.4D;
-                AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x +s, eachVec3.y +s, eachVec3.z +s);
-                for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof SeatEntity);
-                })) {
-                    entity.moveTo(eachVec3);
-                }
-            }*//*
-            *//*for(int i=0;i<getPosList().size();i++) {
-                Vec3 eachVec3= getPosList().get(i).getCenter();
-                //s=0d;
-                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
-                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof LivingEntity);
-                })) {
-                    if(!entity.isPassenger()) {
-                        CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x + 0.5D, eachVec3.y - 0.5D, eachVec3.z + 0.5D, Blocks.AIR.defaultBlockState(), new CompoundTag());
-                        level().addFreshEntity(collisionEntity);
 
-                        if (entity.getY() != eachVec3.y + 0.55D) {
-                            //    entity.setPos(entity.getX(), eachVec3.y + 0.55D, entity.getZ());
-                        }
-
-                        entity.fallDistance = 0f;
-
-                        //Vec3 aimedPos=eachVec3.add(0D,0.5D,0D);
-                        //Vec3 currentEntityPos=entity.position();
-                        //Vec3 differ=aimedPos.add(-currentEntityPos.x,-currentEntityPos.y,-currentEntityPos.z);
-                        // Vec3 speeds=new Vec3();
-                        // entity.setDeltaMovement(differ);
-                        float dd=getDegreeAngle();
-                        Vec3 speeds=Utils.getSpeedsRotation(eachVec3,Vec3.ZERO,dd,duration,getAxis());
-                        entity.setDeltaMovement(speeds);
-                        entity.setOnGround(true);
-                    }
-                }
-
-            }*//*
-            for (int i = 0; i < rotatedVec3List.size(); i++) {
-                Vec3 eachVec3 = rotatedVec3List.get(i);
-                BlockState eachState = blockStateList.get(i);
-                double s = 0.2D;
-                BlockPos eachPos = new BlockPos(Mth.floor(eachVec3.x), Mth.floor(eachVec3.y), Mth.floor(eachVec3.z));
-                if (eachPos == pos) {
-                    setState(i, Blocks.DIAMOND_ORE.defaultBlockState());
-                    return true;
-                }
-              *//*  //s=0d;
-                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
-           *//**//* AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x +s, eachVec3.y +s, eachVec3.z +s);
-                for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof SeatEntity);
-                })) {
-                    entity.moveTo(eachVec3);
-                }*//**//*
-                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof LivingEntity);
-                })) {
-                    if(!entity.isPassenger()) {
-                        CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x + 0.5D, eachVec3.y - 0.5D, eachVec3.z + 0.5D, Blocks.AIR.defaultBlockState(), new CompoundTag());
-                        level().addFreshEntity(collisionEntity);
-
-                        if (entity.getY() != eachVec3.y + 0.55D) {
-                            entity.setPos(entity.getX(), eachVec3.y + 0.55D, entity.getZ());
-                        }
-
-                        entity.fallDistance = 0f;
-
-                        //Vec3 aimedPos=eachVec3.add(0D,0.5D,0D);
-                        //Vec3 currentEntityPos=entity.position();
-                        //Vec3 differ=aimedPos.add(-currentEntityPos.x,-currentEntityPos.y,-currentEntityPos.z);
-                        // Vec3 speeds=new Vec3();
-                        // entity.setDeltaMovement(differ);
-                        entity.setOnGround(true);
-                    }
-                }
-
-            }
-*//*
-            }
-        }
-            return false;
-    }*/
 
     public  enum AxisType {
         NONE((byte) 0, Direction.Axis.Y),

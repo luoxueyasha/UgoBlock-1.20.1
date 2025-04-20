@@ -34,6 +34,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -652,6 +653,7 @@ public class Utils {
                         standingSeatEntity.startRiding(moveableBlock);
                     }
 
+
                 }
 
                 if (axis != null) {
@@ -720,7 +722,7 @@ public class Utils {
         guiGraphics.pose().popPose();
     }
     public static boolean isUnableToMove(Entity entity){
-        if(entity instanceof CollisionEntity||entity instanceof MovingBlockEntity){
+        if(entity instanceof CollisionEntity||entity instanceof MovingBlockEntity||entity instanceof SeatEntity||entity instanceof StandingSeatEntity){
             return true;
         }
         return false;

@@ -10,8 +10,10 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.*;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -41,7 +43,7 @@ import java.util.List;
 
 
 /*@OnlyIn(Dist.CLIENT)*/
-    public class AbstractMovingBlockRenderer<T extends Display, S> extends EntityRenderer<T> {
+    public class AbstractMovingBlockRenderer<T extends MovingBlockEntity, S> extends EntityRenderer<T> {
    /* private final ModelPart lid;
     private final ModelPart bottom;
     private final ModelPart lock;
@@ -75,10 +77,7 @@ import java.util.List;
       return   TextureAtlas.LOCATION_BLOCKS;
     }
 
-    @Nullable
-        protected Display.BlockDisplay.BlockRenderState getSubState(MovingBlockEntity p_277721_) {
-            return p_277721_.blockRenderState();
-        }
+
 
     private static <T extends Display> float entityYRot(T p_297849_, float p_297686_) {
         return Mth.rotLerp(p_297686_, p_297849_.yRotO, p_297849_.getYRot());
@@ -101,11 +100,16 @@ import java.util.List;
     }
 
 
+    @Override
+    public boolean shouldRender(MovingBlockEntity entity, Frustum frustum, double camX, double camY, double camZ) {
+        ModCoreUgoBlock.logger.info("shouldRender in Render");
+        return true;
+    }
     public void render(T movingBlock, float f1, float f2, PoseStack poseStack, MultiBufferSource bufferSource, int i0) {
         Display.RenderState display$renderstate = movingBlock.renderState();
         if (display$renderstate != null) {
-            MovingBlockEntity.BlockRenderState s = this.getSubState((MovingBlockEntity) movingBlock);
-            if (s != null) {
+          //  MovingBlockEntity.BlockRenderState s = this.getSubState((MovingBlockEntity) movingBlock);
+          //  if (s != null) {
                 float f = movingBlock.calculateInterpolationProgress(f2);
                 this.shadowRadius = display$renderstate.shadowRadius().get(f);
                 this.shadowStrength = display$renderstate.shadowStrength().get(f);
@@ -119,7 +123,7 @@ import java.util.List;
                 poseStack.last().normal().rotate(transformation.getLeftRotation()).rotate(transformation.getRightRotation());
                 this.renderInner( (MovingBlockEntity)movingBlock, poseStack, bufferSource,rotatedQuaternionf,i0);
                 poseStack.popPose();
-            }
+          //  }
         }
     }
     protected int getBlockLightLevel(T p_174216_, BlockPos p_174217_) {
@@ -130,6 +134,8 @@ import java.util.List;
         List<BlockPos> posList = movingBlock.getPosList();
         List<BlockState> stateList = movingBlock.getStateList();
         Level level = movingBlock.level();
+        RenderType renderType=null;
+        //ModCoreUgoBlock.logger.info("render");
 
         BlockState placedState=level.getBlockState(movingBlock.blockPosition());
         if(placedState.isAir()){
@@ -243,7 +249,7 @@ import java.util.List;
                     poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
 
                    //this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource, brightness(lightLevel), OverlayTexture.NO_OVERLAY);
-                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY);
+                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.ModelData.EMPTY, renderType);
 
                    /* poseStack.translate(0.4999D, 0.4999D, 0.4999D);
                     if (movingBlock.getAxis() == Direction.Axis.X) {
@@ -297,7 +303,7 @@ import java.util.List;
                    }
                 poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
                 poseStack.translate(eachBasketOffset.getX(), eachBasketOffset.getY(), eachBasketOffset.getZ());
-                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY);
+                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, movingBlock.getPreBlockLightLevel() /*brightness(blockLightLevel,skyLightLevel,i0)*/, OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.ModelData.EMPTY, renderType);
             }
             poseStack.popPose();
         }

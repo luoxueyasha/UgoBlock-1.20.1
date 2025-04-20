@@ -20,13 +20,4 @@ public interface DisplayMixin {
     public static EntityDataAccessor<Integer> getDataStartTick() {
         throw new AssertionError();
     }
-
-    @Accessor("DATA_LEFT_ROTATION_ID")
-    public static EntityDataAccessor<Quaternionf> getDataLeftRotation() {
-        throw new AssertionError();
-    }
-    @Accessor("DATA_RIGHT_ROTATION_ID")
-    public static EntityDataAccessor<Quaternionf> getDataRightRotation() {
-        throw new AssertionError();
-    }
 }

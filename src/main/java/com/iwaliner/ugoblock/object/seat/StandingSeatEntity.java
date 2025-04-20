@@ -2,11 +2,15 @@ package com.iwaliner.ugoblock.object.seat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockEntity;
 import com.iwaliner.ugoblock.register.Register;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -22,6 +26,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
@@ -33,6 +38,7 @@ public class StandingSeatEntity extends Entity {
     public static final EntityDataAccessor<Boolean> DATA_ROTATING_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.BOOLEAN);
     private static final ImmutableMap<Pose, ImmutableList<Integer>> POSE_DISMOUNT_HEIGHTS = ImmutableMap.of(Pose.STANDING, ImmutableList.of(0, 1, -1), Pose.CROUCHING, ImmutableList.of(0, 1, -1), Pose.SWIMMING, ImmutableList.of(0, 1));
     public static final EntityDataAccessor<Vector3f> DATA_OFFSET_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.VECTOR3);
+   // public static final EntityDataAccessor<Integer> DATA_COOL_TIME_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.INT);
 
     public StandingSeatEntity(EntityType<?> p_270360_, Level p_270280_) {
         super(Register.StandingSeatEntity.get(), p_270280_);
@@ -51,11 +57,13 @@ public class StandingSeatEntity extends Entity {
         this.noCulling = false;
         this.blocksBuilding=false;
         this.entityData.set(DATA_ROTATING_ID,flag);
+  //      this.entityData.set(DATA_COOL_TIME_ID,20);
     }
     @Override
     protected void defineSynchedData() {
         this.entityData.define(DATA_ROTATING_ID,false);
         this.entityData.define(DATA_OFFSET_ID,new Vector3f());
+   //     this.entityData.define(DATA_COOL_TIME_ID,0);
     }
     @Override
     public  Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -69,6 +77,9 @@ public class StandingSeatEntity extends Entity {
         if (tag.contains("offsetX")&&tag.contains("offsetY")&&tag.contains("offsetZ")) {
             this.entityData.set(DATA_OFFSET_ID,new Vector3f(tag.getFloat("offsetX"),tag.getFloat("offsetY"),tag.getFloat("offsetZ")));
         }
+//        if (tag.contains("coolTime")) {
+//            this.entityData.set(DATA_COOL_TIME_ID,tag.getInt("coolTime"));
+//        }
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -76,7 +87,17 @@ public class StandingSeatEntity extends Entity {
         tag.putFloat("offsetX",entityData.get(DATA_OFFSET_ID).x);
         tag.putFloat("offsetY",entityData.get(DATA_OFFSET_ID).y);
         tag.putFloat("offsetZ",entityData.get(DATA_OFFSET_ID).z);
+    //    tag.putInt("coolTime",entityData.get(DATA_COOL_TIME_ID));
     }
+//    public void setCoolTime(int i){
+//        entityData.set(DATA_COOL_TIME_ID,i);
+//    }
+//    public void addCoolTime(int i){
+//        entityData.set(DATA_COOL_TIME_ID,getCoolTime()+i);
+//    }
+//    public int getCoolTime(){
+//        return entityData.get(DATA_COOL_TIME_ID);
+//    }
     public Vector3f getOffset(){
         return entityData.get(DATA_OFFSET_ID);
     }
@@ -94,6 +115,9 @@ public class StandingSeatEntity extends Entity {
     public void tick() {
         super.tick();
         this.tickLerp();
+        if(!this.isPassenger()){
+            discard();
+        }
         if (level().isClientSide) {
             return;
         }
@@ -103,14 +127,14 @@ public class StandingSeatEntity extends Entity {
         if(!level().isClientSide()&&this.getPassengers().isEmpty()){
             if(!list.isEmpty()) {
                 for (LivingEntity entity : list) {
-                 //   if (entity instanceof Player) {
-                 //   } else {
+                    if (entity instanceof Player) {
+                    } else {
                     if(!entity.isPassenger()&&!entity.isSuppressingBounce()) {
                         entity.startRiding(this);
                         level().playSound((Player) null, this.blockPosition(), SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                         return;
                               }
-                 //   }
+                    }
                 }
             }
         }
@@ -120,6 +144,11 @@ public class StandingSeatEntity extends Entity {
         }
         this.discard();
         }
+//        if(getCoolTime()>0){
+//            addCoolTime(-1);
+//        }else{
+//            discard();
+//        }
     }
     @Override
     protected void addPassenger(Entity passenger) {
@@ -214,6 +243,11 @@ public class StandingSeatEntity extends Entity {
         }
     }
     public Vec3 getDismountLocationForPassenger(LivingEntity p_38145_) {
+//        Vec3 vec3=this.position();
+//        double vx=getOffset().x;
+//        double vy=getOffset().y;
+//        double vz=getOffset().z;
+//        return vec3.add(new Vec3(getOffset()));
         Direction direction = this.getMotionDirection();
         if (direction.getAxis() == Direction.Axis.Y) {
             return super.getDismountLocationForPassenger(p_38145_);
@@ -267,19 +301,58 @@ public class StandingSeatEntity extends Entity {
     protected void positionRider(Entity entity, MoveFunction moveFunction) {
       //  super.positionRider(entity, moveFunction);
         int passengerIndex = this.getPassengers().indexOf(entity);
-        if(passengerIndex>=0) {
+        if(passengerIndex>=0&&entity instanceof Player) {
             Vec3 vec3=this.position();
             double vx=getOffset().x;
             double vy=getOffset().y;
             double vz=getOffset().z;
-            if(entity.getDeltaMovement().x!=0D) {
-                vx += entity.getDeltaMovement().x * 10D;
+            double vx0=getOffset().x;
+            double vy0=getOffset().y;
+            double vz0=getOffset().z;
+            if(this.isPassenger()&&this.getVehicle() instanceof MovingBlockEntity movingBlock) {
+                boolean flag= movingBlock.getTimeCount() >= movingBlock.getStartTick() && movingBlock.getTimeCount() < movingBlock.getStartTick() + movingBlock.getDuration();
+                float thetaDegreeF= (flag||movingBlock.isLoopRotation())? (movingBlock.getTimeCount()-movingBlock.getStartTick())*movingBlock.getDegreeAngle()/(float)movingBlock.getDuration() : movingBlock.getDegreeAngle();
+                float degreeCombinedF=thetaDegreeF+movingBlock.getVisualRot()+movingBlock.getStartRotation();
+                if(!movingBlock.shouldRotate()){
+                    degreeCombinedF=0f;
+                }
+                List<Vec3> rotatedVec3BasketList= Utils.rotateVec3BasketPosList(movingBlock.getBasketPosList(),BlockPos.ZERO,movingBlock.getActualBlockPos(),movingBlock.getAxis(),degreeCombinedF,movingBlock.getBasketOriginPosList());
+                List<Vec3> rotatedVec3List=Utils.rotateVec3PosList(movingBlock.getPosList(),BlockPos.ZERO,movingBlock.getActualBlockPos(),movingBlock.getAxis(),degreeCombinedF);
+                rotatedVec3List.addAll(rotatedVec3BasketList);
+                List<BlockState> blockStateList=movingBlock.getStateList();
+                blockStateList.addAll(movingBlock.getBasketStateList());
+                boolean movableFlag=false;
+                if (entity.getDeltaMovement().x != 0D) {
+                    vx += entity.getDeltaMovement().x * 10D;
+                }
+                if (entity.getDeltaMovement().z != 0D) {
+                    vz += entity.getDeltaMovement().z * 10D;
+                }
+                Vec3 entityVec3=vec3.add(vx,vy,vz);
+                for(int i=0;i<rotatedVec3List.size();i++) {
+                    Vec3 eachVec3=rotatedVec3List.get(i);
+                    BlockState eachState=blockStateList.get(i);
+                    float f1= 0.75F;
+                    if(Mth.abs((float) eachVec3.y-(float) entityVec3.y)<f1){
+                        if(Mth.abs((float) eachVec3.x-(float) entityVec3.x)<f1){
+                            if(Mth.abs((float) eachVec3.z-(float) entityVec3.z)<f1){
+                                movableFlag=true;
+                            }
+                        }
+                    }
+                }
+
+                if(movableFlag) {
+                    moveFunction.accept(entity, vec3.x + vx, vec3.y + vy, vec3.z + vz);
+                    setOffset((float) vx, (float) 1D, (float) vz);
+                }else{
+
+                    moveFunction.accept(entity, vec3.x + vx0, vec3.y + vy0, vec3.z + vz0);
+                }
+
             }
-            if(entity.getDeltaMovement().z!=0D){
-                vz+=entity.getDeltaMovement().z*10D;
-            }
-            moveFunction.accept(entity, vec3.x+vx,vec3.y+1D,vec3.z+vz);
-            setOffset((float) vx, (float) vy, (float) vz);
+        }else{
+            super.positionRider(entity,moveFunction);
         }
     }
 
