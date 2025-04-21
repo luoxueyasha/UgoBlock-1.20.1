@@ -1,11 +1,9 @@
 package com.iwaliner.ugoblock.object.moving_block;
-
-
-import com.iwaliner.ugoblock.ModCoreUgoBlock;
 import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.mixin.DisplayMixin;
 import com.iwaliner.ugoblock.object.seat.SeatBlock;
 import com.iwaliner.ugoblock.object.seat.SeatEntity;
+import com.iwaliner.ugoblock.object.seat.StandingSeatEntity;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -118,45 +116,39 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     /**basketPosListの各位置におけるブロックエンティティのデータ*/
     private List<CompoundTag> basketBlockEntityDataList =new ArrayList<>();
 
-    /**このbasketを作成しているバスケット作成機は大元のposListだとどの番号に相当するか*/
-    private List<Integer> basketIndexList =new ArrayList<>();
 
-    /**座席の初期位置の相対座標*/
+    /**座席など、乗車しているEntityの初期位置の相対座標*/
     private List<BlockPos> seatPosList=new ArrayList<>();
 
-    /**座席の回転中心の相対座標*/
+    /**座席など、乗車しているEntityの回転中心の相対座標*/
     private List<BlockPos> seatOriginPosList=new ArrayList<>();
 
-    /**座席がゴンドラ内かどうか*/
+    /**座席など、乗車しているEntityがゴンドラ内かどうか*/
     private List<Boolean> seatIsInBasketList=new ArrayList<>();
+
+    /**座席など、乗車しているEntityのUUID*/
+    private List<UUID> seatUuidList=new ArrayList<>();
+
     int minX=0;
     int minY=0;
     int minZ=0;
     int maxX=0;
     int maxY=0;
     int maxZ=0;
-
-
-
     public MovingBlockEntity(EntityType<?> p_271022_, Level p_270442_) {
         super(Register.MoveableBlock.get(), p_270442_);
         this.noPhysics = true;
         this.noCulling = true;
         this.blocksBuilding=true;
-
     }
-
-
     public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag posNBT, CompoundTag stateNBT, CompoundTag blockentityNBT, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState,BlockPos endPos) {
         super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX()+0.5D,startPos.getY()+0.5D,startPos.getZ()+0.5D);
-      //  this.entityData.set(BlockDisplayMixin.getData(),state);
         this.entityData.set(DATA_START_LOCATION_ID,startPos);
         this.entityData.set(DisplayMixin.getDataStartTick(),startTick);
         this.entityData.set(DisplayMixin.getDataDuration(),duration);
         this.entityData.set(DATA_COMPOUND_TAG_ID,tag);
-        //this.noCulling = false;
-        this.entityData.set(DATA_TIME_COUNT_ID,0);
+         this.entityData.set(DATA_TIME_COUNT_ID,0);
         if(axis==null){
             this.entityData.set(DATA_TRANSITION_POSITION_ID,endPos);
             this.entityData.set(DATA_AXIS_ID,AxisType.NONE.getID());
@@ -178,12 +170,10 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.noPhysics = true;
         this.noCulling = true;
     }
-
     @Override
     public InteractionResult interact(Player p_19978_, InteractionHand p_19979_) {
         return InteractionResult.PASS;
     }
-
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -205,14 +195,10 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_BLOCKENTITY_TAG_ID,new CompoundTag());
         this.entityData.define(DATA_PRE_BLOCK_LIGHT_ID,0);
       }
-
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
         super.onSyncedDataUpdated(p_277476_);
-      //  if (p_277476_.equals(BlockDisplayMixin.getData())) {
             this.updateRenderState = true;
             this.setBoundingBox(this.makeBoundingBox());
-
-     //   }
     }
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
@@ -334,45 +320,24 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         }
     }
     @Override
-    public @NotNull AABB getBoundingBoxForCulling() {
-        if (minX == 0 && minY == 0 && minZ == 0 && maxX == 0 && maxY == 0 && maxZ == 0) {
-            makeBoundingBoxFirst();
-        }
-        AABB aabb = new AABB(position().x - 0.5D + minX, position().y - 0.5D + minY, position().z - 0.5D + minZ, position().x - 0.5D + maxX + 1D, position().y - 0.5D + maxY + 1D, position().z - 0.5D + maxZ + 1D);
-return aabb.inflate(1.1F);
-    }
-    @Override
     public boolean canCollideWith(Entity entity) {
         return !isLoopRotation();
     }
-
-
     /**trueにすると、当たり判定内に入ったときにはじき出される*/
     public boolean canBeCollidedWith() {
         return false;
     }
-
     public boolean isPickable() {
         return false;
     }
-
-    @Override
-    public boolean shouldRender(double p_20296_, double p_20297_, double p_20298_) {
-        ModCoreUgoBlock.logger.info("shouldRender in Entity");
-        return true;
-    }
-
-    @Override
-    public boolean shouldRenderAtSqrDistance(double p_270991_) {
-        return true;
-    }
-
     @Override
     public void tick() {
-        setBoundingBox(makeBoundingBox());
+        if(getTimeCount()-getStartTick()<=5) {
+            setBoundingBox(makeBoundingBox());
+        }
         this.tickLerp();
         makeCollisionEntity();
-        for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos())/*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0d, 0.1d, 0d)*/, (o) -> {
+        for (Entity entity : level().getEntities((Entity) null, new AABB(getActualBlockPos()), (o) -> {
             return (o instanceof MovingBlockEntity);
         })) {
             MovingBlockEntity movingBlock = (MovingBlockEntity) entity;
@@ -401,8 +366,7 @@ return aabb.inflate(1.1F);
                             }
                         }
                     }
-                    movingBlock.getPassengers().forEach(Entity::discard);
-                    movingBlock.discard();
+                     movingBlock.discardWithPassenger();
                 }
             }
         }
@@ -422,88 +386,35 @@ return aabb.inflate(1.1F);
                 }
             }
         }
-        //setBoundingBox(makeBoundingBox());
         BlockPos transition= getTransition();
         int duration=getDuration();
         int startTick=getStartTick();
         if(getDiscardTime()>1){
             setDiscardTime(getDiscardTime()-1);
         }else if(getDiscardTime()==1){
-            getPassengers().forEach(Entity::discard);
-            discard();
+            discardWithPassenger();
         }else if(getDiscardTime()==-1){
             rotateAndMakeBlock(0);
-            getPassengers().forEach(Entity::discard);
-            discard();
+            discardWithPassenger();
         }
         if(!shouldRotate()) {
             if (duration > 0 && getTimeCount() >= startTick && getTimeCount() < startTick + duration) {
                 Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
                setActualPos(pos);
-
-                /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling()*//*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0.1d, 1d, 0.1d), (o) -> {
-                    return !(o instanceof MovingBlockEntity);
-                })) {
-
-                        entity.fallDistance=0f;
-                        Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
-                        entity.setDeltaMovement(speed);
-                        entity.setOnGround(true);
-                  *//* if(getTimeCount() == startTick + duration-2){
-                        double y=2D;
-                        entity.setPos(entity.position().add(0D,y,0D));
-                         }*//*
-                }*/
-
             } else if (duration > 0 && getTimeCount() == startTick + duration) {
-               /*for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling()*//*.move(0.5D, 0.5D, 0.5D)*//*.inflate(0.1d, 1d, 0.1d), (o) -> {
-                    return !(o instanceof MovingBlockEntity);
-                })) {
-                    double y=0D;
-                 //   if(transition.getY()!=0){
-                        y=5D;
-                      //  entity.moveTo(entity.position().add(0D,y,0D));
-                  //  }
-
-                    entity.fallDistance=0f;
-                    entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,y,entity.getDeltaMovement().z));
-                    entity.setOnGround(true);
-                }*/
                 if(getTimeCount()>3) {
                     makeBlock();
                 }
             } else if (duration > 0 && getTimeCount() >= startTick + duration + 1) {
-                getPassengers().forEach(Entity::discard);
-                discard();
+                discardWithPassenger();
             }
         }else{
             rotate();
-            //makeCollisionEntity();
         }
-        //makeCollisionEntity();
-        addTimeCount(1);
-        /*for(int i=0;i<getPassengers().size();i++){
-            Entity entity=getPassengers().get(i);
-            if(entity instanceof StandingSeatEntity standingSeatEntity){
-                standingSeatEntity.addCoolTime(1);
-            }
-        }*/
+       addTimeCount(1);
     }
-
     private void makeBlock(){ /**移動し終わってブロック化する*/
         if(!level().isClientSide) {
-           /* List<Entity> seatPassengerList=new ArrayList<>();
-            for(int i=0;i<getPassengers().size();i++){
-                Entity entity=getPassengers().get(i);
-                Entity passenger=null;
-                if(entity instanceof SeatEntity){
-                    if(entity.getFirstPassenger()!=null) {
-                        passenger = entity.getFirstPassenger();
-                    }
-                    seatPassengerList.add(passenger);
-                }
-               // seatPassengerList.add(passenger);
-            }*/
             BlockPos originPos = new BlockPos(getStartLocation().getX() + getTransition().getX(), getStartLocation().getY() + getTransition().getY(), getStartLocation().getZ() + getTransition().getZ());
             for (int i=0;i<getPosList().size();i++) {
                 BlockPos pos=originPos.offset(getPosList().get(i).getX(),getPosList().get(i).getY(),getPosList().get(i).getZ());
@@ -570,7 +481,7 @@ return aabb.inflate(1.1F);
                         }
                         level().setBlock(pos, movingState,82);
                     }
-                    discard();
+                    discardWithPassenger();
                 }
             }
             for (int i=0;i<getPosList().size();i++) {
@@ -797,10 +708,8 @@ return aabb.inflate(1.1F);
     private void discardAfterRotate( int degree) { /**回転し終わってブロック化する*/
         if (!level().isClientSide) {
             int degree2= degree+getVisualRot()+getStartRotation();
-
             if ( degree2 % 90 == 0) {
-                getPassengers().forEach(Entity::discard);
-                discard();
+                discardWithPassenger();
             }
         }
     }
@@ -824,7 +733,6 @@ return aabb.inflate(1.1F);
         boolean flag= getTimeCount() >= startTick && getTimeCount() < startTick + duration;
         float thetaDegreeF= (flag||isLoopRotation())? (getTimeCount()-startTick)*getDegreeAngle()/(float)duration : getDegreeAngle();
         float degreeCombinedF=thetaDegreeF+getVisualRot()+getStartRotation();
-
         if(!shouldRotate()){
             degreeCombinedF=0f;
         }
@@ -835,48 +743,6 @@ return aabb.inflate(1.1F);
         rotatedVec3List.addAll(rotatedVec3BasketList);
         List<BlockState> blockStateList=getStateList();
         blockStateList.addAll(getBasketStateList());
-        //posList2.addAll(getBasketPosList());
-            /*for(int i=0;i<rotatedVec3ListFloat.size();i++) {
-                Vec3 eachVec3 = rotatedVec3ListFloat.get(i);
-                double s = 0.4D;
-                AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x +s, eachVec3.y +s, eachVec3.z +s);
-                for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof SeatEntity);
-                })) {
-                    entity.moveTo(eachVec3);
-                }
-            }*/
-            /*for(int i=0;i<getPosList().size();i++) {
-                Vec3 eachVec3= getPosList().get(i).getCenter();
-                //s=0d;
-                AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x - 0.5D+ 1D, eachVec3.y - 0.5D + 1D, eachVec3.z - 0.5D  + 1D);
-                for (Entity entity : level().getEntities((Entity) null, aabb.move(0D,1D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof LivingEntity);
-                })) {
-                    if(!entity.isPassenger()) {
-                      //  CollisionEntity collisionEntity = new CollisionEntity(level(), eachVec3.x + 0.5D, eachVec3.y - 0.5D, eachVec3.z + 0.5D, Blocks.AIR.defaultBlockState(), new CompoundTag());
-                       // level().addFreshEntity(collisionEntity);
-
-                        if (entity.getY() != eachVec3.y + 0.55D) {
-                            //    entity.setPos(entity.getX(), eachVec3.y + 0.55D, entity.getZ());
-                        }
-
-                        entity.fallDistance = 0f;
-
-                        Vec3 aimedPos=eachVec3.add(0D,0.5D,0D);
-                        Vec3 currentEntityPos=entity.position();
-                        Vec3 differ=aimedPos.add(-currentEntityPos.x,-currentEntityPos.y,-currentEntityPos.z);
-                         //Vec3 speeds=new Vec3();
-                         entity.setDeltaMovement(differ);
-                        float dd=getDegreeAngle();
-                        Vec3 speeds=Utils.getSpeedsRotation(eachVec3,Vec3.ZERO,dd,duration,getAxis());
-                        //entity.setDeltaMovement(speeds);
-                        entity.setOnGround(true);
-
-                    }
-                }
-
-            }*/
             List< UUID> uuidList=new ArrayList<>();
            for(int i=0;i<rotatedVec3List.size();i++) {
             Vec3 eachVec3=rotatedVec3List.get(i);
@@ -896,15 +762,7 @@ return aabb.inflate(1.1F);
             if(floorMakeFlag){
                 double s = 0.2D;
                 AABB aabb = new AABB(eachVec3.x - 0.5D, eachVec3.y - 0.5D, eachVec3.z - 0.5D, eachVec3.x +0.5D, eachVec3.y +0.5D, eachVec3.z +0.5D);
-                //AABB aabb2 = new AABB(eachVec3.x - s, eachVec3.y - s, eachVec3.z - s, eachVec3.x + s, eachVec3.y + s, eachVec3.z + s);
-               /* for (Entity entity : level().getEntities((Entity) null, aabb2.move(0D,0D,0D).inflate(0d, 0d, 0d), (o) -> {
-                    return (o instanceof SeatEntity);
-                })) {
-                    entity.moveTo(eachVec3);
-                }*/
-                double bigger=0.125D;
-                bigger=0.125D*3D;
-                bigger=0.18D;
+                double bigger=0.18D;
 
                 AABB aabb2=aabb.move(0D, 0.25D, 0D).inflate(bigger, bigger, bigger);
                 for (Entity entity : level().getEntities((Entity) null, aabb2, (o) -> {
@@ -923,23 +781,16 @@ return aabb.inflate(1.1F);
                             Vec3 newPos = vec31.add(differ);
                             double entityPosX = entity.getX();
                             double entityPosZ = entity.getZ();
-                            double entitySpeedX = entity.getDeltaMovement().x;
-                            double entitySpeedZ = entity.getDeltaMovement().z;
-                            double d = 0.000125D;
-                            double x = newPos.x;
+                             double x = newPos.x;
                             double y = newPos.y;
                             double z = newPos.z;
                             Vec3 vec32 = entity.getDeltaMovement();
                             double d9 = vec32.horizontalDistanceSqr();
                             double d11 = this.getDeltaMovement().horizontalDistanceSqr();
                             if (d9 > 1.0E-4D && d11 < 0.01D) {
-                                //if (Mth.abs((float) entitySpeedX) > d) {
-                                x = entityPosX;
-                                //}
-                                //if (Mth.abs((float) entitySpeedZ) > d) {
-                                z = entityPosZ;
-                                // }
-                            }
+                               x = entityPosX;
+                               z = entityPosZ;
+                                }
                             if(getTimeCount()-getStartTick()<1){
                                 y+=0.1D;
                             }
@@ -948,47 +799,17 @@ return aabb.inflate(1.1F);
                             BlockPos transition = getTransition();
                             Vec3 offset = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
                             newPos2 = entity.position().add(offset);
-                            /*if (duration > 0 && getTimeCount() == startTick + duration + 0) {
-                              newPos2=newPos2.add(0,0.05D,0D);
-                            }*/
-                        }else{
+                          }else{
                             newPos2 = entity.position();
                         }
-                        /*if (duration > 0 && getTimeCount() >= startTick && getTimeCount() < startTick + duration) {
-                            Vec3 pos = new Vec3( getActualPos().x+(double) transition.getX() / (double) duration,  getActualPos().y+(double) transition.getY() / (double) duration, getActualPos().z+(double) transition.getZ() / (double) duration);
-                            setActualPos(pos);
-
-                            for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
-                                return !(o instanceof MovingBlockEntity);
-                            })) {
-
-                                entity.fallDistance=0f;
-                                Vec3 speed = new Vec3((double) transition.getX() / (double) duration, (double) transition.getY() / (double) duration, (double) transition.getZ() / (double) duration);
-                                entity.setDeltaMovement(speed);
-                                entity.setOnGround(true);
-                            }
-
-                        } else if (duration > 0 && getTimeCount() == startTick + duration + 0) {
-                            for (Entity entity : level().getEntities((Entity) null, getBoundingBoxForCulling().move(0.5D, 0.5D, 0.5D).inflate(0d, 0.1d, 0d), (o) -> {
-                                return !(o instanceof MovingBlockEntity);
-                            })) {
-                                entity.fallDistance=0f;
-                                entity.setDeltaMovement(new Vec3(entity.getDeltaMovement().x,0D,entity.getDeltaMovement().z));
-                                entity.setOnGround(true);
-                            }
-                            if(getTimeCount()>3) {
-                                makeBlock();
-                            }
-                        }*/
                         double collisionYOffset=-1.001D;
                         if(!isLoopRotation()&&(getTimeCount()>(duration+startTick))) {
                             collisionYOffset=-1D;
-                            if(getTimeCount()==duration+startTick+1/*&&shouldRotate()*/&&getAxis()!= Direction.Axis.Y){
+                            if(getTimeCount()==duration+startTick+1&&getAxis()!= Direction.Axis.Y){
                                 newPos2=newPos2.add(0D,0.5D,0D);
                             }
                         }
                         if(!shouldRotate()||getAxis()== Direction.Axis.Y){
-                            //newPos2=newPos2.add(0D,0.005D,0D);
                             collisionYOffset=-1D;
                             if(shouldRotate()&&getTransition().getY()==0) {
                                 if (getTimeCount() == startTick + duration) {
@@ -996,13 +817,11 @@ return aabb.inflate(1.1F);
                                 }
                             }
                         }
-                        if(isLoopRotation()||(getTimeCount()<=(duration+startTick)+1)&&getTimeCount()>=startTick/*&&shouldRotate()*/) {
-
+                        if(isLoopRotation()||(getTimeCount()<=(duration+startTick)+1)&&getTimeCount()>=startTick) {
                             entity.setPos(newPos2);
                         }
-
                         entity.setOnGround(true);
-                        CollisionEntity collisionEntity = new CollisionEntity(level(), newPos2.x + 0D, newPos2.y +collisionYOffset, newPos2.z + 0D, Blocks.AIR.defaultBlockState(), new CompoundTag());
+                        CollisionEntity collisionEntity = new CollisionEntity(level(), newPos2.x + 0D, newPos2.y +collisionYOffset, newPos2.z + 0D);
                         if(!level().isClientSide()) {
                             level().addFreshEntity(collisionEntity);
                         }
@@ -1048,16 +867,6 @@ return aabb.inflate(1.1F);
     public BlockPos getActualBlockPos(){
         return new BlockPos(Mth.floor(getActualPos().x),Mth.floor(getActualPos().y),Mth.floor(getActualPos().z));
     }
-    public void setActualBlockPos(BlockPos blockPos){
-        setPos(blockPos.getCenter());
-    }
-
-//    public BlockState getState(){
-//        return entityData.get(BlockDisplayMixin.getData());
-//    }
-//    public void setState(BlockState state){
-//         entityData.set(BlockDisplayMixin.getData(),state);
-//    }
     public int getStartTick(){
         return entityData.get(DisplayMixin.getDataStartTick());
     }
@@ -1087,9 +896,6 @@ return aabb.inflate(1.1F);
     public AxisType getAxisType(){
        return AxisType.getType(entityData.get(DATA_AXIS_ID));
     }
-    private void setAxisType(AxisType type){
-        entityData.set(DATA_AXIS_ID,type.getID());
-    }
     public Direction.Axis getAxis(){
        return getAxisType().axis;
     }
@@ -1099,12 +905,9 @@ return aabb.inflate(1.1F);
     public void setStartRotation(int degree){
         entityData.set(DATA_STAT_ROTATION_ID,degree);
     }
-
-
     private void setPosRotInterpolationDuration(int p_300107_) {
         this.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, p_300107_);
     }
-
     private int getPosRotInterpolationDuration() {
         return this.entityData.get(DATA_POS_ROT_INTERPOLATION_DURATION_ID);
     }
@@ -1129,7 +932,6 @@ return aabb.inflate(1.1F);
     public void setLoopRotation(boolean isLoop){
         entityData.set(DATA_IS_LOOP_ROTATION_ID,isLoop);
     }
-
     private List<BlockPos> getPosListFirst(){
         CompoundTag posTag=entityData.get(DATA_POSITION_TAG_ID);
         List<BlockPos> posList=new ArrayList<>();
@@ -1146,16 +948,13 @@ return aabb.inflate(1.1F);
             posList=getPosListFirst();
         }
             return posList;
-
     }
     public List<BlockState> getStateList() {
         if(stateList==null||stateList.isEmpty()){
             stateList=getStateListFirst();
         }
         return stateList;
-
     }
-
     private List<BlockState> getStateListFirst(){
         CompoundTag stateTag=entityData.get(DATA_STATE_TAG_ID);
         List<BlockState> stateList=new ArrayList<>();
@@ -1177,15 +976,12 @@ return aabb.inflate(1.1F);
             setStateList();
         }
     }
-
     public List<CompoundTag> getBlockEntityDataList() {
         if(blockEntityDataList ==null|| blockEntityDataList.isEmpty()){
             blockEntityDataList =getBlockEntityDataListFirst();
         }
         return blockEntityDataList;
-
     }
-
     private List<CompoundTag> getBlockEntityDataListFirst(){
         CompoundTag blockEntityTag=entityData.get(DATA_BLOCKENTITY_TAG_ID);
         List<CompoundTag> blockEntityList=new ArrayList<>();
@@ -1195,31 +991,6 @@ return aabb.inflate(1.1F);
             }
         }
         return blockEntityList;
-    }
-    private List<Integer> getBasketIndexListFirst(){
-        CompoundTag entityTag=getCompoundTag();
-        if(!entityTag.contains("basketData")){
-            entityTag.put("basketData",new CompoundTag());
-        }
-        CompoundTag basketTag=entityTag.getCompound("basketData");
-        if(!basketTag.contains("indexList")){
-            basketTag.put("indexList",new CompoundTag());
-        }
-        CompoundTag indexTag=basketTag.getCompound("indexList");
-        List<Integer> indexList=new ArrayList<>();
-        for(int i=0; i< indexTag.size();i++){
-            if (indexTag.contains("index_" + String.valueOf(i))) {
-                indexList.add(indexTag.getInt("index_" + String.valueOf(i)));
-            }
-        }
-        return indexList;
-    }
-
-    public List<Integer> getBasketIndexList() {
-        if(basketIndexList==null||basketIndexList.isEmpty()){
-            basketIndexList=getBasketIndexListFirst();
-        }
-        return basketIndexList;
     }
     private List<BlockPos> getBasketPosListFirst(){
         CompoundTag entityTag=getCompoundTag();
@@ -1276,9 +1047,7 @@ return aabb.inflate(1.1F);
             basketStateList=getBasketStateListFirst();
         }
         return basketStateList;
-
     }
-
     private List<BlockState> getBasketStateListFirst(){
         CompoundTag entityTag=getCompoundTag();
         if(!entityTag.contains("basketData")){
@@ -1290,7 +1059,7 @@ return aabb.inflate(1.1F);
         }
         CompoundTag stateTag=basketTag.getCompound("stateList");
         List<BlockState> stateList=new ArrayList<>();
-        for(int i=0; i<getBasketIndexList().size();i++){
+        for(int i=0; i<stateTag.size();i++){
             if (stateTag.contains("state_" + String.valueOf(i))) {
                 stateList.add(NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK),stateTag.getCompound("state_" + String.valueOf(i))));
             }
@@ -1317,9 +1086,7 @@ return aabb.inflate(1.1F);
             basketBlockEntityDataList =getBasketBlockEntityDataListFirst();
         }
         return basketBlockEntityDataList;
-
     }
-
     private List<CompoundTag> getBasketBlockEntityDataListFirst(){
         CompoundTag entityTag=getCompoundTag();
         if(!entityTag.contains("basketData")){
@@ -1331,7 +1098,7 @@ return aabb.inflate(1.1F);
         }
         CompoundTag blockEntityTag=basketTag.getCompound("blockEntityList");
         List<CompoundTag> blockEntityList=new ArrayList<>();
-        for(int i=0; i<getBasketIndexList().size();i++){
+        for(int i=0; i<blockEntityTag.size();i++){
             if (blockEntityTag.contains("blockEntity_" + String.valueOf(i))) {
                 blockEntityList.add(blockEntityTag.getCompound("blockEntity_" + String.valueOf(i)));
             }
@@ -1356,7 +1123,6 @@ return aabb.inflate(1.1F);
         }
         return posList;
     }
-
     public List<BlockPos> getSeatPosList() {
         if(seatPosList==null||seatPosList.isEmpty()){
             seatPosList=getSeatPosListFirst();
@@ -1381,7 +1147,6 @@ return aabb.inflate(1.1F);
         }
         return posList;
     }
-
     public List<BlockPos> getSeatOriginPosList() {
         if(seatOriginPosList==null||seatOriginPosList.isEmpty()){
             seatOriginPosList=getSeatOriginPosListFirst();
@@ -1406,12 +1171,35 @@ return aabb.inflate(1.1F);
         }
         return list;
     }
-
     public List<Boolean> getSeatIsInBasketList() {
         if(seatIsInBasketList==null||seatIsInBasketList.isEmpty()){
             seatIsInBasketList=getSeatIsInBasketListFirst();
         }
         return seatIsInBasketList;
+    }
+    private List<UUID> getSeatUuidListFirst(){
+        CompoundTag entityTag=getCompoundTag();
+        if(!entityTag.contains("seatData")){
+            entityTag.put("seatData",new CompoundTag());
+        }
+        CompoundTag uuidTag=entityTag.getCompound("seatData");
+        if(!uuidTag.contains("uuidList")){
+            uuidTag.put("uuidList",new CompoundTag());
+        }
+        CompoundTag tag=uuidTag.getCompound("uuidList");
+        List<UUID> list=new ArrayList<>();
+        for(int i=0; i< tag.size();i++){
+            if (tag.contains("uuid_" + String.valueOf(i))) {
+                list.add(tag.getUUID("uuid_" + String.valueOf(i)));
+            }
+        }
+        return list;
+    }
+    public List<UUID> getSeatUuidList() {
+        if(seatUuidList==null||seatUuidList.isEmpty()){
+            seatUuidList=getSeatUuidListFirst();
+        }
+        return seatUuidList;
     }
     public int getVisualXRot(){
         return getAxis()== Direction.Axis.X? entityData.get(DATA_VISUAL_ROTATION_ID) : 0;
@@ -1443,7 +1231,6 @@ return aabb.inflate(1.1F);
     public void setPreBlockLightLevel(int i){
         entityData.set(DATA_PRE_BLOCK_LIGHT_ID,i);
     }
-
     @Override
     public void lerpTo(double p_297677_, double p_301293_, double p_301384_, float p_300635_, float p_299108_, int p_299659_,boolean b) {
         int i = this.getPosRotInterpolationDuration();
@@ -1455,8 +1242,18 @@ return aabb.inflate(1.1F);
         this.lerpSteps = 10;
         this.posRotInterpolationTarget = new MovingBlockEntity.PosRotInterpolationTarget(i, p_297677_, p_301293_, p_301384_, (double)p_300635_, (double)p_299108_);
     }
-
-
+    public void discardWithPassenger(){
+        for(Entity entity : getPassengers()){
+            if(Utils.isUnableToMove(entity)){
+                entity.discard();
+            }
+        }
+        discard();
+    }
+    @Override
+    public double getPassengersRidingOffset() {
+        return  0d;
+    }
     private  void rotate(){
         setInvisible(false);
         int transitionDegree=getDegreeAngle();
@@ -1468,55 +1265,51 @@ return aabb.inflate(1.1F);
         if(!isLoopRotation()) {
             if (getTimeCount() == getDuration() + 1) {
                 rotateAndMakeBlock(transitionDegree);
-            //} else if (getTimeCount() == getDuration() + 2) {
                 discardAfterRotate( transitionDegree);
             }
         }
     }
-
-    @Override
-    public double getPassengersRidingOffset() {
-        return super.getPassengersRidingOffset();
-    }
-
     @Override
     protected void positionRider(Entity entity, MoveFunction moveFunction) {
         super.positionRider(entity, moveFunction);
         int passengerIndex = this.getPassengers().indexOf(entity);
         if(passengerIndex>=0) {
             if(!getSeatPosList().isEmpty()&&!getSeatOriginPosList().isEmpty()) {
-                if (getSeatPosList().size() > passengerIndex&&getSeatOriginPosList().size()>passengerIndex) {
-                    BlockPos seatOldPos = getSeatPosList().get(passengerIndex);
-                    BlockPos seatOriginPos = getSeatOriginPosList().get(passengerIndex);
+                int index=-1;
+                for (int i=0;i<getSeatUuidList().size();i++){
+                    if(entity.getUUID().equals(getSeatUuidList().get(i))){
+                        index=i;
+                        break;
+                    }
+                }
+                Vec3 moveVec3=null;
+                if(index!=-1){
+                    BlockPos seatOldPos = getSeatPosList().get(index);
+                    BlockPos seatOriginPos = getSeatOriginPosList().get(index);
                     int startTick = getStartTick();
                     int duration = getDuration();
                     boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
                     if(shouldRotate()) {
                         float thetaDegree = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
                         float degreeCombined = thetaDegree + getVisualRot() + getStartRotation();
-                        if(!getSeatIsInBasketList().get(passengerIndex)){
-                            Vec3 vec3 =  entity.position();
-                            Vec3 differ = Vec3.ZERO;
-                            Vec3 vec31=vec3;
-                            if(isLoopRotation()||(getTimeCount()<(duration+startTick))) {
-                                vec31 = Utils.getRotatedEntityPosition(vec3, getActualPos(), getDegreeAngle(), duration, getAxis());
-                            }
-                            Vec3 newPos = vec31.add(differ);
-                            //moveFunction.accept(entity, newPos.x, newPos.y - 0.5D, newPos.z);
-                           // moveFunction.accept(entity, position().x, position().y+8D, position().z);
+                        if(!getSeatIsInBasketList().get(index)){
                             Vec3 rotatedVec3 = Utils.rotateVec3SeatPos(seatOldPos, BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombined, BlockPos.ZERO,false);
-                            moveFunction.accept(entity, rotatedVec3.x, rotatedVec3.y - 0.5D, rotatedVec3.z);
-
+                            moveVec3=new Vec3(rotatedVec3.x, rotatedVec3.y - 0.5D, rotatedVec3.z);
                         }else {
                             Vec3 rotatedVec3 = Utils.rotateVec3SeatPos(seatOldPos, BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombined, seatOriginPos,true);
-                            moveFunction.accept(entity, rotatedVec3.x, rotatedVec3.y - 0.5D, rotatedVec3.z);
-
+                            moveVec3=new Vec3(rotatedVec3.x, rotatedVec3.y - 0.5D, rotatedVec3.z);
                         }
                     }else{
                         Vec3 vec3=seatOldPos.getCenter().add(this.getActualPos());
-                        moveFunction.accept(entity, vec3.x-0.5D, vec3.y-1D, vec3.z-0.5D);
+                        moveVec3=new Vec3(vec3.x-0.5D, vec3.y-1D, vec3.z-0.5D);
                     }
-               }
+                }
+                if(moveVec3!=null){
+                    if(!(entity instanceof SeatEntity)&&!(entity instanceof StandingSeatEntity)&&!(entity instanceof DoorEntity)){
+                        moveVec3=moveVec3.add(0D,1D,0D);
+                    }
+                    moveFunction.accept(entity, moveVec3.x,moveVec3.y,moveVec3.z);
+                }
             }
         }
     }
@@ -1550,51 +1343,21 @@ return aabb.inflate(1.1F);
     protected boolean canAddPassenger(Entity p_248594_) {
         return true;
     }
-
-   /* @Override
-    public InteractionResult interactAt(Player player, Vec3 vec3, InteractionHand hand) {
-        int duration=getDuration();
-        if(duration>0) {
-            int startTick = getStartTick();
-            boolean flag = getTimeCount() >= startTick && getTimeCount() < startTick + duration;
-            float thetaDegreeF = (flag || isLoopRotation()) ? (getTimeCount() - startTick) * getDegreeAngle() / (float) duration : getDegreeAngle();
-            float degreeCombinedF = thetaDegreeF + getVisualRot() + getStartRotation();
-            List<Vec3> rotatedVec3BasketList = Utils.rotateVec3BasketPosList(getBasketPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF, getBasketOriginPosList());
-            List<Vec3> rotatedVec3List = Utils.rotateVec3PosList(getPosList(), BlockPos.ZERO, getActualBlockPos(), getAxis(), degreeCombinedF);
-            //rotatedVec3List.addAll(rotatedVec3BasketList);
-            List<BlockState> blockStateList = getStateList();
-            BlockPos pos = new BlockPos(Mth.floor(vec3.x), Mth.floor(vec3.y), Mth.floor(vec3.z));
-            for (int i = 0; i < rotatedVec3List.size(); i++) {
-                Vec3 eachVec3 = rotatedVec3List.get(i);
-                BlockState eachState = blockStateList.get(i);
-                double s = 0.2D;
-                BlockPos eachPos = new BlockPos(Mth.floor(eachVec3.x), Mth.floor(eachVec3.y), Mth.floor(eachVec3.z));
-                if (eachPos.equals(pos)) {
-                    setState(i, Blocks.DIAMOND_ORE.defaultBlockState());
-                    return InteractionResult.SUCCESS;
-                }
-            }
-        }
-        return InteractionResult.FAIL;
-    }*/
-
     @Override
     public boolean mayInteract(Level p_146843_, BlockPos p_146844_) {
        return false;
     }
-
-
-
+    @Override
+    public boolean shouldRiderSit() {
+        return false;
+    }
     public  enum AxisType {
         NONE((byte) 0, Direction.Axis.Y),
         X((byte) 1, Direction.Axis.X),
         Y((byte) 2, Direction.Axis.Y),
-
         Z((byte) 3, Direction.Axis.Z);
-
         private byte id;
         public Direction.Axis axis;
-
         private AxisType(byte id, Direction.Axis axis) {
             this.id = id;
             this.axis=axis;
@@ -1607,7 +1370,6 @@ return aabb.inflate(1.1F);
                 case 3 -> Z;
                 default -> NONE;
             };
-
         }
         public byte getID()
         {
@@ -1621,7 +1383,6 @@ return aabb.inflate(1.1F);
             };
         }
     }
-
     static class PosRotInterpolationTarget {
         int steps;
         final double targetX;
@@ -1646,7 +1407,6 @@ return aabb.inflate(1.1F);
             p_297540_.setPos(this.targetX, this.targetY, this.targetZ);
            setRot(p_297540_,(float)this.targetYRot, (float)this.targetXRot);
         }
-
         void applyLerpStep(Entity p_300902_) {
             lerpPositionAndRotationStep(p_300902_,this.steps, this.targetX, this.targetY, this.targetZ, this.targetYRot, this.targetXRot);
         }

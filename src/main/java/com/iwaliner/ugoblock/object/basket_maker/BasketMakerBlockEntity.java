@@ -27,12 +27,9 @@ import java.util.List;
 public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implements ImitatableBlockEntity {
     private int destroyCoolTime;
     protected NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
-
-
     public BasketMakerBlockEntity(BlockPos p_155077_, BlockState p_155078_) {
         super(Register.BasketMakerBlockEntity.get(), p_155077_, p_155078_);
     }
-
     @Override
     protected Component getDefaultName() {
         return Component.translatable("container.ugoblock.basket_maker");
@@ -53,10 +50,8 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
                 return false;
             }
         }
-
         return true;
     }
-
     @Override
     public ItemStack getItem(int slot) {
         return  items.get(slot);
@@ -88,7 +83,6 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
             return p_70300_1_.distanceToSqr((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double)this.worldPosition.getZ() + 0.5D) <= 64.0D;
         }
     }
-
     @Override
     public void clearContent() {
         this.items.clear();
@@ -101,16 +95,11 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
         destroyCoolTime=tag.getInt("destroyCoolTime");
 
     }
-
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         ContainerHelper.saveAllItems(tag, this.items);
         tag.putInt("destroyCoolTime",destroyCoolTime);
     }
-
-
-
-
     public boolean hasCards(){
         return getItem(0).getItem()==Register.shape_card.get()&&getItem(0).getTag()!=null&&getItem(0).getTag().contains("positionList");
     }
@@ -124,12 +113,7 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
                blockEntity.decreaseDestroyCoolTime(1);
            }
         }
-
     }
-    public boolean isWaitingForBreakBlocks(){
-        return getDestroyCoolTime()!=0;
-    }
-
     public int getDestroyCoolTime() {
         return destroyCoolTime;
     }
@@ -144,12 +128,10 @@ public class BasketMakerBlockEntity extends AbstractControllerBlockEntity implem
             destroyCoolTime=0;
         }
     }
-
     @Override
     public boolean canPlaceItem(int i, ItemStack stack) {
             return stack.getItem()==Register.shape_card.get();
     }
-
     public static void breakBlocks(Level level0,BasketMakerBlockEntity blockEntity){
         if(blockEntity!=null&&blockEntity.hasCards()) {
             BlockPos makerPos=blockEntity.getBlockPos();

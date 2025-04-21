@@ -19,52 +19,25 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class CollisionEntity extends Entity {
-    private static final EntityDataAccessor<BlockState> DATA_BLOCK_STATE_ID = SynchedEntityData.defineId(CollisionEntity .class, EntityDataSerializers.BLOCK_STATE);
-
-    private static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_ID = SynchedEntityData.defineId(CollisionEntity .class, EntityDataSerializers.COMPOUND_TAG);
-
     public CollisionEntity(EntityType<?> type, Level level) {
         super(Register.CollisionEntity.get(), level);
         this.noPhysics = false;
         this.noCulling = false;
         this.blocksBuilding=false;
     }
-    public CollisionEntity(Level level, double x, double y, double z,BlockState state,CompoundTag blockEntityData) {
+    public CollisionEntity(Level level, double x, double y, double z) {
         super(Register.CollisionEntity.get(), level);
         this.setPos(x, y, z);
-        this.entityData.set(DATA_BLOCK_STATE_ID,state);
-        this.entityData.set(DATA_BLOCKENTITY_ID,blockEntityData);
         this.noPhysics = false;
         this.noCulling = false;
         this.blocksBuilding=false;
     }
-
-    public BlockState getBlockState() {
-        return this.entityData.get(DATA_BLOCK_STATE_ID);
-    }
-
-    public void setBlockState(BlockState p_270267_) {
-        this.entityData.set(DATA_BLOCK_STATE_ID, p_270267_);
-    }
-    public void setBlockEntityData(CompoundTag tag) {
-        this.entityData.set(DATA_BLOCKENTITY_ID, tag);
-    }
-    public CompoundTag getBlockEntityData(){
-        return entityData.get(DATA_BLOCKENTITY_ID);
-    }
-    @Override
+     @Override
     protected void defineSynchedData() {
-        this.entityData.define(DATA_BLOCK_STATE_ID, Blocks.AIR.defaultBlockState());
-        this.entityData.define(DATA_BLOCKENTITY_ID, new CompoundTag());
-    }
-
+      }
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        this.setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), tag.getCompound("block_state")));
-        this.setBlockEntityData(tag.getCompound("block_entity"));
-
     }
-
     @Override
     public boolean canCollideWith(Entity entity) {
         return false;
@@ -74,38 +47,17 @@ public class CollisionEntity extends Entity {
     public boolean canBeCollidedWith() {
         return true;
     }
-
     public boolean isPushable() {
         return false;
     }
     public boolean isPickable() {
         return true;
     }
-
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.put("block_state", NbtUtils.writeBlockState(this.getBlockState()));
-        tag.put("block_entity", entityData.get(DATA_BLOCKENTITY_ID));
-    }
-
+     }
     @Override
     public void tick() {
-        Level level=level();
-        BlockPos pos=blockPosition();
-        BlockState state=entityData.get(DATA_BLOCK_STATE_ID);
-            if(!state.isAir()) {
-                level.setBlockAndUpdate(pos, state);
-                if (!getBlockEntityData().isEmpty() && state.hasBlockEntity()) {
-                    if (getBlockEntityData() != null) {
-                        BlockEntity blockentity = level.getBlockEntity(pos);
-
-                        if (blockentity != null) {
-                            blockentity.load(getBlockEntityData());
-                        }
-                    }
-                }
-            }
                 discard();
-
     }
 }

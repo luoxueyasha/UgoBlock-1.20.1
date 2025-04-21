@@ -17,13 +17,9 @@ public class RotationControllerMenu extends AbstractContainerMenu {
     public final Container container;
     private final ContainerData degreeAngleData;
     private final ContainerData durationSecondData;
-
-
-
     public RotationControllerMenu(int s, Inventory inventory) {
         this( s, inventory, new SimpleContainer(1), new SimpleContainerData(1), new SimpleContainerData(1));
     }
-
     public RotationControllerMenu(int s, Inventory inventory, Container c, ContainerData degreeAngleData, ContainerData durationData) {
         super(Register.RotationControllerMenu.get(), s);
         checkContainerSize(c, 1);
@@ -39,14 +35,12 @@ public class RotationControllerMenu extends AbstractContainerMenu {
                 this.addSlot(new Slot(inventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
             }
         }
-
         for(int k = 0; k < 9; ++k) {
             this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
         }
         this.addDataSlots(degreeAngleData);
         this.addDataSlots(durationData);
     }
-
     public ItemStack quickMoveStack(Player player, int i) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(i);
@@ -60,23 +54,18 @@ public class RotationControllerMenu extends AbstractContainerMenu {
             } else if (!this.moveItemStackTo(itemstack1, 0, 1, false)) {
                 return ItemStack.EMPTY;
             }
-
             if (itemstack1.isEmpty()) {
                 slot.set(ItemStack.EMPTY);
             } else {
                 slot.setChanged();
             }
-
             if (itemstack1.getCount() == itemstack.getCount()) {
                 return ItemStack.EMPTY;
             }
-
             slot.onTake(player, itemstack1);
         }
-
         return itemstack;
     }
-
     public void removed(Player p_39251_) {
         super.removed(p_39251_);
         this.container.stopOpen(p_39251_);
@@ -99,11 +88,9 @@ public class RotationControllerMenu extends AbstractContainerMenu {
     public void addDegreeAngle(int angle) {
         degreeAngleData.set(0,degreeAngleData.get(0)+angle);
     }
-
     public void addDurationSecond(int duration) {
         durationSecondData.set(0,durationSecondData.get(0)+duration);
     }
-
     public boolean clickMenuButton(Player player, int variable) {
         int degreeAngle=getDegreeAngle();
         int durationSecond=getDurationSecond();

@@ -49,7 +49,6 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49915_) {
         p_49915_.add(POWERED,COLOR1,COLOR2,COLOR3);
     }
-
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         ItemStack stack=player.getItemInHand(hand);
@@ -59,7 +58,7 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
             }
             Optional<Vec2> optional = getRelativeHitCoordinatesForBlockFace(result);
             if (!optional.isEmpty()&&result.getDirection().getAxis()!= Direction.Axis.Y) {
-                if(/*optional.get().x>0.125F&&*/optional.get().x<0.40625F){
+                if(optional.get().x<0.40625F){
                     if(stack.is(Items.WHITE_DYE)){
                         setColor1(level,pos,state,blockEntity,DyeColor.WHITE,player);
                         return InteractionResult.SUCCESS;
@@ -159,7 +158,7 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
                         setColor2(level,pos,state,blockEntity,DyeColor.BLACK,player);
                         return InteractionResult.SUCCESS;
                     }
-                }else if(optional.get().x>0.59375F/*&&optional.get().x<0.75F*/){
+                }else if(optional.get().x>0.59375F){
                     if(stack.is(Items.WHITE_DYE)){
                         setColor3(level,pos,state,blockEntity,DyeColor.WHITE,player);
                         return InteractionResult.SUCCESS;
@@ -224,7 +223,6 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
     }
     private static Optional<Vec2> getRelativeHitCoordinatesForBlockFace(BlockHitResult p_261714_) {
         Direction direction = p_261714_.getDirection();
-
         BlockPos blockpos = p_261714_.getBlockPos().relative(direction);
         Vec3 vec3 = p_261714_.getLocation().subtract((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ());
         double d0 = vec3.x();
@@ -251,11 +249,8 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
             default:
                 throw new IncompatibleClassChangeError();
         }
-
         return optional;
-
     }
-
     private void setColor1(Level level, BlockPos pos, BlockState state, WirelessRedstoneTransmitterBlockEntity blockEntity, DyeColor color1, Player player){
         blockEntity.setColor1(color1);
         level.setBlock(pos,state.setValue(COLOR1,color1.getId()),3);
@@ -296,16 +291,11 @@ public class WirelessRedstoneTransmitterBlock extends BaseEntityBlock {
                     data.setSignal(blockEntity.getColor1(),blockEntity.getColor2(),blockEntity.getColor3(),level.hasNeighborSignal(pos));
                 });
                           level.setBlock(pos, state.cycle(POWERED), 2);
-
             }
-
     }
-
-
     public RenderShape getRenderShape(BlockState p_49090_) {
         return RenderShape.MODEL;
     }
-
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {

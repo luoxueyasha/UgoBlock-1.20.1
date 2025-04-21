@@ -17,7 +17,6 @@ public class WirelessRedstoneTransmitterRenderer implements BlockEntityRenderer<
     public WirelessRedstoneTransmitterRenderer(BlockEntityRendererProvider.Context context) {
         blockRenderDispatcher=context.getBlockRenderDispatcher();
     }
-
     public void render(WirelessRedstoneTransmitterBlockEntity blockEntity, float f1, PoseStack poseStack, MultiBufferSource bufferSource, int i1, int i2) {
       BlockState imitatingState=blockEntity.getImitatingState();
         if(!imitatingState.isAir()){

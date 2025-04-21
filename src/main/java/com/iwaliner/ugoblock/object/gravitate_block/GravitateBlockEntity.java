@@ -37,7 +37,6 @@ import net.minecraft.world.phys.Vec3;
 
 public class GravitateBlockEntity extends FallingBlockEntity {
     private boolean cancelDrop=false;
-
     public GravitateBlockEntity(EntityType<? extends GravitateBlockEntity> p_i48580_1_, Level p_i48580_2_) {
         super(Register.GravitateBlock.get(), p_i48580_2_);
     }
@@ -66,13 +65,9 @@ public class GravitateBlockEntity extends FallingBlockEntity {
     public boolean isPickable() {
         return true;
     }
-
     public boolean canBeCollidedWith() {
         return true;
     }
-
-
-
     @Override
     protected boolean canRide(Entity p_20339_) {
         return true;
@@ -81,7 +76,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
     public boolean canRiderInteract() {
         return true;
     }
-
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         if(hand==InteractionHand.OFF_HAND){
@@ -215,7 +209,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                     }
                 }
             }
-
             this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
         }
     }
@@ -238,7 +231,6 @@ public class GravitateBlockEntity extends FallingBlockEntity {
                 this.markHurt();
                 this.playSound(SoundEvents.WOOL_BREAK, 1.0F, 1.0F);
             }
-
             return true;
         }
     }

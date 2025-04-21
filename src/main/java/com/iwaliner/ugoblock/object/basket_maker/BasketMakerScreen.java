@@ -13,7 +13,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
 public class BasketMakerScreen extends AbstractContainerScreen<BasketMakerMenu>{
-
     private final ResourceLocation texture;
     public BasketMakerScreen(BasketMakerMenu p_97741_, Inventory p_97742_, Component p_97743_) {
         super(p_97741_, p_97742_, p_97743_);
@@ -23,7 +22,6 @@ public class BasketMakerScreen extends AbstractContainerScreen<BasketMakerMenu>{
         super.init();
        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
     }
-
     public void render(GuiGraphics p_282573_, int p_97859_, int p_97860_, float p_97861_) {
         this.renderBackground(p_282573_);
         this.renderBg(p_282573_, p_97861_, p_97859_, p_97860_);
@@ -42,8 +40,4 @@ public class BasketMakerScreen extends AbstractContainerScreen<BasketMakerMenu>{
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 16766976, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 16766976, false);
     }
-
-
-
-
 }

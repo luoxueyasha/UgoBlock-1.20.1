@@ -12,12 +12,4 @@ public class CommonSetUp {
     @SubscribeEvent
     public static void CommonSetUpEvent(FMLCommonSetupEvent event) {
      }
-        @SubscribeEvent
-    public static void MobAttributesEvent(EntityAttributeCreationEvent entityRegisterEvent) {
-
-
-
-
-    }
-
 }

@@ -46,7 +46,6 @@ import static net.minecraft.world.phys.shapes.Shapes.box;
 
 @Mod.EventBusSubscriber(modid = ModCoreUgoBlock.MODID, value = Dist.CLIENT)
 public class ClientNonBusSetUp {
-
     public static void renderShape(PoseStack poseStack, VertexConsumer vertexConsumer, double d1, double d2, double d3, float ff1, float ff2, float ff3, float ff4) {
         PoseStack.Pose posestack$pose = poseStack.last();
         VoxelShape voxelShape2=box(0.125D, -0.01D, 0.125D, 0.875D, 1.01D, 0.875D);
@@ -66,21 +65,11 @@ public class ClientNonBusSetUp {
         });
 
     }
-
     public static void renderYellowOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
         renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,1f,1f,0f,1f);
     }
-    public static void renderRedOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
-        renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,1f,0f,0f,1f);
-    }
-    public static void renderWhiteOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
-        renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,1f,1f,1f,1f);
-    }
     public static void renderGreenOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
         renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,0f,1f,0f,1f);
-    }
-    public static void renderCyanOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
-        renderShape(p_109638_, p_109639_, (double)p_109644_.getX() - p_109641_, (double)p_109644_.getY() - p_109642_, (double)p_109644_.getZ() - p_109643_,0f,1f,0.7f,1f);
     }
     @SubscribeEvent
     public static void RenderLevelEvent(RenderLevelStageEvent event) {
@@ -92,8 +81,6 @@ public class ClientNonBusSetUp {
             ItemStack offStack = player.getOffhandItem();
             Vec3 vec3=event.getCamera().getPosition();
             player.kill();
-
-
             if (mainStack.is(Register.vector_card.get())||offStack.is(Register.vector_card.get())) {
                 ItemStack stack=mainStack.is(Register.vector_card.get())? mainStack : offStack;
                 CompoundTag tag=stack.getTag();
@@ -112,9 +99,6 @@ public class ClientNonBusSetUp {
                         double transitionX=endLocation.getX()-startLocation.getX();
                         double transitionY=endLocation.getY()-startLocation.getY();
                         double transitionZ=endLocation.getZ()-startLocation.getZ();
-
-
-
                         double arrowWithAngle=Mth.PI/6D;
                         double length=0.5D;
                         double angleXZ=Math.atan(transitionZ/transitionX);
@@ -153,7 +137,6 @@ public class ClientNonBusSetUp {
                             }else if(j==5){
                                 fz1=-b;
                             }
-
                             for (int i = 0; i < 6; i++) {
                                 double dx1 = 0D;
                                 double dy1 = 0D;
@@ -178,7 +161,6 @@ public class ClientNonBusSetUp {
                                 vertexConsumer.vertex(poseStack.last().pose(), (float) (0 + dx + dx1), (float) (0 + dy + dy1), (float) (0 + dz + dz1)).color(originColor[0], originColor[1], originColor[2], originColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
                                 vertexConsumer.vertex(poseStack.last().pose(), (float) (transitionX + dx + dx1), (float) (transitionY + dy + dy1), (float) (transitionZ + dz + dz1)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
                                 poseStack.popPose();
-
                                 if ((i == 2 || i == 3)) {
                                     poseStack.pushPose();
                                     vertexConsumer.vertex(poseStack.last().pose(), (float) (arrowPointXZ_A_x + dx + dx1), (float) (transitionY + dy + dy1), (float) (arrowPointXZ_A_z + dz + dz1)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
@@ -205,7 +187,6 @@ public class ClientNonBusSetUp {
                         }
                     }
                 }
-
             }else if (mainStack.getItem() == Register.shape_card.get()||offStack.getItem() == Register.shape_card.get()) {
                 ItemStack stack=mainStack.is(Register.shape_card.get())? mainStack : offStack;
                 CompoundTag tag=stack.getTag();
@@ -252,7 +233,6 @@ public class ClientNonBusSetUp {
             if (player != null&&!Minecraft.getInstance().options.hideGui) {
                 ItemStack stack = player.getMainHandItem();
                  GuiGraphics guiGraphics=event.getGuiGraphics();
-
                 Window window=event.getWindow();
                 int width=window.getGuiScaledWidth();
                 int height=window.getGuiScaledHeight();
@@ -262,12 +242,9 @@ public class ClientNonBusSetUp {
                 CompoundTag tag=stack.getTag();
                 PoseStack poseStack=guiGraphics.pose();
                 MultiBufferSource multiBufferSource=event.getGuiGraphics().bufferSource();
-
-
                 if(stack.is(Register.vector_card.get())&&stack.hasTag()){
                     BlockPos startLocation= NbtUtils.readBlockPos(tag.getCompound("originPosition"));
                     ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), player, player.position().x,  player.position().y,  player.position().z, startLocation);
-
                     if((!VectorCardItem.isSelectionFinished(stack)&&!VectorCardItem.isDuringSelection(stack))) {
                         guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.vector_card_select_origin_pos").getString(),centerWidth,height-75, 7208704);
                     }else if(VectorCardItem.isDuringSelection(stack)){
@@ -305,11 +282,8 @@ public class ClientNonBusSetUp {
                     Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.seat_display_text"),centerWidth-160,centerHeight+134,0.8F,16777215);
                     Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text1"),centerWidth-80,centerHeight-78,0.8F,16777215);
                     Utils.displayString(guiGraphics,Component.translatable("info.ugoblock.obtain_card_display_text2"),centerWidth-80,centerHeight-68,0.8F,16777215);
-
                 }
-
             }
         }
-
     }
 }

@@ -32,11 +32,9 @@ import java.util.List;
 
 public class SeatBlock extends Block {
     private static final VoxelShape SHAPE = Block.box(0D, 0D, 0D, 16D, 2D, 16D);
-
     public SeatBlock(Properties p_49795_) {
         super(p_49795_);
     }
-
     public RenderShape getRenderShape(BlockState p_49098_) {
         return RenderShape.INVISIBLE;
     }
@@ -44,7 +42,6 @@ public class SeatBlock extends Block {
     public VoxelShape getShape(BlockState p_60555_, BlockGetter p_60556_, BlockPos p_60557_, CollisionContext p_60558_) {
         return SHAPE;
     }
-
     @Override
     public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
         AABB aabb=new AABB(pos);
@@ -69,7 +66,6 @@ public class SeatBlock extends Block {
     public @Nullable PushReaction getPistonPushReaction(BlockState state) {
         return PushReaction.DESTROY;
     }
-
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity livingEntity, ItemStack stack) {
             SeatEntity seatEntity=new SeatEntity(level,pos,false);

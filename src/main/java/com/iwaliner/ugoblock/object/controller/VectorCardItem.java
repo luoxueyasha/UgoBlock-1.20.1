@@ -39,13 +39,11 @@ public class VectorCardItem extends Item {
     public VectorCardItem(Properties p_41383_) {
         super(p_41383_);
     }
-
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level=context.getLevel();
         BlockPos pos=context.getClickedPos();
-        BlockState state=level.getBlockState(pos);
-        ItemStack stack=context.getItemInHand();
+       ItemStack stack=context.getItemInHand();
         if(stack.getItem() instanceof VectorCardItem) {
             CompoundTag tag =stack.getTag();
             if(tag==null){
@@ -87,8 +85,6 @@ public class VectorCardItem extends Item {
         }
         return InteractionResult.FAIL;
     }
-
-
     public static boolean isDuringSelection(ItemStack stack){
         CompoundTag tag=stack.getTag();
         return tag!=null&& tag.contains("select")&&tag.getBoolean("select");
@@ -96,14 +92,10 @@ public class VectorCardItem extends Item {
     public static boolean isSelectionFinished(ItemStack stack){
         CompoundTag tag=stack.getTag();
         return tag!=null&& tag.contains("endPosition")&&tag.contains("originPosition")&& !NbtUtils.readBlockPos(tag.getCompound("endPosition")).equals(Utils.errorPos()) &&!NbtUtils.readBlockPos(tag.getCompound("originPosition")).equals(Utils.errorPos());
-
     }
     public boolean isFoil(@NotNull ItemStack stack) {
         return isDuringSelection(stack);
     }
-
-
-
     public static BlockPos getTransition(ItemStack stack){
         CompoundTag tag=stack.getTag();
         if(tag!=null&&tag.contains("originPosition")&& tag.contains("endPosition")) {
@@ -148,6 +140,4 @@ public class VectorCardItem extends Item {
             }
         }
     }
-
-
 }

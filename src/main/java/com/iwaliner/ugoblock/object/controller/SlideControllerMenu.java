@@ -17,12 +17,9 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     private final ContainerData startTickData;
     private final ContainerData speedData;
     private final ContainerData onewayData;
-
-
     public SlideControllerMenu(int s, Inventory inventory) {
         this( s, inventory, new SimpleContainer(2), new SimpleContainerData(1), new SimpleContainerData(1), new SimpleContainerData(1));
     }
-
     public SlideControllerMenu(int s, Inventory inventory,Container c,ContainerData startTickData,ContainerData speedData,ContainerData onewayData) {
         super(Register.SlideControllerMenu.get(), s);
         checkContainerSize(c, 2);
@@ -40,7 +37,6 @@ public class SlideControllerMenu extends AbstractContainerMenu {
                 this.addSlot(new Slot(inventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
             }
         }
-
         for(int k = 0; k < 9; ++k) {
             this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
         }
@@ -48,7 +44,6 @@ public class SlideControllerMenu extends AbstractContainerMenu {
         this.addDataSlots(speedData);
         this.addDataSlots(onewayData);
     }
-
     public ItemStack quickMoveStack(Player player, int i) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(i);
@@ -62,23 +57,18 @@ public class SlideControllerMenu extends AbstractContainerMenu {
             } else if (!this.moveItemStackTo(itemstack1, 0, 2, false)) {
                 return ItemStack.EMPTY;
             }
-
             if (itemstack1.isEmpty()) {
                 slot.set(ItemStack.EMPTY);
             } else {
                 slot.setChanged();
             }
-
             if (itemstack1.getCount() == itemstack.getCount()) {
                 return ItemStack.EMPTY;
             }
-
             slot.onTake(player, itemstack1);
         }
-
         return itemstack;
     }
-
     public void removed(Player p_39251_) {
         super.removed(p_39251_);
         this.container.stopOpen(p_39251_);
@@ -89,11 +79,8 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     public int getStartTime(){
          return Mth.floor((double) startTickData.get(0)/20D);
     }
-
-
     public void setStartTime(int startTime) {
          startTickData.set(0,startTime*20);
-
     }
     public void setOneway(boolean b){
         if(b){
@@ -105,8 +92,6 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     public boolean isOneway(){
         return onewayData.get(0)==1;
     }
-
-
     public int getSpeed(){
         return Math.round((float) speedData.get(0)/10F);
     }
@@ -116,14 +101,10 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     public void addStartTime(int startTime) {
         startTickData.set(0,startTickData.get(0)+startTime*20);
     }
-
     public void addSpeed(double speed) {
         speedData.set(0,speedData.get(0)+Mth.floor(speed*10D));
     }
     public boolean clickMenuButton(Player player, int variable) {
-        Level level=player.level();
-        BlockPos playerPos=player.blockPosition();
-
         int startTime=getStartTime();
         int speed=getSpeed();
         if(variable==0){

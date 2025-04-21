@@ -14,19 +14,15 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
 public class SlideControllerScreen extends AbstractContainerScreen<SlideControllerMenu>{
-
     private final ResourceLocation texture;
     public SlideControllerScreen(SlideControllerMenu p_97741_, Inventory p_97742_, Component p_97743_) {
         super(p_97741_, p_97742_, p_97743_);
         this.texture = new ResourceLocation("ugoblock:textures/gui/slide_controller.png");
-
     }
     public void init() {
         super.init();
        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-
     }
-
     @Override
     public boolean mouseScrolled(double x, double y, double scrollY) {
         /**scrollYは、マウスのホイールを下に回したときに負、上に回したときに正。*/
@@ -35,7 +31,6 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
                 this.minecraft.gameMode.handleInventoryButtonClick((this.menu).containerId, 6);
             }
-
         }else{
             if (this.menu.clickMenuButton(this.minecraft.player, 5)) {
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
@@ -133,8 +128,6 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
     private boolean isButtonOneway(double x, double y) {
         return x < this.leftPos + 60&& x > this.leftPos + 5 && y > this.topPos +12 && y < this.topPos + 23;
     }
-
-
     public void render(GuiGraphics p_282573_, int p_97859_, int p_97860_, float p_97861_) {
         this.renderBackground(p_282573_);
         this.renderBg(p_282573_, p_97861_, p_97859_, p_97860_);
@@ -163,8 +156,4 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
             guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.is_not_oneway"), 34, 17, 8587492);
         }
     }
-
-
-
-
 }

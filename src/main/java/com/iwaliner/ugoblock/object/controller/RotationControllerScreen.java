@@ -13,7 +13,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
 public class RotationControllerScreen extends AbstractContainerScreen<RotationControllerMenu>{
-
     private final ResourceLocation texture;
     public RotationControllerScreen(RotationControllerMenu p_97741_, Inventory p_97742_, Component p_97743_) {
         super(p_97741_, p_97742_, p_97743_);
@@ -23,8 +22,6 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
         super.init();
        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
     }
-
-
     @Override
     public boolean mouseScrolled(double x, double y, double scrollY) {
         /**scrollYは、マウスのホイールを下に回したときに負、上に回したときに正。*/
@@ -33,7 +30,6 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
                 this.minecraft.gameMode.handleInventoryButtonClick((this.menu).containerId, 3);
             }
-
         }else{
             if (this.menu.clickMenuButton(this.minecraft.player, 0)) {
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
@@ -123,9 +119,6 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
     private boolean isButtonH(double x, double y) {
         return x < this.leftPos + 156 && x > this.leftPos + 133 && y > this.topPos +57 && y < this.topPos + 72;
     }
-
-
-
     public void render(GuiGraphics p_282573_, int p_97859_, int p_97860_, float p_97861_) {
         this.renderBackground(p_282573_);
         this.renderBg(p_282573_, p_97861_, p_97859_, p_97860_);
@@ -155,8 +148,4 @@ public class RotationControllerScreen extends AbstractContainerScreen<RotationCo
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 16766976, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 16766976, false);
     }
-
-
-
-
 }

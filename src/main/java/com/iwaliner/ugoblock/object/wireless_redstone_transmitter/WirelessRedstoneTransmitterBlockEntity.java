@@ -27,8 +27,6 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
     private DyeColor color3;
     protected BlockState imitatingState;
     private boolean disregardRedstoneInputChanging;
-    private int coolTime;
-
     public WirelessRedstoneTransmitterBlockEntity(BlockPos p_155077_, BlockState p_155078_) {
         super(Register.WirelessRedstoneTransmitterBlockEntity.get(), p_155077_, p_155078_);
     }
@@ -57,7 +55,6 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
             this.disregardRedstoneInputChanging=tag.getBoolean("disregardRedstoneInputChanging");
         }
     }
-
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putByte("color1", color1==null? 0 : (byte) color1.getId());
@@ -68,30 +65,18 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
         }
         tag.putBoolean("disregardRedstoneInputChanging",disregardRedstoneInputChanging);
     }
-    public boolean isDisregardRedstoneInputChanging(){
-        return disregardRedstoneInputChanging;
-    }
-
-    public void setDisregardRedstoneInputChanging(boolean disregardRedstoneInputChanging) {
-        this.disregardRedstoneInputChanging = disregardRedstoneInputChanging;
-    }
-
     public void setColor1(DyeColor color1) {
         this.color1 = color1;
     }
-
     public void setColor2(DyeColor color2) {
         this.color2 = color2;
     }
-
     public void setColor3(DyeColor color3) {
         this.color3 = color3;
     }
-
     public DyeColor getColor1() {
         return color1==null? DyeColor.byId(0):color1;
     }
-
     public DyeColor getColor2() {
         return color2 == null ? DyeColor.byId(0) : color2;
     }
@@ -101,7 +86,6 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
     public BlockState getImitatingState() {
         return imitatingState==null? Blocks.AIR.defaultBlockState() : imitatingState;
     }
-
     public void setImitatingState(BlockState imitatingState) {
         this.imitatingState = imitatingState;
     }
@@ -111,7 +95,6 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
         saveAdditional(tag);
         return tag;
     }
-
     @Override
     public void handleUpdateTag(CompoundTag tag) {
         super.handleUpdateTag(tag);
@@ -124,10 +107,8 @@ public class WirelessRedstoneTransmitterBlockEntity extends BlockEntity implemen
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
         super.onDataPacket(net, pkt);
     }
-
     public void markUpdated() {
         this.setChanged();
         this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
     }
-
     }

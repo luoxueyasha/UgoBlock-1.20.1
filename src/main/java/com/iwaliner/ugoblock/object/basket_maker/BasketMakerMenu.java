@@ -16,13 +16,9 @@ import net.minecraft.world.item.ItemStack;
 
 public class BasketMakerMenu extends AbstractContainerMenu {
     public final Container container;
-
-
-
     public BasketMakerMenu(int s, Inventory inventory) {
         this( s, inventory, new SimpleContainer(1));
     }
-
     public BasketMakerMenu(int s, Inventory inventory, Container c) {
         super(Register.BasketMakerMenu.get(), s);
         checkContainerSize(c, 1);
@@ -39,7 +35,6 @@ public class BasketMakerMenu extends AbstractContainerMenu {
             this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
         }
     }
-
     public ItemStack quickMoveStack(Player player, int i) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(i);
@@ -69,7 +64,6 @@ public class BasketMakerMenu extends AbstractContainerMenu {
 
         return itemstack;
     }
-
     public void removed(Player p_39251_) {
         super.removed(p_39251_);
         this.container.stopOpen(p_39251_);
@@ -77,5 +71,4 @@ public class BasketMakerMenu extends AbstractContainerMenu {
     public boolean stillValid(Player p_39242_) {
         return this.container.stillValid(p_39242_);
     }
-
 }

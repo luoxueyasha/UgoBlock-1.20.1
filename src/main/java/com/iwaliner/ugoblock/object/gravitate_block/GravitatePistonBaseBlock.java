@@ -35,33 +35,23 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(EXTENDED, Boolean.valueOf(false)));
         this.isSticky = false;
     }
-
-
-
     public void setPlacedBy(Level p_60172_, BlockPos p_60173_, BlockState p_60174_, LivingEntity p_60175_, ItemStack p_60176_) {
         if (!p_60172_.isClientSide) {
             this.checkIfExtend(p_60172_, p_60173_, p_60174_);
         }
-
     }
-
     public void neighborChanged(BlockState p_60198_, Level p_60199_, BlockPos p_60200_, Block p_60201_, BlockPos p_60202_, boolean p_60203_) {
         if (!p_60199_.isClientSide) {
             this.checkIfExtend(p_60199_, p_60200_, p_60198_);
         }
-
     }
-
     public void onPlace(BlockState p_60225_, Level p_60226_, BlockPos p_60227_, BlockState p_60228_, boolean p_60229_) {
         if (!p_60228_.is(p_60225_.getBlock())) {
             if (!p_60226_.isClientSide && p_60226_.getBlockEntity(p_60227_) == null) {
                 this.checkIfExtend(p_60226_, p_60227_, p_60225_);
             }
-
         }
     }
-
-
     private void checkIfExtend(Level p_60168_, BlockPos p_60169_, BlockState p_60170_) {
         Direction direction = p_60170_.getValue(FACING);
         boolean flag = this.getNeighborSignal(p_60168_, p_60169_, direction);
@@ -82,34 +72,27 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                     }
                 }
             }
-
             p_60168_.blockEvent(p_60169_, this, i, direction.get3DDataValue());
         }
-
     }
-
     private boolean getNeighborSignal(SignalGetter p_277378_, BlockPos p_60179_, Direction p_60180_) {
         for(Direction direction : Direction.values()) {
             if (direction != p_60180_ && p_277378_.hasSignal(p_60179_.relative(direction), direction)) {
                 return true;
             }
         }
-
         if (p_277378_.hasSignal(p_60179_, Direction.DOWN)) {
             return true;
         } else {
             BlockPos blockpos = p_60179_.above();
-
             for(Direction direction1 : Direction.values()) {
                 if (direction1 != Direction.DOWN && p_277378_.hasSignal(blockpos.relative(direction1), direction1)) {
                     return true;
                 }
             }
-
             return false;
         }
     }
-
     public boolean triggerEvent(BlockState p_60192_, Level p_60193_, BlockPos p_60194_, int p_60195_, int p_60196_) {
         Direction direction = p_60192_.getValue(FACING);
         BlockState blockstate = p_60192_.setValue(EXTENDED, Boolean.valueOf(true));
@@ -119,18 +102,15 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                 p_60193_.setBlock(p_60194_, blockstate, 2);
                 return false;
             }
-
             if (!flag && p_60195_ == 0) {
                 return false;
             }
         }
-
         if (p_60195_ == 0) {
             if (net.minecraftforge.event.ForgeEventFactory.onPistonMovePre(p_60193_, p_60194_, direction, true)) return false;
             if (!this.moveBlocks(p_60193_, p_60194_, direction, true)) {
                 return false;
             }
-
             p_60193_.setBlock(p_60194_, blockstate, 67);
             p_60193_.playSound((Player)null, p_60194_, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 0.5F, p_60193_.random.nextFloat() * 0.25F + 0.6F);
             p_60193_.gameEvent(GameEvent.BLOCK_ACTIVATE, p_60194_, GameEvent.Context.of(blockstate));
@@ -140,7 +120,6 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
             if (blockentity1 instanceof PistonMovingBlockEntity) {
                 ((PistonMovingBlockEntity)blockentity1).finalTick();
             }
-
             BlockState blockstate1 = Blocks.MOVING_PISTON.defaultBlockState().setValue(MovingPistonBlock.FACING, direction).setValue(MovingPistonBlock.TYPE, this.isSticky ? PistonType.STICKY : PistonType.DEFAULT);
             p_60193_.setBlock(p_60194_, blockstate1, 20);
             p_60193_.setBlockEntity(MovingPistonBlock.newMovingBlockEntity(p_60194_, blockstate1, this.defaultBlockState().setValue(FACING, Direction.from3DDataValue(p_60196_ & 7)), direction, false, true));
@@ -160,7 +139,6 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                         }
                     }
                 }
-
                 if (!flag1) {
                     if (p_60195_ != 1 || blockstate2.isAir() || !isPushable(blockstate2, p_60193_, blockpos, direction.getOpposite(), false, direction) || blockstate2.getPistonPushReaction() != PushReaction.NORMAL && !blockstate2.is(Blocks.PISTON) && !blockstate2.is(Blocks.STICKY_PISTON)&& !blockstate2.is(Register.gravitate_piston_base_block.get())) {
                         p_60193_.removeBlock(p_60194_.relative(direction), false);
@@ -175,11 +153,9 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
             p_60193_.playSound((Player)null, p_60194_, SoundEvents.PISTON_CONTRACT, SoundSource.BLOCKS, 0.5F, p_60193_.random.nextFloat() * 0.15F + 0.6F);
             p_60193_.gameEvent(GameEvent.BLOCK_DEACTIVATE, p_60194_, GameEvent.Context.of(blockstate1));
         }
-
         net.minecraftforge.event.ForgeEventFactory.onPistonMovePost(p_60193_, p_60194_, direction, (p_60195_ == 0));
         return true;
     }
-
     public static boolean isPushable(BlockState p_60205_, Level p_60206_, BlockPos p_60207_, Direction p_60208_, boolean p_60209_, Direction p_60210_) {
         if (p_60207_.getY() >= p_60206_.getMinBuildHeight() && p_60207_.getY() <= p_60206_.getMaxBuildHeight() - 1 && p_60206_.getWorldBorder().isWithinBounds(p_60207_)) {
             if (p_60205_.isAir()) {
@@ -194,7 +170,6 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                         if (p_60205_.getDestroySpeed(p_60206_, p_60207_) == -1.0F) {
                             return false;
                         }
-
                         switch (p_60205_.getPistonPushReaction()) {
                             case BLOCK:
                                 return false;
@@ -206,7 +181,6 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                     } else if (p_60205_.getValue(EXTENDED)) {
                         return false;
                     }
-
                     return !p_60205_.hasBlockEntity();
                 }
             } else {
@@ -216,13 +190,11 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
             return false;
         }
     }
-
     private boolean moveBlocks(Level level, BlockPos pos, Direction direction0, boolean flag) {
         BlockPos blockpos = pos.relative(direction0);
         if (!flag && level.getBlockState(blockpos).is(getHeadBlock())) {
             level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), 20);
         }
-
         PistonStructureResolver pistonstructureresolver = new PistonStructureResolver(level, pos, direction0, flag);
         if (!pistonstructureresolver.resolve()) {
             return false;
@@ -237,7 +209,6 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
             gravitateBlockEntity.setDeltaMovement(vec3);
             level.setBlockAndUpdate(gravitateBlockPos, Blocks.AIR.defaultBlockState());
             level.addFreshEntity(gravitateBlockEntity);*/
-
             Map<BlockPos, BlockState> map = Maps.newHashMap();
             List<BlockPos> list = pistonstructureresolver.getToPush();
             List<BlockState> list1 = Lists.newArrayList();
@@ -248,12 +219,10 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                 list1.add(blockstate);
                 map.put(blockpos1, blockstate);
             }
-
             List<BlockPos> list2 = pistonstructureresolver.getToDestroy();
             BlockState[] ablockstate = new BlockState[list.size() + list2.size()];
             Direction direction = flag ? direction0 : direction0.getOpposite();
             int j = 0;
-
             for(int k = list2.size() - 1; k >= 0; --k) {
                 BlockPos blockpos2 = list2.get(k);
                 BlockState blockstate1 = level.getBlockState(blockpos2);
@@ -264,10 +233,8 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                 if (!blockstate1.is(BlockTags.FIRE)) {
                     level.addDestroyBlockEffect(blockpos2, blockstate1);
                 }
-
                 ablockstate[j++] = blockstate1;
             }
-
             for(int l = list.size() - 1; l >= 0; --l) {
                 BlockPos blockpos3 = list.get(l);
                 BlockState blockstate5 = level.getBlockState(blockpos3);
@@ -289,14 +256,12 @@ public class GravitatePistonBaseBlock extends PistonBaseBlock {
                 PistonType pistontype = this.isSticky ? PistonType.STICKY : PistonType.DEFAULT;
                 BlockState blockstate4 = getHeadBlock().defaultBlockState().setValue(PistonHeadBlock.FACING, direction0).setValue(PistonHeadBlock.TYPE, pistontype);
                 BlockState blockstate6 = Blocks.MOVING_PISTON.defaultBlockState().setValue(MovingPistonBlock.FACING, direction0).setValue(MovingPistonBlock.TYPE, this.isSticky ? PistonType.STICKY : PistonType.DEFAULT);
-                //map.remove(blockpos);
                 level.setBlock(blockpos, blockstate6, 68);
                 level.setBlockEntity(MovingPistonBlock.newMovingBlockEntity(blockpos, blockstate6, blockstate4, direction0, true, true));
             }
             if (flag) {
                 level.updateNeighborsAt(blockpos, getHeadBlock());
             }
-
             return true;
         }
     }

@@ -22,7 +22,6 @@ public class BasketMakerRenderer implements BlockEntityRenderer<BasketMakerBlock
     public BasketMakerRenderer(BlockEntityRendererProvider.Context context) {
         blockRenderDispatcher=context.getBlockRenderDispatcher();
     }
-
     public void render(BasketMakerBlockEntity blockEntity, float f1, PoseStack poseStack, MultiBufferSource bufferSource, int i1, int i2) {
       BlockState imitatingState=blockEntity.getImitatingState();
         if(!imitatingState.isAir()){

@@ -178,7 +178,7 @@ public class Utils {
         }else{
             transitionRotated = transition.rotateY(Mth.PI * (degreeAngle) / 180f);
         }
-        return new Vec3(transitionRotated).add(originPos)/*.add(-transition.x,-transition.y,-transition.z)*/;
+        return new Vec3(transitionRotated).add(originPos);
     }
     public static Vec3 getRotatedEntitySpeed(Vec3 currentPos,Vec3 originPos, float degree,int duration, Direction.Axis axis){
         Vec3 eachOffsetPos=currentPos.add(-originPos.x,-originPos.y,-originPos.z);
@@ -192,7 +192,7 @@ public class Utils {
         }else{
             transitionRotated = transition.rotateY(Mth.PI * (degreeAngle) / 180f);
         }
-        return new Vec3(transitionRotated)/*.add(originPos)*/.add(-transition.x,-transition.y,-transition.z);
+        return new Vec3(transitionRotated).add(-transition.x,-transition.y,-transition.z);
     }
     public static List<BlockPos> rotatePosList(List<BlockPos> oldList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle) {
         List<BlockPos> newList=oldList;
@@ -261,7 +261,6 @@ public class Utils {
     }
     public static List<BlockPos> rotateBasketPosList(List<BlockPos> oldBasketList, BlockPos oldOriginPos, BlockPos newOriginPos, Direction.Axis axis,int degreeAngle,List<BlockPos> basketOriginPosList) {
         List<BlockPos> newList=oldBasketList;
-
         for (int i = 0; i < oldBasketList.size(); i++) {
             BlockPos eachOffsetPos=oldBasketList.get(i).offset(-basketOriginPosList.get(i).getX(),-basketOriginPosList.get(i).getY(),-basketOriginPosList.get(i).getZ());
             BlockPos eachBasketOriginPos = basketOriginPosList.get(i).offset(-oldOriginPos.getX(),-oldOriginPos.getY(),-oldOriginPos.getZ());
@@ -314,15 +313,16 @@ public class Utils {
             CompoundTag basketOriginPosTag=new CompoundTag();
             CompoundTag basketStateTag=new CompoundTag();
             CompoundTag basketBlockEntityTag=new CompoundTag();
-            CompoundTag basketMakerIndexTag=new CompoundTag();
             List<BlockState> stateList=new ArrayList<>();
             List<BlockState> basketStateList=new ArrayList<>();
             List<BlockPos> basketPosListAll=new ArrayList<>();
             CompoundTag seatPosTag=new CompoundTag();
             CompoundTag seatOriginPosTag=new CompoundTag();
             CompoundTag seatIsInBasketTag=new CompoundTag();
+            CompoundTag seatUUIDTag=new CompoundTag();
             List<BlockPos> seatPosList=new ArrayList<>();
             List<BlockPos> fullPosList=new ArrayList<>();
+            List<Entity> passengerList=new ArrayList<>();
             int basketPosAmount=0;
             int seatPosAmount=0;
             Map<BlockPos, Entity> containedEntity = new HashMap<>();
@@ -335,14 +335,28 @@ public class Utils {
                 List<Entity> entityList = level.getEntitiesOfClass(Entity.class, new AABB(eachPos).inflate(0.1D));
                 CompoundTag posNBT = NbtUtils.writeBlockPos(new BlockPos(posList.get(i).getX() - startPos.getX(), posList.get(i).getY() - startPos.getY(), posList.get(i).getZ() - startPos.getZ()));
                 for(Entity entity : entityList){
-                    if(!entityUUIDList.contains(entity.getUUID())&&!isUnableToMove(entity)&& !eachState.getCollisionShape(level,eachPos).isEmpty()&&!isDisableForStandingSeat(eachState)) {
-                        containedEntity.put(eachPos, entity);
-                        seatPosList.add(posList.get(i));
-                        seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), false);
-                        seatPosTag.put("location_" + String.valueOf(seatPosAmount), posNBT);
-                        seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(BlockPos.ZERO));
-                        ++seatPosAmount;
-                        entityUUIDList.add(entity.getUUID());
+                    if(!Utils.isUnableToMove(entity)) {
+                        if (!entityUUIDList.contains(entity.getUUID()) && !isUnableToMove(entity) && !eachState.getCollisionShape(level, eachPos).isEmpty() && !isDisableForStandingSeat(eachState)) {
+                            containedEntity.put(posList.get(i), entity);
+                            seatPosList.add(posList.get(i));
+                            seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), false);
+                            seatPosTag.put("location_" + String.valueOf(seatPosAmount), posNBT);
+                            seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(BlockPos.ZERO));
+                            if(entity instanceof Player){
+                                StandingSeatEntity seatEntity=new StandingSeatEntity(level,eachPos,true);
+                                if(!level.isClientSide()){
+                                    level.addFreshEntity(seatEntity);
+                                }
+                                entity.startRiding(seatEntity);
+                                passengerList.add(seatEntity);
+                                seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), seatEntity.getUUID());
+                            }else {
+                                passengerList.add(entity);
+                                seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), entity.getUUID());
+                            }
+                            ++seatPosAmount;
+                            entityUUIDList.add(entity.getUUID());
+                        }
                     }
                 }
                 if (eachBlockEntity != null && i != positionList.indexOf(controllerPos) && !(eachBlockEntity instanceof PistonMovingBlockEntity)) {
@@ -374,15 +388,29 @@ public class Utils {
                             BlockEntity eachBasketComponentBlockEntity = level.getBlockEntity(eachBasketComponentPos);
                             List<Entity> entityList2 = level.getEntitiesOfClass(Entity.class, new AABB(eachBasketComponentPos).inflate(0.1D));
                              for(Entity entity : entityList2){
-                                if(!entityUUIDList.contains(entity.getUUID())&&!isUnableToMove(entity)&& !eachBasketComponentState.getCollisionShape(level,eachBasketComponentPos).isEmpty()&&!isDisableForStandingSeat(eachBasketComponentState)) {
-                                    containedEntity.put(eachBasketComponentPos, entity);
-                                    seatPosList.add(posList.get(i));
-                                    seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), true);
-                                    seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(basketOriginPos.getX() - startPos.getX(), basketOriginPos.getY() - startPos.getY(), basketOriginPos.getZ() - startPos.getZ())));
-                                    seatPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
-                                    ++seatPosAmount;
-                                    entityUUIDList.add(entity.getUUID());
-                                }
+                                 if(!Utils.isUnableToMove(entity)) {
+                                     if (!entityUUIDList.contains(entity.getUUID()) && !isUnableToMove(entity) && !eachBasketComponentState.getCollisionShape(level, eachBasketComponentPos).isEmpty() && !isDisableForStandingSeat(eachBasketComponentState)) {
+                                         containedEntity.put(eachBasketComponentPos, entity);
+                                         seatPosList.add(posList.get(i));
+                                         seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), true);
+                                         seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(basketOriginPos.getX() - startPos.getX(), basketOriginPos.getY() - startPos.getY(), basketOriginPos.getZ() - startPos.getZ())));
+                                         seatPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
+                                         if(entity instanceof Player){
+                                             StandingSeatEntity seatEntity=new StandingSeatEntity(level,eachBasketComponentPos,true);
+                                             if(!level.isClientSide()){
+                                                 level.addFreshEntity(seatEntity);
+                                             }
+                                             entity.startRiding(seatEntity);
+                                             passengerList.add(seatEntity);
+                                             seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), seatEntity.getUUID());
+                                         }else {
+                                             passengerList.add(entity);
+                                             seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), entity.getUUID());
+                                         }
+                                         ++seatPosAmount;
+
+                                     }
+                                 }
                             }
                                 if (eachBasketComponentBlockEntity != null) {
                                     if (eachBasketComponentBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
@@ -401,6 +429,32 @@ public class Utils {
                                     seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), true);
                                     seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(basketOriginPos.getX() - startPos.getX(), basketOriginPos.getY() - startPos.getY(), basketOriginPos.getZ() - startPos.getZ())));
                                     seatPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
+                                    if(eachBasketComponentState.getBlock() instanceof SeatBlock){
+                                        SeatEntity seatEntity=new SeatEntity(level,eachBasketComponentPos,true);
+                                        if(!level.isClientSide()){
+                                            level.addFreshEntity(seatEntity);
+                                        }
+                                        passengerList.add(seatEntity);
+                                        AABB aabb = new AABB(eachBasketComponentPos);
+                                        Entity passenger=null;
+                                        for (Entity entity : level.getEntities((Entity) null, aabb.move(0D, 0D, 0D).inflate(0d, 0d, 0d), (o) -> {
+                                            return (o instanceof LivingEntity);
+                                        })) {
+                                            passenger=entity;
+                                            break;
+                                        }
+                                        if(passenger!=null) {
+                                            passenger.startRiding(seatEntity);
+                                        }
+                                        seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), seatEntity.getUUID());
+                                    }else if(eachBasketComponentState.getBlock() instanceof DoorBlock||eachBasketComponentState.getBlock() instanceof FenceGateBlock){
+                                        DoorEntity doorEntity=new DoorEntity(level,eachBasketComponentPos);
+                                        if(!level.isClientSide()){
+                                            level.addFreshEntity(doorEntity);
+                                        }
+                                        passengerList.add(doorEntity);
+                                        seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), doorEntity.getUUID());
+                                    }
                                     ++seatPosAmount;
                                 }
                                 eachBasketComponentState = eachBasketComponentState.hasProperty(BlockStateProperties.WATERLOGGED) ? eachBasketComponentState.setValue(BlockStateProperties.WATERLOGGED, false) : level.getFluidState(eachBasketComponentPos).isEmpty() ? eachBasketComponentState : Blocks.AIR.defaultBlockState();
@@ -410,7 +464,6 @@ public class Utils {
                                 basketOriginPosTag.put("location_" + String.valueOf(j), NbtUtils.writeBlockPos(new BlockPos(basketOriginPos.getX() - startPos.getX(), basketOriginPos.getY() - startPos.getY(), basketOriginPos.getZ() - startPos.getZ())));
                                 basketPosTag.put("location_" + String.valueOf(j), NbtUtils.writeBlockPos(new BlockPos(eachBasketComponentPos.getX() - startPos.getX(), eachBasketComponentPos.getY() - startPos.getY(), eachBasketComponentPos.getZ() - startPos.getZ())));
                                 basketStateTag.put("state_" + String.valueOf(j), NbtUtils.writeBlockState(eachBasketComponentState));
-                                basketMakerIndexTag.putInt("index_" + String.valueOf(j), i);
                                 basketPosListAll.add(eachBasketComponentPos);
                                 basketStateList.add(eachBasketComponentState);
                                 fullPosList.add(eachBasketComponentPos);
@@ -513,7 +566,6 @@ public class Utils {
                         boolean east2 = east;
                         boolean south2 = south;
                         boolean west2 = west;
-
                         if (axis == Direction.Axis.X) {
                             if (degree == 180 || degree == -180) {
                                 north2 = south;
@@ -572,6 +624,32 @@ public class Utils {
                     seatIsInBasketTag.putBoolean("isInBasket_" + String.valueOf(seatPosAmount), false);
                     seatPosTag.put("location_" + String.valueOf(seatPosAmount), posNBT);
                     seatOriginPosTag.put("location_" + String.valueOf(seatPosAmount), NbtUtils.writeBlockPos(BlockPos.ZERO));
+                     if(eachState.getBlock() instanceof SeatBlock){
+                         SeatEntity seatEntity=new SeatEntity(level,eachPos,true);
+                         if(!level.isClientSide()){
+                             level.addFreshEntity(seatEntity);
+                         }
+                         passengerList.add(seatEntity);
+                         AABB aabb = new AABB(eachPos);
+                         Entity passenger=null;
+                         for (Entity entity : level.getEntities((Entity) null, aabb.move(0D, 0D, 0D).inflate(0d, 0d, 0d), (o) -> {
+                             return (o instanceof LivingEntity);
+                         })) {
+                             passenger=entity;
+                             break;
+                         }
+                         if(passenger!=null) {
+                             passenger.startRiding(seatEntity);
+                         }
+                         seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), seatEntity.getUUID());
+                     }else if(eachState.getBlock() instanceof DoorBlock||eachState.getBlock() instanceof FenceGateBlock){
+                         DoorEntity doorEntity=new DoorEntity(level,eachPos);
+                         if(!level.isClientSide()){
+                             level.addFreshEntity(doorEntity);
+                         }
+                         passengerList.add(doorEntity);
+                         seatUUIDTag.putUUID("uuid_" + String.valueOf(seatPosAmount), doorEntity.getUUID());
+                     }
                     ++seatPosAmount;
                 }
                 if(fullPosList.contains(posList.get(i))){
@@ -583,13 +661,8 @@ public class Utils {
                 stateList.add(eachState);
                 fullPosList.add(posList.get(i));
             }
-
-            /*entityTag.put("positionList",posTag);
-            entityTag.put("stateList",stateTag);
-            entityTag.put("blockEntityList",blockEntityTag);*/
             CompoundTag basketTag=new CompoundTag();
             if(axis!=null) {
-                basketTag.put("indexList", basketMakerIndexTag);
                 basketTag.put("positionList", basketPosTag);
                 basketTag.put("originPositionList", basketOriginPosTag);
                 basketTag.put("stateList", basketStateTag);
@@ -599,9 +672,10 @@ public class Utils {
             seatTag.put("positionList",seatPosTag);
             seatTag.put("originPositionList",seatOriginPosTag);
             seatTag.put("isInBasketList",seatIsInBasketTag);
+            seatTag.put("uuidList",seatUUIDTag);
             entityTag.put("basketData",basketTag);
             entityTag.put("seatData",seatTag);
-            if(reachedNBTLimit(basketTag)||reachedNBTLimit(posTag)/*||reachedNBTLimit(stateTag)||*//*reachedNBTLimit(blockEntityTag)*/){
+            if(reachedNBTLimit(basketTag)||reachedNBTLimit(posTag)){
                 if(level.getServer()!=null) {
                     PlayerList playerlist = level.getServer().getPlayerList();
                     Component component=Component.translatable("info.ugoblock.data_overflow").withStyle(ChatFormatting.RED);
@@ -611,51 +685,9 @@ public class Utils {
             }else {
                 MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, axis, degree, posTag, stateTag, blockEntityTag, entityTag, visualDegree, controllerBlockEntity.isLoop(), !rotateState, transitionPos);
                 moveableBlock.setStartRotation(startRotation);
-                for(int s=0;s<seatPosList.size();s++){
-                    BlockPos eachPos=seatPosList.get(s);
-                    BlockState eachState=level.getBlockState(eachPos);
-                    if(eachState.getBlock() instanceof SeatBlock){
-                        SeatEntity seatEntity=new SeatEntity(level,eachPos,true);
-                        if(!level.isClientSide()){
-                            level.addFreshEntity(seatEntity);
-                        }
-                        seatEntity.startRiding(moveableBlock);
-                        AABB aabb = new AABB(eachPos);
-                        Entity passenger=null;
-                        for (Entity entity : level.getEntities((Entity) null, aabb.move(0D, 0D, 0D).inflate(0d, 0d, 0d), (o) -> {
-                            return (o instanceof LivingEntity);
-                        })) {
-                            passenger=entity;
-                            break;
-                        }
-                        if(passenger!=null) {
-                            passenger.startRiding(seatEntity);
-                         }
-
-                    }else if(eachState.getBlock() instanceof DoorBlock||eachState.getBlock() instanceof FenceGateBlock){
-                        DoorEntity doorEntity=new DoorEntity(level,eachPos);
-                        if(!level.isClientSide()){
-                            level.addFreshEntity(doorEntity);
-                        }
-                        doorEntity.startRiding(moveableBlock);
-                    }
-
+                for(Entity passenger : passengerList){
+                    passenger.startRiding(moveableBlock);
                 }
-                for(Map.Entry<BlockPos, Entity> entry : containedEntity.entrySet()){
-                    BlockPos entityPos=entry.getKey();
-                    Entity entity=entry.getValue();
-                    if(!entity.isPassenger()){
-                        StandingSeatEntity standingSeatEntity=new StandingSeatEntity(level,entityPos,true);
-                        if(!level.isClientSide()){
-                            level.addFreshEntity(standingSeatEntity);
-                        }
-                        entity.startRiding(standingSeatEntity);
-                        standingSeatEntity.startRiding(moveableBlock);
-                    }
-
-
-                }
-
                 if (axis != null) {
                     controllerBlockEntity.setVisualDegree(degree);
                 }
@@ -722,7 +754,7 @@ public class Utils {
         guiGraphics.pose().popPose();
     }
     public static boolean isUnableToMove(Entity entity){
-        if(entity instanceof CollisionEntity||entity instanceof MovingBlockEntity||entity instanceof SeatEntity||entity instanceof StandingSeatEntity){
+        if(entity instanceof CollisionEntity||entity instanceof MovingBlockEntity||entity instanceof SeatEntity||entity instanceof StandingSeatEntity||entity instanceof DoorEntity){
             return true;
         }
         return false;
@@ -734,6 +766,4 @@ public class Utils {
         }
         return false;
     }
-
-
 }

@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SlideControllerBlockEntity extends AbstractControllerBlockEntity implements ImitatableBlockEntity {
-
     private int speedx10=10;
     private boolean oneway;
     protected NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
@@ -40,14 +39,11 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
                     return 0;
             }
         }
-
         public void set(int i, int j) {
            if(!isMoving){
                     SlideControllerBlockEntity.this.startTime = j;
             }
-
         }
-
         public int getCount() {
             return 1;
         }
@@ -57,19 +53,15 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
             switch(i) {
                 case 0:
                     return getSpeedx10();
-
                 default:
                     return 0;
             }
         }
-
         public void set(int i, int j) {
             if(!isMoving){
                     SlideControllerBlockEntity.this.speedx10=j;
             }
-
         }
-
         public int getCount() {
             return 1;
         }
@@ -83,11 +75,9 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
                 return 0;
             }
         }
-
         public void set(int i, int j) {
             setOneway(j == 1);
         }
-
         public int getCount() {
             return 1;
         }
@@ -95,7 +85,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
     public SlideControllerBlockEntity( BlockPos p_155077_, BlockState p_155078_) {
         super(Register.SlideController.get(), p_155077_, p_155078_);
     }
-
     @Override
     protected Component getDefaultName() {
         return Component.translatable("container.ugoblock.slide_controller");
@@ -119,7 +108,6 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
 
         return true;
     }
-
     @Override
     public ItemStack getItem(int slot) {
         return  items.get(slot);
@@ -138,12 +126,10 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
             if (stack.getCount() > this.getMaxStackSize()) {
                 stack.setCount(this.getMaxStackSize());
             }
-
             if (slot == 0 && !flag) {
                 this.setChanged();
             }
     }
-
     public boolean stillValid(Player p_70300_1_) {
         if (this.level.getBlockEntity(this.worldPosition) != this) {
             return false;
@@ -151,12 +137,10 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
             return p_70300_1_.distanceToSqr((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double)this.worldPosition.getZ() + 0.5D) <= 64.0D;
         }
     }
-
     @Override
     public void clearContent() {
         this.items.clear();
     }
-
     public void load(CompoundTag tag) {
         super.load(tag);
         this.oneway=tag.getBoolean("oneway");
@@ -167,16 +151,13 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
         }
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items);
-
     }
-
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean("oneway",oneway);
         tag.putInt("speedx10",speedx10);
         ContainerHelper.saveAllItems(tag, this.items);
     }
-
     public BlockPos getStartPos(){
         if(level.getBlockState(getBlockPos()).getBlock()instanceof SlideControllerBlock){
             return getBlockPos().relative(level.getBlockState(getBlockPos()).getValue(BlockStateProperties.FACING));
@@ -189,14 +170,12 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
        }
        return Utils.errorPos();
    }
-
     public int getSpeedx10(){
         return  speedx10;
     }
     public void setSpeedx10(int speed){
         speedx10=speed;
     }
-
     public int getDuration() {
         double distance=this.getDistance();
         double d=(distance/((double) speedx10/10D))*20D;
@@ -207,11 +186,9 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
         BlockPos transition=getTransition();
         return Mth.sqrt((float)Mth.square(transition.getX())+(float)Mth.square(transition.getY())+(float)Mth.square(transition.getZ()));
     }
-
     public boolean hasCards(){
         return getItem(0).getItem()==Register.shape_card.get()&&getItem(1).getItem()==Register.vector_card.get()&&getItem(0).getTag()!=null&&getItem(1).getTag()!=null&&getItem(0).getTag().contains("positionList")&&VectorCardItem.isSelectionFinished(getItem(1));
     }
-
     public static void tick(Level level, BlockPos pos, BlockState state, SlideControllerBlockEntity blockEntity) {
         if(state.getBlock() instanceof SlideControllerBlock) {
             if(blockEntity.isMoving()&&!state.getValue(SlideControllerBlock.MOVING)){
@@ -239,11 +216,8 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
                     }
                     blockEntity.increaseTickCount(1);
                 }
-
             }
-
         }
-
        }
     @Override
     public boolean canPlaceItem(int i, ItemStack stack) {
@@ -253,11 +227,9 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
             return stack.getItem()==Register.shape_card.get();
         }
     }
-
     public void setOneway(boolean oneway) {
         this.oneway = oneway;
     }
-
     public boolean isOneway() {
         return oneway;
     }

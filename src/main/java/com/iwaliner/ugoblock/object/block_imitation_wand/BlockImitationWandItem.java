@@ -32,7 +32,6 @@ public class BlockImitationWandItem extends Item {
     public BlockImitationWandItem(Properties p_41383_) {
         super(p_41383_);
     }
-
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level=context.getLevel();

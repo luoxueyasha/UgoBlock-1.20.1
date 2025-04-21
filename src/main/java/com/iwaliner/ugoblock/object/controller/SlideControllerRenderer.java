@@ -20,7 +20,6 @@ public class SlideControllerRenderer  implements BlockEntityRenderer<SlideContro
     public SlideControllerRenderer(BlockEntityRendererProvider.Context context) {
         blockRenderDispatcher=context.getBlockRenderDispatcher();
     }
-
     public void render(SlideControllerBlockEntity blockEntity, float f1, PoseStack poseStack, MultiBufferSource bufferSource, int i1, int i2) {
       BlockState imitatingState=blockEntity.getImitatingState();
         if(!imitatingState.isAir()){

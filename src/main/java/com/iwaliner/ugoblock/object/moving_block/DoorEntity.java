@@ -1,5 +1,6 @@
 package com.iwaliner.ugoblock.object.moving_block;
 
+import com.iwaliner.ugoblock.object.seat.SeatBlock;
 import com.iwaliner.ugoblock.register.Register;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -39,39 +40,28 @@ public class DoorEntity extends Entity {
         this.noCulling = false;
         this.blocksBuilding=false;
     }
-
     @Override
     protected void defineSynchedData() {
     }
-
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-
     }
-
     @Override
     public void tick() {
         super.tick();
         this.tickLerp();
     }
-
-
     @Override
     public boolean canCollideWith(Entity entity) {
         return false;
     }
-
-
     /**trueにすると、当たり判定内に入ったときにはじき出される*/
     public boolean canBeCollidedWith() {
         return false;
     }
-
-
     public boolean isPickable() {
         return true;
     }
@@ -79,7 +69,6 @@ public class DoorEntity extends Entity {
     public boolean mayInteract(Level level, BlockPos pos) {
         return true;
     }
-
     @Override
     protected boolean canRide(Entity p_20339_) {
         return true;
@@ -88,15 +77,25 @@ public class DoorEntity extends Entity {
     public boolean canRiderInteract() {
         return false;
     }
+    @Override
+    public boolean hurt(DamageSource p_19946_, float p_19947_) {
+        discard();
+        return true;
+    }
     /**右クリック時の処理*/
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         if(this.isPassenger()&&this.getVehicle() instanceof MovingBlockEntity movingBlock){
             SoundEvent soundEvent=null;
-           for(int i=0;i<movingBlock.getPassengers().size();i++){
-               Entity passenger=movingBlock.getPassengers().get(i);
-               if(passenger.getUUID()==this.getUUID()){
-                   BlockPos seatPos=movingBlock.getSeatPosList().get(i);
+            int index=-1;
+           for(int i=0;i<movingBlock.getPassengers().size();i++) {
+               if(this.getUUID().equals(movingBlock.getSeatUuidList().get(i))){
+                   index=i;
+                   break;
+               }
+           }
+           if(index!=-1){
+                   BlockPos seatPos=movingBlock.getSeatPosList().get(index);
                    for(int j=0;j<movingBlock.getPosList().size();j++){
                        BlockPos eachPos=movingBlock.getPosList().get(j);
                        if(seatPos.equals(eachPos)){
@@ -111,7 +110,6 @@ public class DoorEntity extends Entity {
                           soundEvent= changeState(level(),player,seatPos,eachPos,state,movingBlock,j,true);
                        }
                    }
-               }
            }
            if(soundEvent!=null){
                player.level().playSound(player,player.blockPosition(), soundEvent,SoundSource.BLOCKS,1f,1f);
@@ -147,12 +145,6 @@ public class DoorEntity extends Entity {
         }else{
             movingBlock.setState(i,state);
         }
-    }
-
-    @Override
-    public boolean hurt(DamageSource p_19946_, float p_19947_) {
-        discard();
-        return true;
     }
     @Override
     public void lerpTo(double p_297677_, double p_301293_, double p_301384_, float p_300635_, float p_299108_, int p_299659_,boolean b) {

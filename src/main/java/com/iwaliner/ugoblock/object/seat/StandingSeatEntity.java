@@ -38,8 +38,6 @@ public class StandingSeatEntity extends Entity {
     public static final EntityDataAccessor<Boolean> DATA_ROTATING_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.BOOLEAN);
     private static final ImmutableMap<Pose, ImmutableList<Integer>> POSE_DISMOUNT_HEIGHTS = ImmutableMap.of(Pose.STANDING, ImmutableList.of(0, 1, -1), Pose.CROUCHING, ImmutableList.of(0, 1, -1), Pose.SWIMMING, ImmutableList.of(0, 1));
     public static final EntityDataAccessor<Vector3f> DATA_OFFSET_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.VECTOR3);
-   // public static final EntityDataAccessor<Integer> DATA_COOL_TIME_ID = SynchedEntityData.defineId(StandingSeatEntity.class, EntityDataSerializers.INT);
-
     public StandingSeatEntity(EntityType<?> p_270360_, Level p_270280_) {
         super(Register.StandingSeatEntity.get(), p_270280_);
     }
@@ -57,13 +55,11 @@ public class StandingSeatEntity extends Entity {
         this.noCulling = false;
         this.blocksBuilding=false;
         this.entityData.set(DATA_ROTATING_ID,flag);
-  //      this.entityData.set(DATA_COOL_TIME_ID,20);
     }
     @Override
     protected void defineSynchedData() {
         this.entityData.define(DATA_ROTATING_ID,false);
         this.entityData.define(DATA_OFFSET_ID,new Vector3f());
-   //     this.entityData.define(DATA_COOL_TIME_ID,0);
     }
     @Override
     public  Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -77,27 +73,14 @@ public class StandingSeatEntity extends Entity {
         if (tag.contains("offsetX")&&tag.contains("offsetY")&&tag.contains("offsetZ")) {
             this.entityData.set(DATA_OFFSET_ID,new Vector3f(tag.getFloat("offsetX"),tag.getFloat("offsetY"),tag.getFloat("offsetZ")));
         }
-//        if (tag.contains("coolTime")) {
-//            this.entityData.set(DATA_COOL_TIME_ID,tag.getInt("coolTime"));
-//        }
-    }
+   }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putBoolean("rotatable",entityData.get(DATA_ROTATING_ID));
         tag.putFloat("offsetX",entityData.get(DATA_OFFSET_ID).x);
         tag.putFloat("offsetY",entityData.get(DATA_OFFSET_ID).y);
         tag.putFloat("offsetZ",entityData.get(DATA_OFFSET_ID).z);
-    //    tag.putInt("coolTime",entityData.get(DATA_COOL_TIME_ID));
     }
-//    public void setCoolTime(int i){
-//        entityData.set(DATA_COOL_TIME_ID,i);
-//    }
-//    public void addCoolTime(int i){
-//        entityData.set(DATA_COOL_TIME_ID,getCoolTime()+i);
-//    }
-//    public int getCoolTime(){
-//        return entityData.get(DATA_COOL_TIME_ID);
-//    }
     public Vector3f getOffset(){
         return entityData.get(DATA_OFFSET_ID);
     }
@@ -110,19 +93,15 @@ public class StandingSeatEntity extends Entity {
     public void setRotating(boolean flag){
         entityData.set(DATA_ROTATING_ID,flag);
     }
-
     @Override
     public void tick() {
         super.tick();
         this.tickLerp();
-        if(!this.isPassenger()){
-            discard();
-        }
         if (level().isClientSide) {
             return;
         }
         double bigger=0.3D;
-        AABB axisalignedbb =this.getBoundingBox()/*.deflate(bigger, bigger, bigger)*/;
+        AABB axisalignedbb =this.getBoundingBox();
         List<LivingEntity> list =level().getEntitiesOfClass(LivingEntity.class, axisalignedbb);
         if(!level().isClientSide()&&this.getPassengers().isEmpty()){
             if(!list.isEmpty()) {
@@ -138,17 +117,7 @@ public class StandingSeatEntity extends Entity {
                 }
             }
         }
-        if(!isRotating()) {
-        if ( level().getBlockState(blockPosition()).getBlock() instanceof SeatBlock) {
-            return;
-        }
-        this.discard();
-        }
-//        if(getCoolTime()>0){
-//            addCoolTime(-1);
-//        }else{
-//            discard();
-//        }
+
     }
     @Override
     protected void addPassenger(Entity passenger) {
@@ -162,19 +131,14 @@ public class StandingSeatEntity extends Entity {
     public double getPassengersRidingOffset() {
         return  -0.2d;
     }
-
     @Override
     public boolean canCollideWith(Entity entity) {
         return true;
     }
-
-
     /**trueにすると、当たり判定内に入ったときにはじき出される*/
     public boolean canBeCollidedWith() {
         return false;
     }
-
-
     public boolean isPickable() {
         return true;
     }
@@ -182,7 +146,6 @@ public class StandingSeatEntity extends Entity {
     public boolean mayInteract(Level level, BlockPos pos) {
         return true;
     }
-
     @Override
     protected boolean canRide(Entity p_20339_) {
         return true;
@@ -199,14 +162,12 @@ public class StandingSeatEntity extends Entity {
         }
         if (!this.level().isClientSide()&&this.getPassengers().isEmpty())
         {
-
             player.startRiding(this);
             level().playSound((Player) null, this.blockPosition(), SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.FAIL;
     }
-
     @Override
     public boolean hurt(DamageSource p_19946_, float p_19947_) {
         if(level().getBlockState(blockPosition()).is(Register.seat.get())){
@@ -243,11 +204,6 @@ public class StandingSeatEntity extends Entity {
         }
     }
     public Vec3 getDismountLocationForPassenger(LivingEntity p_38145_) {
-//        Vec3 vec3=this.position();
-//        double vx=getOffset().x;
-//        double vy=getOffset().y;
-//        double vz=getOffset().z;
-//        return vec3.add(new Vec3(getOffset()));
         Direction direction = this.getMotionDirection();
         if (direction.getAxis() == Direction.Axis.Y) {
             return super.getDismountLocationForPassenger(p_38145_);
@@ -278,10 +234,8 @@ public class StandingSeatEntity extends Entity {
                     }
                 }
             }
-
             double d1 = this.getBoundingBox().maxY;
             blockpos$mutableblockpos.set((double)blockpos.getX(), d1, (double)blockpos.getZ());
-
             for(Pose pose1 : immutablelist) {
                 double d2 = (double)p_38145_.getDimensions(pose1).height;
                 int j = Mth.ceil(d1 - (double)blockpos$mutableblockpos.getY() + d2);
@@ -293,14 +247,12 @@ public class StandingSeatEntity extends Entity {
                     break;
                 }
             }
-
             return super.getDismountLocationForPassenger(p_38145_);
         }
     }
     @Override
     protected void positionRider(Entity entity, MoveFunction moveFunction) {
-      //  super.positionRider(entity, moveFunction);
-        int passengerIndex = this.getPassengers().indexOf(entity);
+       int passengerIndex = this.getPassengers().indexOf(entity);
         if(passengerIndex>=0&&entity instanceof Player) {
             Vec3 vec3=this.position();
             double vx=getOffset().x;
@@ -341,7 +293,6 @@ public class StandingSeatEntity extends Entity {
                         }
                     }
                 }
-
                 if(movableFlag) {
                     moveFunction.accept(entity, vec3.x + vx, vec3.y + vy, vec3.z + vz);
                     setOffset((float) vx, (float) 1D, (float) vz);
@@ -349,7 +300,6 @@ public class StandingSeatEntity extends Entity {
 
                     moveFunction.accept(entity, vec3.x + vx0, vec3.y + vy0, vec3.z + vz0);
                 }
-
             }
         }else{
             super.positionRider(entity,moveFunction);

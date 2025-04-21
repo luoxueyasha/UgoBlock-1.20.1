@@ -23,7 +23,6 @@ public class RotationControllerRenderer implements BlockEntityRenderer<RotationC
     public RotationControllerRenderer(BlockEntityRendererProvider.Context context) {
         blockRenderDispatcher=context.getBlockRenderDispatcher();
     }
-
     public void render(RotationControllerBlockEntity blockEntity, float f1, PoseStack poseStack, MultiBufferSource bufferSource, int i1, int i2) {
       BlockState imitatingState=blockEntity.getImitatingState();
         if(!imitatingState.isAir()){
@@ -33,8 +32,5 @@ public class RotationControllerRenderer implements BlockEntityRenderer<RotationC
             this.blockRenderDispatcher.renderSingleBlock(imitatingState,poseStack,bufferSource,i1, OverlayTexture.NO_OVERLAY);
             poseStack.popPose();
         }
-
     }
-
-
 }

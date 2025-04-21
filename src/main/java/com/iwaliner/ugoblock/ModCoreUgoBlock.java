@@ -40,8 +40,7 @@ import java.util.List;
 
 
 @Mod(ModCoreUgoBlock.MODID)
-public class ModCoreUgoBlock
-{
+public class ModCoreUgoBlock {
      public static final String MODID = "ugoblock";
     public static Logger logger = LogManager.getLogger("ugoblock");
     public ModCoreUgoBlock() {
@@ -51,7 +50,6 @@ public class ModCoreUgoBlock
         modEventBus.addListener(this::CreativeTabEvent);
         modEventBus.addListener(this::ItemDecorationRegisterEvent);
     }
-
     @SubscribeEvent
     public void CreativeTabEvent(BuildCreativeModeTabContentsEvent event){
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
@@ -101,7 +99,6 @@ public class ModCoreUgoBlock
             }
         }
     }
-
     @SubscribeEvent
     public void CardLeftClickEvent(PlayerInteractEvent.LeftClickBlock event) {
         ItemStack stack=event.getItemStack();
@@ -123,8 +120,7 @@ public class ModCoreUgoBlock
                 tag.putBoolean("select",false);
             }
             tag.putBoolean("select",!tag.getBoolean("select"));
-            //   if(!(state.getBlock() instanceof SlideControllerBlock)) {
-            int ii = -1;
+           int ii = -1;
             for (int i = 0; i < Utils.getMaxSize(); i++) {
                 if (!posTag.contains("location_" + String.valueOf(i))) {
                     ii = i;
@@ -169,15 +165,12 @@ public class ModCoreUgoBlock
             } else {
                 stack.setTag(tag);
             }
-            //  }
             level.playSound(event.getEntity(),pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS,1F,1F);
             if(event.getEntity().isCreative()) {
                 event.setCanceled(true);
             }
         }
     }
-
-
     @SubscribeEvent
     public void AttachCapabilitiesLevel(AttachCapabilitiesEvent<Level> event) {
             if(!event.getObject().getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).isPresent()) {

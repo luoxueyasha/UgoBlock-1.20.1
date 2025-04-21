@@ -5,8 +5,8 @@ import com.iwaliner.ugoblock.object.basket_maker.BasketMakerRenderer;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerScreen;
 import com.iwaliner.ugoblock.object.controller.RotationControllerRenderer;
 import com.iwaliner.ugoblock.object.controller.SlideControllerRenderer;
-import com.iwaliner.ugoblock.object.seat.InvisibleEntityRenderer;
 import com.iwaliner.ugoblock.object.moving_block.MovingBlockRenderer;
+import com.iwaliner.ugoblock.object.seat.InvisibleEntityRenderer;
 import com.iwaliner.ugoblock.object.controller.RotationControllerScreen;
 import com.iwaliner.ugoblock.object.controller.SlideControllerScreen;
 import com.iwaliner.ugoblock.object.wireless_redstone_receiver.WirelessRedstoneReceiverRenderer;
@@ -40,9 +40,7 @@ public class ClientSetUp {
         event.registerEntityRenderer(Register.GravitateBlock.get(), FallingBlockRenderer::new);
         event.registerEntityRenderer(Register.DoorEntity.get(), InvisibleEntityRenderer::new);
         event.registerEntityRenderer(Register.StandingSeatEntity.get(), InvisibleEntityRenderer::new);
-      //  event.registerEntityRenderer(Register.ControllableEntity.get(), ControllableEntityRenderer::new);
     }
-
     @Nullable
     @SubscribeEvent
     public static void RegisterRendererEvent(FMLClientSetupEvent event) {
@@ -64,9 +62,7 @@ public class ClientSetUp {
                 ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color2"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor2(itemStack).getId());
                 ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color3"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor3(itemStack).getId());
                 ItemProperties.register(Register.portable_momentary_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "powered"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.isPowered(itemStack)? 1 : 0);
-
             });
-
          }
     @SubscribeEvent
     public static void registerItemColorEvent(RegisterColorHandlersEvent.Item event) {

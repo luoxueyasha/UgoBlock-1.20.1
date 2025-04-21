@@ -17,7 +17,6 @@ public class SeatBlockItem extends BlockItem {
     public SeatBlockItem(Block p_40565_, Properties p_40566_) {
         super(p_40565_, p_40566_);
     }
-
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int i0, boolean flag0) {
         super.inventoryTick(stack, level, entity, i0, flag0);

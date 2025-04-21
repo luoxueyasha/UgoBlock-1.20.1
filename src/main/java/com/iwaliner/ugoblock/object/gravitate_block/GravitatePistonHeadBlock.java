@@ -22,7 +22,6 @@ public class GravitatePistonHeadBlock extends PistonHeadBlock {
         Block block = Register.gravitate_piston_base_block.get();
         return p_60299_.is(block) && p_60299_.getValue(PistonBaseBlock.EXTENDED) && p_60299_.getValue(FACING) == p_60298_.getValue(FACING);
     }
-
     public void playerWillDestroy(Level p_60265_, BlockPos p_60266_, BlockState p_60267_, Player p_60268_) {
         if (!p_60265_.isClientSide && p_60268_.getAbilities().instabuild) {
             BlockPos blockpos = p_60266_.relative(p_60267_.getValue(FACING).getOpposite());
@@ -30,7 +29,6 @@ public class GravitatePistonHeadBlock extends PistonHeadBlock {
                 p_60265_.destroyBlock(blockpos, false);
             }
         }
-
         super.playerWillDestroy(p_60265_, p_60266_, p_60267_, p_60268_);
     }
     public ItemStack getCloneItemStack(BlockGetter p_60261_, BlockPos p_60262_, BlockState p_60263_) {
@@ -40,5 +38,4 @@ public class GravitatePistonHeadBlock extends PistonHeadBlock {
         BlockState blockstate = p_60289_.getBlockState(p_60290_.relative(p_60288_.getValue(FACING).getOpposite()));
         return this.isFittingBase(p_60288_, blockstate) || blockstate.is(Blocks.MOVING_PISTON) && blockstate.getValue(FACING) == p_60288_.getValue(FACING);
     }
-
 }

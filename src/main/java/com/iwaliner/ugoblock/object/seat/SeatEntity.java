@@ -35,7 +35,6 @@ import java.util.List;
 public class SeatEntity extends Entity {
     public static final EntityDataAccessor<Boolean> DATA_ROTATING_ID = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.BOOLEAN);
     private static final ImmutableMap<Pose, ImmutableList<Integer>> POSE_DISMOUNT_HEIGHTS = ImmutableMap.of(Pose.STANDING, ImmutableList.of(0, 1, -1), Pose.CROUCHING, ImmutableList.of(0, 1, -1), Pose.SWIMMING, ImmutableList.of(0, 1));
-
     public SeatEntity(EntityType<?> p_270360_, Level p_270280_) {
         super(Register.SeatEntity.get(), p_270280_);
     }
@@ -77,7 +76,6 @@ public class SeatEntity extends Entity {
     public void setRotating(boolean flag){
         entityData.set(DATA_ROTATING_ID,flag);
     }
-
     @Override
     public void tick() {
         super.tick();
@@ -85,20 +83,19 @@ public class SeatEntity extends Entity {
         if (level().isClientSide) {
             return;
         }
-        double bigger=0.3D;
-        AABB axisalignedbb =this.getBoundingBox()/*.deflate(bigger, bigger, bigger)*/;
+        if(!(level().getBlockState(blockPosition()).getBlock() instanceof SeatBlock)&&!isPassenger()){
+            discard();
+        }
+        AABB axisalignedbb =this.getBoundingBox();
         List<LivingEntity> list =level().getEntitiesOfClass(LivingEntity.class, axisalignedbb);
         if(!level().isClientSide()&&this.getPassengers().isEmpty()){
             if(!list.isEmpty()) {
                 for (LivingEntity entity : list) {
-                 //   if (entity instanceof Player) {
-                 //   } else {
-                    if(!entity.isPassenger()&&!entity.isSuppressingBounce()) {
+                   if(!entity.isPassenger()&&!entity.isSuppressingBounce()&&!(entity instanceof Player)&&!isPassenger()) {
                         entity.startRiding(this);
                         level().playSound((Player) null, this.blockPosition(), SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                         return;
                               }
-                 //   }
                 }
             }
         }
@@ -121,19 +118,14 @@ public class SeatEntity extends Entity {
     public double getPassengersRidingOffset() {
         return  -0.2d;
     }
-
     @Override
     public boolean canCollideWith(Entity entity) {
         return true;
     }
-
-
     /**trueにすると、当たり判定内に入ったときにはじき出される*/
     public boolean canBeCollidedWith() {
         return false;
     }
-
-
     public boolean isPickable() {
         return true;
     }
@@ -141,7 +133,6 @@ public class SeatEntity extends Entity {
     public boolean mayInteract(Level level, BlockPos pos) {
         return true;
     }
-
     @Override
     protected boolean canRide(Entity p_20339_) {
         return true;
@@ -232,10 +223,8 @@ public class SeatEntity extends Entity {
                     }
                 }
             }
-
             double d1 = this.getBoundingBox().maxY;
             blockpos$mutableblockpos.set((double)blockpos.getX(), d1, (double)blockpos.getZ());
-
             for(Pose pose1 : immutablelist) {
                 double d2 = (double)p_38145_.getDimensions(pose1).height;
                 int j = Mth.ceil(d1 - (double)blockpos$mutableblockpos.getY() + d2);
@@ -251,33 +240,4 @@ public class SeatEntity extends Entity {
             return super.getDismountLocationForPassenger(p_38145_);
         }
     }
-   /* @Override
-    protected void positionRider(Entity entity, MoveFunction moveFunction) {
-      //  super.positionRider(entity, moveFunction);
-        int passengerIndex = this.getPassengers().indexOf(entity);
-        if(passengerIndex>=0) {
-                        Vec3 vec3=entity.position();
-                        double vx=0D;
-                        double vy=0D;
-                        double vz=0D;
-                        double i=0.25D;
-                        if(entity instanceof Player player){
-                           // ModCoreUgoBlock.logger.info("xOld:"+player.xOld);
-                            if(player.getDeltaMovement().x!=0D) {
-                                vx += player.getDeltaMovement().x * 10D;
-                            }
-                            if(player.getDeltaMovement().z!=0D){
-                                vz+=player.getDeltaMovement().z*10D;
-                            }
-                           *//* if(player.getDeltaMovement().z>0D){
-                                ++vz;
-                            }else if(player.getDeltaMovement().z<0D){
-                                --vz;
-                            }*//*
-                        }
-                        moveFunction.accept(entity, vec3.x+vx,vec3.y,vec3.z+vz);
-                    }
-    }
-*/
-
 }

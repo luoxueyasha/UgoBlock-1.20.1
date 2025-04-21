@@ -27,19 +27,16 @@ public class ShapeCardItem extends Item {
     public ShapeCardItem(Properties p_41383_) {
         super(p_41383_);
     }
-
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level=context.getLevel();
         BlockPos pos=context.getClickedPos();
-        BlockState state=level.getBlockState(pos);
         ItemStack stack=context.getItemInHand();
         List<BlockPos> list=new ArrayList<>();
         Player player=context.getPlayer();
         int size=stack.getCount();
         boolean flag=false;
         if(stack.getItem() instanceof ShapeCardItem&&player!=null) {
-           // if (!level.isClientSide()) {
                 CompoundTag tag = stack.getTag();
                 if (tag == null) {
                     tag = new CompoundTag();
@@ -120,21 +117,13 @@ public class ShapeCardItem extends Item {
             }else{
                 level.playSound(context.getPlayer(), pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
             }
-               // level.playSound(context.getPlayer(), pos, SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
                 return InteractionResult.SUCCESS;
             }
-
-        //    }
-
-        return InteractionResult.FAIL;
+       return InteractionResult.FAIL;
     }
-
-
-
    public boolean isFoil(ItemStack stack) {
         return stack.getTag()!=null&&stack.getTag().getBoolean("select");
     }
-
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
         list.add(Component.translatable("info.ugoblock.shape_card").withStyle(ChatFormatting.GREEN));

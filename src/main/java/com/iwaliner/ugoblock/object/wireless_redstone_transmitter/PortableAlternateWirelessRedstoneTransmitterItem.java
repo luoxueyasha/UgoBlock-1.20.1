@@ -20,9 +20,6 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
     public PortableAlternateWirelessRedstoneTransmitterItem(Properties p_41383_) {
         super(p_41383_);
     }
-
-
-
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
       ItemStack stack=player.getItemInHand(hand);
@@ -36,7 +33,6 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
                 return InteractionResultHolder.fail(stack);
             }else{
                 player.displayClientMessage(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter_color_not_set").withStyle(ChatFormatting.YELLOW), true);
-
             }
         }
         return InteractionResultHolder.fail(stack);
@@ -72,7 +68,6 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
         }
         return !tag.contains("color3");
     }
-
     public static boolean isPowered(ItemStack stack){
         CompoundTag tag=stack.getTag();
         if(tag==null){
@@ -117,7 +112,6 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
             return DyeColor.byId((int)tag.getByte("color3"));
         }
     }
-
     public static void setPowered(ItemStack stack,boolean power){
         if(stack.getTag()!=null) {
             stack.getTag().putBoolean("signal", power);
@@ -134,7 +128,6 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
             stack.setTag(new CompoundTag());
         }
         stack.getTag().putByte("color2", (byte) color2.getId());
-
     }
     public static void setColor3(ItemStack stack,DyeColor color3){
         if(stack.getTag()==null) {
@@ -142,7 +135,6 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
         }
         stack.getTag().putByte("color3", (byte) color3.getId());
     }
-
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
        list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter").withStyle(ChatFormatting.GREEN));
@@ -151,18 +143,5 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
             list.add(Utils.getComponentFrequencyColors(getColor1(stack),getColor2(stack),getColor3(stack)));
         }
 
-    }
-    public static boolean makeSureTagIsValid(@javax.annotation.Nullable CompoundTag tag) {
-        if (tag == null) {
-            return false;
-        } else if (!tag.contains("color1")) {
-            return false;
-        } else if (!tag.contains("color2")) {
-            return false;
-        } else if (!tag.contains("color3")) {
-            return false;
-        }else{
-            return true;
-        }
     }
 }

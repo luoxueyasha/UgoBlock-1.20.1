@@ -55,7 +55,6 @@ public class WirelessRedstoneReceiverBlockEntity extends BlockEntity implements 
             this.imitatingState = NbtUtils.readBlockState(holdergetter, tag.getCompound("imitatingState"));
         }
     }
-
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putByte("color1", color1==null? 0 : (byte) color1.getId());
@@ -69,50 +68,41 @@ public class WirelessRedstoneReceiverBlockEntity extends BlockEntity implements 
     public BlockState getImitatingState() {
         return imitatingState==null? Blocks.AIR.defaultBlockState() : imitatingState;
     }
-
     public void setImitatingState(BlockState imitatingState) {
         this.imitatingState = imitatingState;
     }
     public void setColor1(DyeColor color1) {
         this.color1 = color1;
     }
-
     public void setColor2(DyeColor color2) {
         this.color2 = color2;
     }
-
     public void setColor3(DyeColor color3) {
         this.color3 = color3;
     }
-
     public void setRemotePowered(boolean remotePowered) {
         level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(WirelessRedstoneReceiverBlock.POWERED,remotePowered));
         markUpdated();
         this.remotePowered = remotePowered;
     }
-
     public boolean isRemotePowered() {
         return remotePowered;
     }
-
     public DyeColor getColor1() {
         return color1==null? DyeColor.byId(0):color1;
     }
-
     public DyeColor getColor2() {
         return color2 == null ? DyeColor.byId(0) : color2;
     }
     public DyeColor getColor3() {
         return color3==null? DyeColor.byId(0):color3;
     }
-
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag= super.getUpdateTag();
         saveAdditional(tag);
         return tag;
     }
-
     @Override
     public void handleUpdateTag(CompoundTag tag) {
         super.handleUpdateTag(tag);
