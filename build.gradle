@@ -147,6 +147,7 @@ dependencies {
     runtimeOnly(  fg.deobf("curse.maven:jade-324717:5672013"))
     runtimeOnly(  fg.deobf("curse.maven:effortless-building-302113:4979089"))
     runtimeOnly(  fg.deobf("curse.maven:journeymap-32274:5789363"))
+    runtimeOnly(  fg.deobf("curse.maven:spark-361579:4587309"))
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
