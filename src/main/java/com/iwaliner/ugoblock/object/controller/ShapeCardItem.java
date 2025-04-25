@@ -49,10 +49,8 @@ public class ShapeCardItem extends Item {
             CompoundTag posTag = tag.getCompound("positionList");
             CompoundTag backup = posTag.copy();
             /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
-            // @debug starts
 
             HashSet<BlockPos> existingPositions = new HashSet<>();
-            int currentSize = 0;
 
             // Travel through current positions and first index only once
             int firstAvailableIndex = -1;
@@ -61,7 +59,6 @@ public class ShapeCardItem extends Item {
                 if (posTag.contains(key)) {
                     BlockPos existingPos = NbtUtils.readBlockPos(posTag.getCompound(key));
                     existingPositions.add(existingPos);
-                    currentSize++;
                 } else if (firstAvailableIndex == -1) {
                     firstAvailableIndex = i;
                 }
@@ -106,59 +103,11 @@ public class ShapeCardItem extends Item {
                             }
                         }
                     }
-
+                    /**始点をリセット*/
                     tag.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
                 }
                 flag = true;
             }
-            // if (!tag.contains("select")) {
-            //     tag.putBoolean("select", false);
-            // }
-            // tag.putBoolean("select", !tag.getBoolean("select"));
-
-            // int ii = -1;
-            // for (int i = 0; i < Utils.getMaxSize(); i++) {
-            //     if (!posTag.contains("location_" + String.valueOf(i))) {
-            //         ii = i;
-            //         break;
-            //     } else {
-            //         list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
-            //     }
-            // }
-            // if (ii != -1) {
-            //     if (tag.getBoolean("select")) {
-            //         /**範囲選択の始点を登録*/
-            //         tag.put("edge_A", NbtUtils.writeBlockPos(pos));
-            //     } else {
-            //         /**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*/
-            //         BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
-            //         for (int i = 0; i <= Math.abs(edgeA.getX() - pos.getX()); i++) {
-            //             for (int j = 0; j <= Math.abs(edgeA.getY() - pos.getY()); j++) {
-            //                 for (int k = 0; k <= Math.abs(edgeA.getZ() - pos.getZ()); k++) {
-            //                     BlockPos pos2 = pos.offset(edgeA.getX() - pos.getX() >= 0 ? i : -i, edgeA.getY() - pos.getY() >= 0 ? j : -j, edgeA.getZ() - pos.getZ() >= 0 ? k : -k);
-            //                     int ii2 = -1;
-            //                     for (int i0 = 0; i0 < Utils.getMaxSize(); i0++) {
-            //                         if (!posTag.contains("location_" + String.valueOf(i0))) {
-            //                             ii2 = i0;
-            //                             break;
-            //                         }
-            //                     }
-            //                     if (ii2 != -1 && !list.contains(pos2)) {
-            //                         if ((player.isSuppressingBounce()) || !level.getBlockState(pos2).isAir()) {
-            //                             posTag.put("location_" + String.valueOf(ii2), NbtUtils.writeBlockPos(pos2));
-            //                         }
-            //                     }
-            //                 }
-            //             }
-            //         }
-
-            //         /**始点をリセット*/
-            //         tag.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
-            //     }
-            //     flag=true;
-            // }
-
-            // @debug ends
 
             if (posTag.size() >= Utils.getMaxSize()) {
                 if (context.getPlayer() != null && !level.isClientSide) {
