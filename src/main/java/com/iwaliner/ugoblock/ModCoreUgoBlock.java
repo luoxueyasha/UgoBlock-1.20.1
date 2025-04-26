@@ -121,7 +121,7 @@ public class ModCoreUgoBlock {
             }
             tag.putBoolean("select",!tag.getBoolean("select"));
            int ii = -1;
-            for (int i = 0; i < Utils.getMaxSize(); i++) {
+            for (int i = 0; i < Utils.maxSize; i++) {
                 if (!posTag.contains("location_" + String.valueOf(i))) {
                     ii = i;
                     break;

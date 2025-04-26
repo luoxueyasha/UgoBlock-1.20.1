@@ -796,9 +796,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
             return;
         }
         int startTick = getStartTick();
-        // @debug, luoxueyasha 2025.4.25
-        // what the fuck are you doing iwaliner????? this list has no usage
-        // List<Vec3> entityOffsetPosList = new ArrayList<>();
+        List<Vec3> entityOffsetPosList = new ArrayList<>();
         List<Vec3> originPosList = new ArrayList<>();
         for (int i = 0; i < getPosList().size(); i++) {
             // entityOffsetPosList.add(Vec3.ZERO);
@@ -825,7 +823,6 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         List<BlockState> blockStateList = getStateList();
         blockStateList.addAll(getBasketStateList());
 
-        // @debug
         HashMap<Vec3, Integer> vec3ToIndex = new HashMap<>();
         for (int i = 0; i < rotatedVec3List.size(); i++) {
             vec3ToIndex.put(rotatedVec3List.get(i), i);

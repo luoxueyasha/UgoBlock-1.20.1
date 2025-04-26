@@ -54,7 +54,7 @@ public class ShapeCardItem extends Item {
 
             // Travel through current positions and first index only once
             int firstAvailableIndex = -1;
-            for (int i = 0; i < Utils.getMaxSize(); i++) {
+            for (int i = 0; i < Utils.maxSize; i++) {
                 String key = "location_" + i;
                 if (posTag.contains(key)) {
                     BlockPos existingPos = NbtUtils.readBlockPos(posTag.getCompound(key));
@@ -88,9 +88,9 @@ public class ShapeCardItem extends Item {
                     int newPosIndex = firstAvailableIndex;
 
                     // add new index
-                    for (int i = 0; i <= xDiff && newPosIndex < Utils.getMaxSize(); i++) {
-                        for (int j = 0; j <= yDiff && newPosIndex < Utils.getMaxSize(); j++) {
-                            for (int k = 0; k <= zDiff && newPosIndex < Utils.getMaxSize(); k++) {
+                    for (int i = 0; i <= xDiff && newPosIndex < Utils.maxSize; i++) {
+                        for (int j = 0; j <= yDiff && newPosIndex < Utils.maxSize; j++) {
+                            for (int k = 0; k <= zDiff && newPosIndex < Utils.maxSize; k++) {
                                 BlockPos newPos = pos.offset(i * xDir, j * yDir, k * zDir);
 
                                 if (!existingPositions.contains(newPos)) {
@@ -109,9 +109,9 @@ public class ShapeCardItem extends Item {
                 flag = true;
             }
 
-            if (posTag.size() >= Utils.getMaxSize()) {
+            if (posTag.size() >= Utils.maxSize) {
                 if (context.getPlayer() != null && !level.isClientSide) {
-                    context.getPlayer().displayClientMessage(Component.translatable("info.ugoblock.reachedPositionSelectLimit", Utils.getMaxSize() - 1).withStyle(ChatFormatting.RED), false);
+                    context.getPlayer().displayClientMessage(Component.translatable("info.ugoblock.reachedPositionSelectLimit", Utils.maxSize - 1).withStyle(ChatFormatting.RED), false);
                 }
                 CompoundTag tag1 = new CompoundTag();
                 tag1.put("edge_A", NbtUtils.writeBlockPos(Utils.errorPos()));
