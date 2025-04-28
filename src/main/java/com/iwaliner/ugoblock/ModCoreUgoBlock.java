@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -76,22 +77,24 @@ public class ModCoreUgoBlock {
     public void ItemStackedOnOtherEvent(ItemStackedOnOtherEvent event){
         ItemStack transmitterStack=event.getCarriedItem();
         ItemStack dyeStack=event.getStackedOnItem();
+        Player player = event.getPlayer();
+        Level level = player.level();
         if(dyeStack.getItem()instanceof DyeItem&& (transmitterStack.is(Register.portable_alternate_wireless_redstone_transmitter.get()) || transmitterStack.is(Register.portable_momentary_wireless_redstone_transmitter.get()) )) {
             DyeColor dyeColor=((DyeItem) dyeStack.getItem()).getDyeColor();
             if (PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(transmitterStack)) {
-                event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
+                level.playSound(player,player.blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
                 PortableAlternateWirelessRedstoneTransmitterItem.setColor1(transmitterStack,dyeColor);
                 event.setCanceled(true);
             }else if (PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(transmitterStack)) {
-                event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
+                level.playSound(player,player.blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
                 PortableAlternateWirelessRedstoneTransmitterItem.setColor2(transmitterStack,dyeColor);
                 event.setCanceled(true);
             }else if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(transmitterStack)) {
-                event.getPlayer().level().playSound(event.getPlayer(),event.getPlayer().blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
+                level.playSound(player,player.blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
                 PortableAlternateWirelessRedstoneTransmitterItem.setColor3(transmitterStack,dyeColor);
-                event.getPlayer().level().getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
+                level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
                     boolean alreadyExist=!data.isSignalNull(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStack));
-                    if(alreadyExist&&event.getPlayer().level().isClientSide){
+                    if(alreadyExist&& level.isClientSide){
                         event.getPlayer().displayClientMessage(Utils.getComponentFrequencyAlreadyExists(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStack)), false);
                     }
                 });
@@ -122,11 +125,11 @@ public class ModCoreUgoBlock {
             tag.putBoolean("select",!tag.getBoolean("select"));
            int ii = -1;
             for (int i = 0; i < Utils.maxSize; i++) {
-                if (!posTag.contains("location_" + String.valueOf(i))) {
+                if (!posTag.contains("location_" + i)) {
                     ii = i;
                     break;
                 } else {
-                    list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + String.valueOf(i))));
+                    list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + i)));
                 }
             }
             if (ii != -1) {
@@ -157,7 +160,7 @@ public class ModCoreUgoBlock {
                     }
                     CompoundTag newTag = new CompoundTag();
                     for (int i = 0; i < newList.size(); i++) {
-                        newTag.put("location_" + String.valueOf(i), NbtUtils.writeBlockPos(newList.get(i)));
+                        newTag.put("location_" + i, NbtUtils.writeBlockPos(newList.get(i)));
                     }
                     tag.put("positionList",newTag);
                     stack.setTag(tag);
@@ -192,7 +195,7 @@ public class ModCoreUgoBlock {
         LivingEntity livingEntity = (LivingEntity)event.getEntity();
         ItemStack stack=livingEntity.getItemInHand(event.getHand());
         if(stack.is(Register.shape_card.get())||stack.is(Register.vector_card.get())) {
-            if(state.getBlock() instanceof BasketMakerBlock||state.getBlock() instanceof RotationControllerBlock||state.getBlock() instanceof SlideControllerBlock){
+            if(block instanceof BasketMakerBlock||block instanceof RotationControllerBlock||block instanceof SlideControllerBlock){
                 if(event.getLevel().getBlockEntity(pos) instanceof AbstractControllerBlockEntity blockEntity){
                     if(stack.is(Register.shape_card.get())&&blockEntity.hasShapeCard()){
                         event.setUseItem(Event.Result.ALLOW);

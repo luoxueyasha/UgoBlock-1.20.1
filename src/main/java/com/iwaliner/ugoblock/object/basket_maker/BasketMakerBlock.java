@@ -58,19 +58,16 @@ public class BasketMakerBlock extends BaseEntityBlock {
     }
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter getter, BlockPos pos, CollisionContext context) {
-        if(state.getValue(FACING)==Direction.EAST){
-            return EAST_BOX;
-        }else if(state.getValue(FACING)==Direction.WEST){
-            return WEST_BOX;
-        }else if(state.getValue(FACING)==Direction.SOUTH){
-            return SOUTH_BOX;
-        }else if(state.getValue(FACING)==Direction.NORTH){
-            return NORTH_BOX;
-        }else if(state.getValue(FACING)==Direction.DOWN){
-            return DOWN_BOX;
-        }else {
-            return UP_BOX;
-        }
+
+        return switch (state.getValue(FACING)) {
+            case EAST -> EAST_BOX;
+            case WEST -> WEST_BOX;
+            case SOUTH -> SOUTH_BOX;
+            case NORTH -> NORTH_BOX;
+            case DOWN -> DOWN_BOX;
+            default -> UP_BOX;
+        };
+
     }
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49915_) {
