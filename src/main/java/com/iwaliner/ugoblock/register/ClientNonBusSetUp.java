@@ -15,10 +15,12 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -43,70 +45,115 @@ public class ClientNonBusSetUp {
 
     // @debug, only render one box for performance
     private static final double[] box = {
-        0,0,0,1,1,1
+        // front
+        0, 0, 0.0,  1, 1, 0.0,
+        // back
+        0, 0, 1.0,  1, 1, 1.0,
+        // top
+        0, 1.0, 0,  1, 1.0, 1,
+        // bottom
+        0, 0.0, 0,  1, 0.0, 1,
+        // right
+        1.0, 0, 0,  1.0, 1, 1,
+        // left
+        0.0, 0, 0,  0.0, 1, 1
     };
-    private static final double minX = box[0];
-    private static final double minY = box[1];
-    private static final double minZ = box[2];
-    private static final double maxX = box[3];
-    private static final double maxY = box[4];
-    private static final double maxZ = box[5];
+
 
     private static final double two_third_PI = 2.09439510239319549231;// PI*2/3
     private static final double one_third_PI = 1.04719755119659774615;// PI/3
 
 
-    public static void renderShape(PoseStack poseStack, VertexConsumer vertexConsumer, double d1, double d2, double d3, float ff1, float ff2, float ff3, float ff4) {
+    private static final ResourceLocation GREEN_BLOCK_TEXTURE = new ResourceLocation("ugoblock", "textures/gui/green_block_surface.png");
+    private static final ResourceLocation YELLOW_BLOCK_TEXTURE = new ResourceLocation("ugoblock", "textures/gui/yellow_block_surface.png");
+
+    public static void renderShape(PoseStack poseStack, MultiBufferSource buffer, double d1, double d2, double d3, boolean isYellow) {
+        VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.entityTranslucent(isYellow ? YELLOW_BLOCK_TEXTURE : GREEN_BLOCK_TEXTURE));
+        
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
 
-        // front
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, minY, minZ, maxX, minY, minZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, minY, minZ, minX, minY, maxZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, maxX, minY, minZ, maxX, minY, maxZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, minY, maxZ, maxX, minY, maxZ, ff1, ff2, ff3, ff4);
+        float minU = 0f;
+        float maxU = 1f;
+        float minV = 0f;
+        float maxV = 1f;
 
-        // top
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, maxY, minZ, maxX, maxY, minZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, maxY, minZ, minX, maxY, maxZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, maxX, maxY, minZ, maxX, maxY, maxZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, maxY, maxZ, maxX, maxY, maxZ, ff1, ff2, ff3, ff4);
+        float r = isYellow ? 1f : 0f;
+        float g = 1f;
+        float b = 0f;
+        float a = 1f;
 
-        // side
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, minY, minZ, minX, maxY, minZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, maxX, minY, minZ, maxX, maxY, minZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, minX, minY, maxZ, minX, maxY, maxZ, ff1, ff2, ff3, ff4);
-        renderLine(matrix4f, matrix3f, vertexConsumer, d1, d2, d3, maxX, minY, maxZ, maxX, maxY, maxZ, ff1, ff2, ff3, ff4);
+        float offsetDistance = 0.005f;
 
+        for (int i = 0; i < 6; i++) {
+            int faceOffset = i * 6;
+            float x1 = (float)(box[faceOffset] + d1);
+            float y1 = (float)(box[faceOffset + 1] + d2);
+            float z1 = (float)(box[faceOffset + 2] + d3);
+            float x2 = (float)(box[faceOffset + 3] + d1);
+            float y2 = (float)(box[faceOffset + 4] + d2);
+            float z2 = (float)(box[faceOffset + 5] + d3);
+
+            float nx = 0, ny = 0, nz = 0;
+            switch (i) {
+                case 0: // front
+                    nz = -1;
+                    z1 -= offsetDistance;
+                    vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y1, z1).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y2, z1).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y2, z1).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    break;
+                case 1: // back
+                    nz = 1;
+                    z1 += offsetDistance;
+                    vertexConsumer.vertex(matrix4f, x2, y1, z1).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y2, z1).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y2, z1).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    break;
+                case 2: // top
+                    ny = 1;
+                    y1 += offsetDistance;
+                    vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y1, z2).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y1, z2).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y1, z1).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    break;
+                case 3: // bottom
+                    ny = -1;
+                    y1 -= offsetDistance;
+                    vertexConsumer.vertex(matrix4f, x1, y1, z2).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y1, z1).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x2, y1, z2).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    break;
+                case 4: // right
+                    nx = 1;
+                    x1 += offsetDistance;
+                    vertexConsumer.vertex(matrix4f, x1, y1, z2).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y2, z1).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y2, z2).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    break;
+                case 5: // left
+                    nx = -1;
+                    x1 -= offsetDistance;
+                    vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y1, z2).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y2, z2).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    vertexConsumer.vertex(matrix4f, x1, y2, z1).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
+                    break;
+            }
+        }
     }
 
-    private static void renderLine(Matrix4f matrix4f, Matrix3f matrix3f, VertexConsumer vertexConsumer, 
-                                 double d1, double d2, double d3,
-                                 double x1, double y1, double z1, 
-                                 double x2, double y2, double z2,
-                                 float r, float g, float b, float a) {
-        float f = (float)(x2 - x1);
-        float f1 = (float)(y2 - y1);
-        float f2 = (float)(z2 - z1);
-        // @debug, f3 is for normalizing the vector. maybe useless.
-        // float f3 = Mth.sqrt(f * f + f1 * f1 + f2 * f2);
-        // f = f / f3;
-        // f1 = f1 / f3;
-        // f2 = f2 / f3;
-
-        vertexConsumer.vertex(matrix4f, (float)(x1 + d1), (float)(y1 + d2), (float)(z1 + d3))
-            .color(r, g, b, a).normal(matrix3f, f, f1, f2).endVertex();
-        vertexConsumer.vertex(matrix4f, (float)(x2 + d1), (float)(y2 + d2), (float)(z2 + d3))
-            .color(r, g, b, a).normal(matrix3f, f, f1, f2).endVertex();
-
+    public static void renderYellowOutline(PoseStack poseStack, MultiBufferSource buffer, Entity entity, double x, double y, double z, BlockPos blockPos) {
+        renderShape(poseStack, buffer, blockPos.getX() - x, blockPos.getY() - y, blockPos.getZ() - z, true);
     }
 
-    public static void renderYellowOutline(PoseStack poseStack, VertexConsumer vertexConsumer, Entity p_109640_, double x, double y, double z, BlockPos blockPos) {
-        renderShape(poseStack, vertexConsumer, (double) blockPos.getX() - x, (double) blockPos.getY() - y, (double) blockPos.getZ() - z, 1f, 1f, 0f, 1f);
-    }
-
-    public static void renderGreenOutline(PoseStack p_109638_, VertexConsumer p_109639_, Entity p_109640_, double p_109641_, double p_109642_, double p_109643_, BlockPos p_109644_) {
-        renderShape(p_109638_, p_109639_, (double) p_109644_.getX() - p_109641_, (double) p_109644_.getY() - p_109642_, (double) p_109644_.getZ() - p_109643_, 0f, 1f, 0f, 1f);
+    public static void renderGreenOutline(PoseStack poseStack, MultiBufferSource buffer, Entity entity, double x, double y, double z, BlockPos blockPos) {
+        renderShape(poseStack, buffer, blockPos.getX() - x, blockPos.getY() - y, blockPos.getZ() - z, false);
     }
 
 
@@ -135,7 +182,8 @@ public class ClientNonBusSetUp {
                 if (tag.contains("originPosition")) {
                     startLocation = NbtUtils.readBlockPos(tag.getCompound("originPosition"));
 
-                    ClientNonBusSetUp.renderGreenOutline(poseStack, lineBuffer, player, cameraPos.x, cameraPos.y, cameraPos.z, startLocation);
+                    ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource, cameraEntity,
+                        cameraEntity.position().x, cameraEntity.position().y, cameraEntity.position().z, startLocation);
 
                     if (tag.contains("endPosition")) {
                         BlockPos endLocation = NbtUtils.readBlockPos(tag.getCompound("endPosition"));
@@ -197,6 +245,7 @@ public class ClientNonBusSetUp {
                                     case 5 -> dz1 -= 0.52D;
                                 }
 
+
                                 double dx_total = dx + dx1, dy_total = dy + dy1, dz_total = dz + dz1;
                                 poseStack.pushPose();
                                 lineBuffer.vertex(poseStack.last().pose(), (float) (0 + dx_total), (float) (0 + dy_total), (float) (0 + dz_total)).color(originColor[0], originColor[1], originColor[2], originColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
@@ -229,6 +278,7 @@ public class ClientNonBusSetUp {
                             }
                         }
                     }
+
                 }
             } else if (mainStack.is(shapeCard) || offStack.is(shapeCard)) {
                 CompoundTag tag = (mainStack.is(shapeCard) ? mainStack : offStack).getTag();
@@ -242,47 +292,48 @@ public class ClientNonBusSetUp {
                 BlockPos hitPos = ((BlockHitResult) Objects.requireNonNull(hitResult)).getBlockPos();
                 int range = 6;
 
-                // init frustum. maybe no use
-                // BlockPos camBlockPos = camera.getBlockPosition();
                 Frustum frustum = new Frustum(new Matrix4f(), new Matrix4f());
                 frustum.prepare(cameraPos.x, cameraPos.y, cameraPos.z);
 
                 if (!tag.contains("positionList")) {
                     tag.put("positionList", new CompoundTag());
+                    return;
                 }
                 CompoundTag posTag = tag.getCompound("positionList");
                 List<BlockPos> blockPosList = new ArrayList<>();
-                int ii = -1;
-                for (int i = 0; i < Utils.maxSize; i++) {
-                    if (!posTag.contains("location_" + i)) {
-                        ii = i - 1;
-                        break;
+                int tagLen = posTag.size();
+                if(tagLen <= 0){
+                    return;
+                }
+                for (int i = 0; i < tagLen; i++) {
+                    BlockPos pos = NbtUtils.readBlockPos(posTag.getCompound("location_" + i));
+                    if (pos.equals(Utils.errorPos())) {
+                        continue;
                     }
 
-                    BlockPos pos = NbtUtils.readBlockPos(posTag.getCompound("location_" + i));
-                    if (!pos.equals(Utils.errorPos())) {
-                        int dx = Math.abs(pos.getX() - hitPos.getX());
-                        int dy = Math.abs(pos.getY() - hitPos.getY());
-                        int dz = Math.abs(pos.getZ() - hitPos.getZ());
+                    int dx = Math.abs(pos.getX() - hitPos.getX());
+                    int dy = Math.abs(pos.getY() - hitPos.getY());
+                    int dz = Math.abs(pos.getZ() - hitPos.getZ());
 
-                        if (dx <= range && dy <= range && dz <= range) {
-                            AABB aabb = new AABB(pos).inflate(range);
-                            if (frustum.isVisible(aabb)) {
-                                blockPosList.add(pos);
-                            }
+                    if (dx <= range && dy <= range && dz <= range) {
+                        AABB aabb = new AABB(pos).inflate(range);
+                        if (frustum.isVisible(aabb)) {
+                            blockPosList.add(pos);
                         }
                     }
                 }
 
-                if(ii == -1 || blockPosList.isEmpty()){
+                if(blockPosList.isEmpty()){
                     return;
                 }
 
+                // @debug
+                poseStack.pushPose();
                 for (BlockPos pos : blockPosList) {
-                    renderYellowOutline(poseStack, lineBuffer, cameraEntity,
+                    renderYellowOutline(poseStack, multiBufferSource, cameraEntity,
                         cameraPos.x, cameraPos.y, cameraPos.z, pos);
                 }
-
+                poseStack.popPose();
 
             }
         }
@@ -314,7 +365,7 @@ public class ClientNonBusSetUp {
                 return;
             }
             BlockPos startLocation = NbtUtils.readBlockPos(tag.getCompound("originPosition"));
-            ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource.getBuffer(RenderType.lines()), player, player.position().x, player.position().y, player.position().z, startLocation);
+            ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource, player, player.position().x, player.position().y, player.position().z, startLocation);
             if ((!VectorCardItem.isSelectionFinished(stack) && !VectorCardItem.isDuringSelection(stack))) {
                 guiGraphics.drawCenteredString(font, Component.translatable("info.ugoblock.vector_card_select_origin_pos").getString(), centerWidth, height - 75, 7208704);
             } else if (VectorCardItem.isDuringSelection(stack)) {

@@ -35,9 +35,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Mod(ModCoreUgoBlock.MODID)
@@ -104,76 +107,90 @@ public class ModCoreUgoBlock {
     }
     @SubscribeEvent
     public void CardLeftClickEvent(PlayerInteractEvent.LeftClickBlock event) {
-        ItemStack stack=event.getItemStack();
-        BlockPos pos=event.getPos();
-        if(stack.is(Register.shape_card.get())&&event.getAction()== PlayerInteractEvent.LeftClickBlock.Action.START){
-            List<BlockPos> list=new ArrayList<>();
-            Level level=event.getLevel();
-            BlockState state=level.getBlockState(pos);
-            CompoundTag tag = stack.getTag();
-            if (tag == null) {
-                tag = new CompoundTag();
-            }
-            if(!tag.contains("positionList")){
-                tag.put("positionList",new CompoundTag());
-            }
-            CompoundTag posTag=tag.getCompound("positionList");
-            /**このタグは、tureのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
-            if(!tag.contains("select")){
-                tag.putBoolean("select",false);
-            }
-            tag.putBoolean("select",!tag.getBoolean("select"));
-           int ii = -1;
-            for (int i = 0; i < Utils.maxSize; i++) {
-                if (!posTag.contains("location_" + i)) {
-                    ii = i;
-                    break;
-                } else {
-                    list.add(NbtUtils.readBlockPos(posTag.getCompound("location_" + i)));
-                }
-            }
-            if (ii != -1) {
-                if (tag.getBoolean("select")) {
-                    /**範囲選択の始点を登録*/
-                    tag.put("edge_A", NbtUtils.writeBlockPos(pos));
+        ItemStack stack = event.getItemStack();
+        BlockPos pos = event.getPos();
+        if (!stack.is(Register.shape_card.get()) || event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) {
+            return;
+        }
 
-                    stack.setTag(tag);
-                } else {
-                    /**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*/
-                    BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
-                    List<BlockPos> removeList = new ArrayList<>();
-                    List<BlockPos> newList = new ArrayList<>();
-                    for (int i = 0; i <= Math.abs(edgeA.getX() - pos.getX()); i++) {
-                        for (int j = 0; j <= Math.abs(edgeA.getY() - pos.getY()); j++) {
-                            for (int k = 0; k <= Math.abs(edgeA.getZ() - pos.getZ()); k++) {
-                                BlockPos pos2 = pos.offset(edgeA.getX() - pos.getX() >= 0 ? i : -i, edgeA.getY() - pos.getY() >= 0 ? j : -j, edgeA.getZ() - pos.getZ() >= 0 ? k : -k);
-                                if (list.contains(pos2)) {
-                                    removeList.add(pos2);
-                                }
-                            }
-                        }
-                    }
-                    for (int i = 0; i < list.size(); i++) {
-                        if (!removeList.contains(list.get(i))) {
-                            newList.add(list.get(i));
-                        }
-                    }
-                    CompoundTag newTag = new CompoundTag();
-                    for (int i = 0; i < newList.size(); i++) {
-                        newTag.put("location_" + i, NbtUtils.writeBlockPos(newList.get(i)));
-                    }
-                    tag.put("positionList",newTag);
-                    stack.setTag(tag);
-                }
-            } else {
-                stack.setTag(tag);
+        Level level = event.getLevel();
+        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag posTag = tag.contains("positionList") ? tag.getCompound("positionList") : new CompoundTag();
+        tag.put("positionList", posTag);
+
+       /**このタグは、trueのときfalseにした上で範囲選択終了処理を行い、falseのときはtrueにしたうえで範囲選択開始処理を行う*/
+        boolean isSelecting = !tag.getBoolean("select");
+        tag.putBoolean("select", isSelecting);
+
+        // get recent positions
+        Set<BlockPos> set = new HashSet<>();
+        int ii = -1;
+        for (int i = 0; i < Utils.maxSize; i++) {
+            String key = "location_" + i;
+            if (!posTag.contains(key)) {
+                ii = i;
+                break;
             }
-            level.playSound(event.getEntity(),pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS,1F,1F);
-            if(event.getEntity().isCreative()) {
-                event.setCanceled(true);
+            set.add(NbtUtils.readBlockPos(posTag.getCompound(key)));
+        }
+
+        if (ii != -1) {
+            if (isSelecting) {
+                /**範囲選択の始点を登録*/
+                tag.put("edge_A", NbtUtils.writeBlockPos(pos));
+            } else {
+                /**範囲選択の終点は今クリックした地点なので、始点も呼び出すことで範囲が確定*/
+                BlockPos edgeA = NbtUtils.readBlockPos(tag.getCompound("edge_A"));
+                Set<BlockPos> newSet = getBlockRemovedSet(set, edgeA, pos);
+
+                CompoundTag newTag = new CompoundTag();
+                int index = 0;
+                for (BlockPos blockPos : newSet) {
+                    newTag.put("location_" + index++, NbtUtils.writeBlockPos(blockPos));
+                }
+                tag.put("positionList", newTag);
             }
         }
+
+        stack.setTag(tag);
+        level.playSound(event.getEntity(), pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS, 1F, 1F);
+        
+        if (event.getEntity().isCreative()) {
+            event.setCanceled(true);
+        }
     }
+
+    private static @NotNull Set<BlockPos> getBlockRemovedSet(Set<BlockPos> set, BlockPos edgeA, BlockPos pos) {
+        Set<BlockPos> remainingSet = new HashSet<>(set);
+        Set<BlockPos> resultSet = new HashSet<>(set);
+
+        if(edgeA.equals(pos)){
+            resultSet.remove(pos);
+            return resultSet;
+        }
+        
+        int minX = Math.min(edgeA.getX(), pos.getX());
+        int maxX = Math.max(edgeA.getX(), pos.getX());
+        remainingSet.removeIf(blockPos -> 
+            blockPos.getX() < minX || blockPos.getX() > maxX
+        );
+
+        int minY = Math.min(edgeA.getY(), pos.getY());
+        int maxY = Math.max(edgeA.getY(), pos.getY());
+        remainingSet.removeIf(blockPos -> 
+            blockPos.getY() < minY || blockPos.getY() > maxY
+        );
+
+        int minZ = Math.min(edgeA.getZ(), pos.getZ());
+        int maxZ = Math.max(edgeA.getZ(), pos.getZ());
+        remainingSet.removeIf(blockPos -> 
+            blockPos.getZ() < minZ || blockPos.getZ() > maxZ
+        );
+
+        resultSet.removeAll(remainingSet);
+        return resultSet;
+    }
+
     @SubscribeEvent
     public void AttachCapabilitiesLevel(AttachCapabilitiesEvent<Level> event) {
             if(!event.getObject().getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).isPresent()) {
@@ -192,7 +209,7 @@ public class ModCoreUgoBlock {
         BlockPos pos = event.getPos();
         BlockState state=event.getLevel().getBlockState(pos);
         Block block=state.getBlock();
-        LivingEntity livingEntity = (LivingEntity)event.getEntity();
+        LivingEntity livingEntity = event.getEntity();
         ItemStack stack=livingEntity.getItemInHand(event.getHand());
         if(stack.is(Register.shape_card.get())||stack.is(Register.vector_card.get())) {
             if(block instanceof BasketMakerBlock||block instanceof RotationControllerBlock||block instanceof SlideControllerBlock){
