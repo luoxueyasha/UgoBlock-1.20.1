@@ -25,6 +25,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -46,17 +47,17 @@ public class ClientNonBusSetUp {
     // @debug, only render one box for performance
     private static final double[] box = {
         // front
-        0, 0, 0.0,  1, 1, 0.0,
+        0.05, 0.05, 0.0,  0.95, 0.95, 0.0,
         // back
-        0, 0, 1.0,  1, 1, 1.0,
+        0.05, 0.05, 1.0,  0.95, 0.95, 1.0,
         // top
-        0, 1.0, 0,  1, 1.0, 1,
+        0.05, 1.0, 0.05,  0.95, 1.0, 0.95,
         // bottom
-        0, 0.0, 0,  1, 0.0, 1,
+        0.05, 0.0, 0.05,  0.95, 0.0, 0.95,
         // right
-        1.0, 0, 0,  1.0, 1, 1,
+        1.0, 0.05, 0.05,  1.0, 0.95, 0.95,
         // left
-        0.0, 0, 0,  0.0, 1, 1
+        0.0, 0.05, 0.05,  0.0, 0.95, 0.95
     };
 
 
@@ -67,9 +68,11 @@ public class ClientNonBusSetUp {
     private static final ResourceLocation GREEN_BLOCK_TEXTURE = new ResourceLocation("ugoblock", "textures/gui/green_block_surface.png");
     private static final ResourceLocation YELLOW_BLOCK_TEXTURE = new ResourceLocation("ugoblock", "textures/gui/yellow_block_surface.png");
 
-    public static void renderShape(PoseStack poseStack, MultiBufferSource buffer, double d1, double d2, double d3, boolean isYellow) {
+    public static void renderShape(PoseStack poseStack, MultiBufferSource buffer, double d1, double d2, double d3, boolean isYellow, BlockPos pos, boolean[] faceVisibility) {
         VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.entityTranslucent(isYellow ? YELLOW_BLOCK_TEXTURE : GREEN_BLOCK_TEXTURE));
         
+        Level level = Minecraft.getInstance().level;
+        if (level == null) return;
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
 
@@ -85,7 +88,10 @@ public class ClientNonBusSetUp {
 
         float offsetDistance = 0.003f;
 
+
         for (int i = 0; i < 6; i++) {
+            if (!faceVisibility[i]) continue;
+            
             int faceOffset = i * 6;
             float x1 = (float)(box[faceOffset] + d1);
             float y1 = (float)(box[faceOffset + 1] + d2);
@@ -105,7 +111,7 @@ public class ClientNonBusSetUp {
                     vertexConsumer.vertex(matrix4f, x1, y2, z1).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
                     break;
                 case 1: // back
-                    nz = 1;
+                    nz = 1; 
                     z1 += offsetDistance;
                     vertexConsumer.vertex(matrix4f, x2, y1, z1).color(r, g, b, a).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
                     vertexConsumer.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
@@ -149,12 +155,13 @@ public class ClientNonBusSetUp {
         }
     }
 
-    public static void renderYellowOutline(PoseStack poseStack, MultiBufferSource buffer, Entity entity, double x, double y, double z, BlockPos blockPos) {
-        renderShape(poseStack, buffer, blockPos.getX() - x, blockPos.getY() - y, blockPos.getZ() - z, true);
+    public static void renderYellowOutline(PoseStack poseStack, MultiBufferSource buffer, Entity entity, double x, double y, double z, BlockPos blockPos, boolean[] faceVisibility) {
+        renderShape(poseStack, buffer, blockPos.getX() - x, blockPos.getY() - y, blockPos.getZ() - z, true, blockPos, faceVisibility);
     }
 
     public static void renderGreenOutline(PoseStack poseStack, MultiBufferSource buffer, Entity entity, double x, double y, double z, BlockPos blockPos) {
-        renderShape(poseStack, buffer, blockPos.getX() - x, blockPos.getY() - y, blockPos.getZ() - z, false);
+        boolean[] faceVisibility = {true,true,true,true,true,true}; 
+        renderShape(poseStack, buffer, blockPos.getX() - x, blockPos.getY() - y, blockPos.getZ() - z, false, blockPos, faceVisibility);
     }
 
 
@@ -295,7 +302,7 @@ public class ClientNonBusSetUp {
                     return;
                 }
                 BlockPos hitPos = ((BlockHitResult) Objects.requireNonNull(hitResult)).getBlockPos();
-                int range = 6;
+                int range = 32;
 
                 Frustum frustum = new Frustum(new Matrix4f(), new Matrix4f());
                 frustum.prepare(cameraPos.x, cameraPos.y, cameraPos.z);
@@ -306,10 +313,14 @@ public class ClientNonBusSetUp {
                 }
                 CompoundTag posTag = tag.getCompound("positionList");
                 List<BlockPos> blockPosList = new ArrayList<>();
+                Map<BlockPos, boolean[]> faceVisibilityMap = new HashMap<>();
+                
                 int tagLen = posTag.size();
                 if(tagLen <= 0){
                     return;
                 }
+
+                Set<BlockPos> allPositions = new HashSet<>();
                 for (int i = 0; i < tagLen; i++) {
                     BlockPos pos = NbtUtils.readBlockPos(posTag.getCompound("location_" + i));
                     if (pos.equals(Utils.errorPos())) {
@@ -323,8 +334,38 @@ public class ClientNonBusSetUp {
                     if (dx <= range && dy <= range && dz <= range) {
                         AABB aabb = new AABB(pos).inflate(range);
                         if (frustum.isVisible(aabb)) {
-                            blockPosList.add(pos);
+                            allPositions.add(pos);
                         }
+                    }
+                }
+
+                for (BlockPos pos : allPositions) {
+                    boolean[] faceVisibility = new boolean[6];
+                    BlockPos[] adjacentPositions = new BlockPos[] {
+                        pos.north(),
+                        pos.south(),
+                        pos.above(),
+                        pos.below(),
+                        pos.east(),
+                        pos.west()
+                    };
+
+                    for (int i = 0; i < 6; i++) {
+                        BlockPos adjPos = adjacentPositions[i];
+                        faceVisibility[i] = !allPositions.contains(adjPos) && !cameraEntity.level().getBlockState(adjPos).canOcclude();
+                    }
+
+                    boolean hasVisibleFace = false;
+                    for (boolean visible : faceVisibility) {
+                        if (visible) {
+                            hasVisibleFace = true;
+                            break;
+                        }
+                    }
+
+                    if (hasVisibleFace) {
+                        blockPosList.add(pos);
+                        faceVisibilityMap.put(pos, faceVisibility);
                     }
                 }
 
@@ -332,11 +373,10 @@ public class ClientNonBusSetUp {
                     return;
                 }
 
-                // @debug
                 poseStack.pushPose();
                 for (BlockPos pos : blockPosList) {
                     renderYellowOutline(poseStack, multiBufferSource, cameraEntity,
-                        cameraPos.x, cameraPos.y, cameraPos.z, pos);
+                        cameraPos.x, cameraPos.y, cameraPos.z, pos, faceVisibilityMap.get(pos));
                 }
                 poseStack.popPose();
 
