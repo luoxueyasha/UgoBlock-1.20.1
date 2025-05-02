@@ -83,7 +83,7 @@ public class ClientNonBusSetUp {
         float b = 0f;
         float a = 1f;
 
-        float offsetDistance = 0.005f;
+        float offsetDistance = 0.003f;
 
         for (int i = 0; i < 6; i++) {
             int faceOffset = i * 6;
@@ -144,6 +144,7 @@ public class ClientNonBusSetUp {
                     vertexConsumer.vertex(matrix4f, x1, y2, z2).color(r, g, b, a).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
                     vertexConsumer.vertex(matrix4f, x1, y2, z1).color(r, g, b, a).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(matrix3f, nx, ny, nz).endVertex();
                     break;
+
             }
         }
     }
@@ -159,14 +160,13 @@ public class ClientNonBusSetUp {
 
     @SubscribeEvent
     public static void RenderLevelEvent(RenderLevelStageEvent event) throws Throwable {
-        RenderLevelStageEvent.Stage stage = RenderLevelStageEvent.Stage.AFTER_SKY;
+        RenderLevelStageEvent.Stage stage = RenderLevelStageEvent.Stage.AFTER_PARTICLES;
         Camera camera = event.getCamera();
         Entity cameraEntity = camera.getEntity();
         Vec3 cameraPos = camera.getPosition();
         if (event.getStage() == stage && cameraEntity instanceof Player player) {
             PoseStack poseStack = event.getPoseStack();
-            MultiBufferSource multiBufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-            VertexConsumer lineBuffer = multiBufferSource.getBuffer(RenderType.lines());
+            MultiBufferSource.BufferSource multiBufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
             ItemStack mainStack = player.getMainHandItem();
             ItemStack offStack = player.getOffhandItem();
             Item vectorCard = Register.vector_card.get();
@@ -179,107 +179,112 @@ public class ClientNonBusSetUp {
                     return;
                 }
                 BlockPos startLocation;
-                if (tag.contains("originPosition")) {
-                    startLocation = NbtUtils.readBlockPos(tag.getCompound("originPosition"));
+                if (!tag.contains("originPosition")) {
+                    return;
+                }
+                startLocation = NbtUtils.readBlockPos(tag.getCompound("originPosition"));
 
-                    ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource, cameraEntity,
-                        cameraEntity.position().x, cameraEntity.position().y, cameraEntity.position().z, startLocation);
+                if (tag.contains("endPosition")) {
+                    VertexConsumer lineBuffer = multiBufferSource.getBuffer(RenderType.lines());
+                    BlockPos endLocation = NbtUtils.readBlockPos(tag.getCompound("endPosition"));
+                    double startLocationX = startLocation.getX();
+                    double startLocationY = startLocation.getY();
+                    double startLocationZ = startLocation.getZ();
+                    double dx=startLocationX-cameraPos.x+0.5D;
+                    double dy=startLocationY-cameraPos.y+0.5D;
+                    double dz=startLocationZ-cameraPos.z+0.5D;
+                    double transitionX=endLocation.getX()-startLocationX;
+                    double transitionY=endLocation.getY()-startLocationY;
+                    double transitionZ=endLocation.getZ()-startLocationZ;
 
-                    if (tag.contains("endPosition")) {
-                        BlockPos endLocation = NbtUtils.readBlockPos(tag.getCompound("endPosition"));
-                        double startLocationX = startLocation.getX();
-                        double startLocationY = startLocation.getY();
-                        double startLocationZ = startLocation.getZ();
-                        double dx=startLocationX-cameraPos.x+0.5D;
-                        double dy=startLocationY-cameraPos.y+0.5D;
-                        double dz=startLocationZ-cameraPos.z+0.5D;
-                        double transitionX=endLocation.getX()-startLocationX;
-                        double transitionY=endLocation.getY()-startLocationY;
-                        double transitionZ=endLocation.getZ()-startLocationZ;
+                    double length=0.5D;
+                    double angleXZ=Math.atan(transitionZ/transitionX);
+                    double arrowPointXZ_A_x=transitionX>=0? transitionX-length*Math.sin(one_third_PI-angleXZ) : transitionX+length*Math.sin(one_third_PI-angleXZ);
+                    double arrowPointXZ_A_z=transitionX>=0? transitionZ-length*Math.cos(one_third_PI-angleXZ) : transitionZ+length*Math.cos(one_third_PI-angleXZ);
+                    double arrowPointXZ_B_x=transitionX>=0? transitionX-length*Math.sin(two_third_PI-angleXZ) : transitionX+length*Math.sin(two_third_PI-angleXZ);
+                    double arrowPointXZ_B_z=transitionX>=0? transitionZ-length*Math.cos(two_third_PI-angleXZ) : transitionZ+length*Math.cos(two_third_PI-angleXZ);
 
-                        double length=0.5D;
-                        double angleXZ=Math.atan(transitionZ/transitionX);
-                        double arrowPointXZ_A_x=transitionX>=0? transitionX-length*Math.sin(one_third_PI-angleXZ) : transitionX+length*Math.sin(one_third_PI-angleXZ);
-                        double arrowPointXZ_A_z=transitionX>=0? transitionZ-length*Math.cos(one_third_PI-angleXZ) : transitionZ+length*Math.cos(one_third_PI-angleXZ);
-                        double arrowPointXZ_B_x=transitionX>=0? transitionX-length*Math.sin(two_third_PI-angleXZ) : transitionX+length*Math.sin(two_third_PI-angleXZ);
-                        double arrowPointXZ_B_z=transitionX>=0? transitionZ-length*Math.cos(two_third_PI-angleXZ) : transitionZ+length*Math.cos(two_third_PI-angleXZ);
+                    double angleXY=Math.atan(transitionY/transitionX);
+                    double arrowPointXY_A_x=transitionX>=0? transitionX-length*Math.sin(one_third_PI-angleXY) : transitionX+length*Math.sin(one_third_PI-angleXY);
+                    double arrowPointXY_A_y=transitionX>=0? transitionY-length*Math.cos(one_third_PI-angleXY) : transitionY+length*Math.cos(one_third_PI-angleXY);
+                    double arrowPointXY_B_x=transitionX>=0? transitionX-length*Math.sin(two_third_PI-angleXY) : transitionX+length*Math.sin(two_third_PI-angleXY);
+                    double arrowPointXY_B_y=transitionX>=0? transitionY-length*Math.cos(two_third_PI-angleXY) : transitionY+length*Math.cos(two_third_PI-angleXY);
 
-                        double angleXY=Math.atan(transitionY/transitionX);
-                        double arrowPointXY_A_x=transitionX>=0? transitionX-length*Math.sin(one_third_PI-angleXY) : transitionX+length*Math.sin(one_third_PI-angleXY);
-                        double arrowPointXY_A_y=transitionX>=0? transitionY-length*Math.cos(one_third_PI-angleXY) : transitionY+length*Math.cos(one_third_PI-angleXY);
-                        double arrowPointXY_B_x=transitionX>=0? transitionX-length*Math.sin(two_third_PI-angleXY) : transitionX+length*Math.sin(two_third_PI-angleXY);
-                        double arrowPointXY_B_y=transitionX>=0? transitionY-length*Math.cos(two_third_PI-angleXY) : transitionY+length*Math.cos(two_third_PI-angleXY);
+                    double angleZY=Math.atan(transitionY/transitionZ);
+                    double arrowPointZY_A_z=transitionZ>=0? transitionZ-length*Math.sin(one_third_PI-angleZY) : transitionZ+length*Math.sin(one_third_PI-angleZY);
+                    double arrowPointZY_A_y=transitionZ>=0? transitionY-length*Math.cos(one_third_PI-angleZY) : transitionY+length*Math.cos(one_third_PI-angleZY);
+                    double arrowPointZY_B_z=transitionZ>=0? transitionZ-length*Math.sin(two_third_PI-angleZY) : transitionZ+length*Math.sin(two_third_PI-angleZY);
+                    double arrowPointZY_B_y=transitionZ>=0? transitionY-length*Math.cos(two_third_PI-angleZY) : transitionY+length*Math.cos(two_third_PI-angleZY);
 
-                        double angleZY=Math.atan(transitionY/transitionZ);
-                        double arrowPointZY_A_z=transitionZ>=0? transitionZ-length*Math.sin(one_third_PI-angleZY) : transitionZ+length*Math.sin(one_third_PI-angleZY);
-                        double arrowPointZY_A_y=transitionZ>=0? transitionY-length*Math.cos(one_third_PI-angleZY) : transitionY+length*Math.cos(one_third_PI-angleZY);
-                        double arrowPointZY_B_z=transitionZ>=0? transitionZ-length*Math.sin(two_third_PI-angleZY) : transitionZ+length*Math.sin(two_third_PI-angleZY);
-                        double arrowPointZY_B_y=transitionZ>=0? transitionY-length*Math.cos(two_third_PI-angleZY) : transitionY+length*Math.cos(two_third_PI-angleZY);
+                    float[] endColor = {0F, 1F, 0F, 1F};
+                    float[] originColor = {1F, 1F, 1F, 1F};
+                    for (int j = 0; j < 6; j++) {
+                        float fx1 = 0F;
+                        float fy1 = 0F;
+                        float fz1 = 0F;
+                        float b = 1F;
+                        switch (j) {
+                            case 0 -> fx1 = b;
+                            case 1 -> fx1 = -b;
+                            case 2 -> fy1 = b;
+                            case 3 -> fy1 = -b;
+                            case 4 -> fz1 = b;
+                            case 5 -> fz1 = -b;
+                        }
+                        for (int i = 0; i < 6; i++) {
+                            double dx1 = 0D;
+                            double dy1 = 0D;
+                            double dz1 = 0D;
 
-                        float[] endColor = {0F, 1F, 0F, 1F};
-                        float[] originColor = {1F, 1F, 1F, 1F};
-                        for (int j = 0; j < 6; j++) {
-                            float fx1 = 0F;
-                            float fy1 = 0F;
-                            float fz1 = 0F;
-                            float b = 1F;
-                            switch (j) {
-                                case 0 -> fx1 = b;
-                                case 1 -> fx1 = -b;
-                                case 2 -> fy1 = b;
-                                case 3 -> fy1 = -b;
-                                case 4 -> fz1 = b;
-                                case 5 -> fz1 = -b;
+                            switch (i) {
+                                case 0 -> dx1 += 0.52D;
+                                case 1 -> dx1 -= 0.52D;
+                                case 2 -> dy1 += 0.52D;
+                                case 3 -> dy1 -= 0.52D;
+                                case 4 -> dz1 += 0.52D;
+                                case 5 -> dz1 -= 0.52D;
                             }
-                            for (int i = 0; i < 6; i++) {
-                                double dx1 = 0D;
-                                double dy1 = 0D;
-                                double dz1 = 0D;
 
-                                switch (i) {
-                                    case 0 -> dx1 += 0.52D;
-                                    case 1 -> dx1 -= 0.52D;
-                                    case 2 -> dy1 += 0.52D;
-                                    case 3 -> dy1 -= 0.52D;
-                                    case 4 -> dz1 += 0.52D;
-                                    case 5 -> dz1 -= 0.52D;
-                                }
+                            double dx_total = dx + dx1, dy_total = dy + dy1, dz_total = dz + dz1;
 
+                            poseStack.pushPose();
+                            lineBuffer.vertex(poseStack.last().pose(), (float) (0 + dx_total), (float) (0 + dy_total), (float) (0 + dz_total)).color(originColor[0], originColor[1], originColor[2], originColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                            lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                            switch (i) {
+                                case 0:
+                                case 1:
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (arrowPointZY_A_y + dy_total), (float) (arrowPointZY_A_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (arrowPointZY_B_y + dy_total), (float) (arrowPointZY_B_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    break;
+                                case 2:
+                                case 3:
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXZ_A_x + dx_total), (float) (transitionY + dy_total), (float) (arrowPointXZ_A_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXZ_B_x + dx_total), (float) (transitionY + dy_total), (float) (arrowPointXZ_B_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    break;
+                                case 4:
+                                case 5:
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXY_A_x + dx_total), (float) (arrowPointXY_A_y + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXY_B_x + dx_total), (float) (arrowPointXY_B_y + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
+                                    break;
 
-                                double dx_total = dx + dx1, dy_total = dy + dy1, dz_total = dz + dz1;
-                                poseStack.pushPose();
-                                lineBuffer.vertex(poseStack.last().pose(), (float) (0 + dx_total), (float) (0 + dy_total), (float) (0 + dz_total)).color(originColor[0], originColor[1], originColor[2], originColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                switch (i) {
-                                    case 0:
-                                    case 1:
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (arrowPointZY_A_y + dy_total), (float) (arrowPointZY_A_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (arrowPointZY_B_y + dy_total), (float) (arrowPointZY_B_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        break;
-                                    case 2:
-                                    case 3:
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXZ_A_x + dx_total), (float) (transitionY + dy_total), (float) (arrowPointXZ_A_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXZ_B_x + dx_total), (float) (transitionY + dy_total), (float) (arrowPointXZ_B_z + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        break;
-                                    case 4:
-                                    case 5:
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXY_A_x + dx_total), (float) (arrowPointXY_A_y + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (arrowPointXY_B_x + dx_total), (float) (arrowPointXY_B_y + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        lineBuffer.vertex(poseStack.last().pose(), (float) (transitionX + dx_total), (float) (transitionY + dy_total), (float) (transitionZ + dz_total)).color(endColor[0], endColor[1], endColor[2], endColor[3]).normal(poseStack.last().normal(), fx1, fy1, fz1).endVertex();
-                                        break;
-
-                                }
-                                poseStack.popPose();
                             }
+                            poseStack.popPose();
+
                         }
                     }
-
                 }
+
+                poseStack.pushPose();
+                ClientNonBusSetUp.renderGreenOutline(poseStack, multiBufferSource, cameraEntity, cameraPos.x, cameraPos.y, cameraPos.z, startLocation);
+                poseStack.popPose();
+
+
             } else if (mainStack.is(shapeCard) || offStack.is(shapeCard)) {
                 CompoundTag tag = (mainStack.is(shapeCard) ? mainStack : offStack).getTag();
                 if (tag == null) {
