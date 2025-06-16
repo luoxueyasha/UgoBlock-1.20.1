@@ -314,7 +314,7 @@ public class Utils {
         return newList;
     }
 
-    public static boolean makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList, int visualDegree, boolean rotateState, BlockPos transitionPos, int startRotation) {
+    public static boolean makeMoveableBlock(Level level, BlockPos controllerPos, BlockPos startPos, int start, int duration, Direction.Axis axis, int degree, List<BlockPos> positionList, int visualDegree, boolean rotateState, BlockPos transitionPos, int startRotation,boolean hasCollisionShape) {
         BlockState controllerState = level.getBlockState(controllerPos);
         if ((controllerState.getBlock() instanceof RotationControllerBlock || controllerState.getBlock() instanceof SlideControllerBlock) && level.getBlockEntity(controllerPos) instanceof AbstractControllerBlockEntity controllerBlockEntity && controllerBlockEntity.getItem(0).getItem() == Register.shape_card.get() && controllerBlockEntity.getItem(0).getTag().contains("positionList")) {
             CompoundTag entityTag = new CompoundTag();
@@ -348,6 +348,7 @@ public class Utils {
                 BlockEntity eachBlockEntity = level.getBlockEntity(eachPos);
                 List<Entity> entityList = level.getEntitiesOfClass(Entity.class, new AABB(eachPos).inflate(0.1D));
                 CompoundTag posNBT = NbtUtils.writeBlockPos(new BlockPos(pos_i.getX() - startPos.getX(), pos_i.getY() - startPos.getY(), pos_i.getZ() - startPos.getZ()));
+                if(hasCollisionShape){
                 for (Entity entity : entityList) {
                     if (Utils.isUnableToMove(entity)) {
                         continue;
@@ -374,6 +375,7 @@ public class Utils {
                         entityUUIDSet.add(entity.getUUID());
                     }
                 }
+            }
                 if (eachBlockEntity != null && i != positionList.indexOf(controllerPos) && !(eachBlockEntity instanceof PistonMovingBlockEntity)) {
                     if (eachBlockEntity instanceof SlideControllerBlockEntity slideControllerBlockEntity2 && !slideControllerBlockEntity2.getPositionList().isEmpty() && VectorCardItem.isSelectionFinished(slideControllerBlockEntity2.getItem(1))) {
 
@@ -401,6 +403,7 @@ public class Utils {
                             BlockState eachBasketComponentState = level.getBlockState(eachBasketComponentPos);
                             BlockEntity eachBasketComponentBlockEntity = level.getBlockEntity(eachBasketComponentPos);
                             List<Entity> entityList2 = level.getEntitiesOfClass(Entity.class, new AABB(eachBasketComponentPos).inflate(0.1D));
+                            if(hasCollisionShape){
                             for (Entity entity : entityList2) {
                                 if (Utils.isUnableToMove(entity) || isDisableForStandingSeat(eachBasketComponentState)) {
                                     continue;
@@ -427,6 +430,7 @@ public class Utils {
 
                                 }
                             }
+                        }
                             if (eachBasketComponentBlockEntity != null) {
                                 if (eachBasketComponentBlockEntity instanceof PistonMovingBlockEntity pistonMovingBlockEntity) {
                                     eachBasketComponentState = pistonMovingBlockEntity.getMovedState();
@@ -692,7 +696,7 @@ public class Utils {
                 }
                 return false;
             } else {
-                MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, axis, degree, posTag, stateTag, blockEntityTag, entityTag, visualDegree, controllerBlockEntity.isLoop(), !rotateState, transitionPos);
+                MovingBlockEntity moveableBlock = new MovingBlockEntity(level, startPos, level.getBlockState(controllerPos), start + 1, duration, axis, degree, posTag, stateTag, blockEntityTag, entityTag, visualDegree, controllerBlockEntity.isLoop(), !rotateState, transitionPos,hasCollisionShape);
                 moveableBlock.setStartRotation(startRotation);
                 for (Entity passenger : passengerList) {
                     passenger.startRiding(moveableBlock);

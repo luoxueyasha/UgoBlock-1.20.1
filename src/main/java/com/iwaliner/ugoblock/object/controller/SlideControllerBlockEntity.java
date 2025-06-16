@@ -91,7 +91,7 @@ public class SlideControllerBlockEntity extends AbstractControllerBlockEntity im
     }
     @Override
     protected AbstractContainerMenu createMenu(int i, Inventory inventory) {
-        return new SlideControllerMenu(i,inventory,this,startTickDataAccess,speedDataAccess,onewayDataAccess);
+        return new SlideControllerMenu(i,inventory,this,startTickDataAccess,speedDataAccess,onewayDataAccess,collisionShapeDataAccess);
     }
 
     @Override

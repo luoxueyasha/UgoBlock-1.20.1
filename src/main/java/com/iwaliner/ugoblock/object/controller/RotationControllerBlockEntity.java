@@ -84,7 +84,7 @@ public class RotationControllerBlockEntity extends AbstractControllerBlockEntity
     }
     @Override
     protected AbstractContainerMenu createMenu(int i, Inventory inventory) {
-        return new RotationControllerMenu(i,inventory,this,degreeAngleDataAccess,durationDataAccess);
+        return new RotationControllerMenu(i,inventory,this,degreeAngleDataAccess,durationDataAccess,collisionShapeDataAccess);
     }
     @Override
     public int getContainerSize() {

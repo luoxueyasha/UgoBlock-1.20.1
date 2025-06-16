@@ -92,5 +92,7 @@
    "info.ugoblock.reset_setting_text": "なお、単体クラフトで設定をリセットできます。",
    "info.ugoblock.obtain_card_display_text1": "設置して",
    "info.ugoblock.obtain_card_display_text2": "入手",
-   "entity.ugoblock.standing_seat": "動いている最中のブロック"
+   "entity.ugoblock.standing_seat": "動いている最中のブロック",
+   "info.ugoblock.has_collision_shape": "☑当たり判定",
+   "info.ugoblock.not_has_collision_shape": "☐当たり判定"
 }

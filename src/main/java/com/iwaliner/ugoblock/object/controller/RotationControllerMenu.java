@@ -17,10 +17,11 @@ public class RotationControllerMenu extends AbstractContainerMenu {
     public final Container container;
     private final ContainerData degreeAngleData;
     private final ContainerData durationSecondData;
+    private final ContainerData collisionShapeData;
     public RotationControllerMenu(int s, Inventory inventory) {
-        this( s, inventory, new SimpleContainer(1), new SimpleContainerData(1), new SimpleContainerData(1));
+        this( s, inventory, new SimpleContainer(1), new SimpleContainerData(1), new SimpleContainerData(1), new SimpleContainerData(1));
     }
-    public RotationControllerMenu(int s, Inventory inventory, Container c, ContainerData degreeAngleData, ContainerData durationData) {
+    public RotationControllerMenu(int s, Inventory inventory, Container c, ContainerData degreeAngleData, ContainerData durationData,ContainerData collisionShapeData) {
         super(Register.RotationControllerMenu.get(), s);
         checkContainerSize(c, 1);
         checkContainerDataCount(degreeAngleData, 1);
@@ -28,6 +29,7 @@ public class RotationControllerMenu extends AbstractContainerMenu {
         this.container=c;
         this.degreeAngleData=degreeAngleData;
         this.durationSecondData=durationData;
+        this.collisionShapeData=collisionShapeData;
         container.startOpen(inventory.player);
         this.addSlot(new ShapeCardSlot(c, 0, 18, 41));
          for(int i = 0; i < 3; ++i) {
@@ -40,6 +42,7 @@ public class RotationControllerMenu extends AbstractContainerMenu {
         }
         this.addDataSlots(degreeAngleData);
         this.addDataSlots(durationData);
+        this.addDataSlots(collisionShapeData);
     }
     public ItemStack quickMoveStack(Player player, int i) {
         ItemStack itemstack = ItemStack.EMPTY;
@@ -72,6 +75,16 @@ public class RotationControllerMenu extends AbstractContainerMenu {
     }
     public boolean stillValid(Player p_39242_) {
         return this.container.stillValid(p_39242_);
+    }
+    public void setCollisionShape(boolean b){
+        if(b){
+            collisionShapeData.set(0,0);
+        }else{
+            collisionShapeData.set(0,1);
+        }
+    }
+    public boolean hasCollisionShape(){
+        return collisionShapeData.get(0)==0;
     }
     public int getDegreeAngle(){
          return degreeAngleData.get(0);
@@ -165,6 +178,9 @@ public class RotationControllerMenu extends AbstractContainerMenu {
                 i=-181;
             }
             setDegreeAngle(i);
+            return true;
+        }else if(variable==10){
+            setCollisionShape(!hasCollisionShape());
             return true;
         }
         return false;

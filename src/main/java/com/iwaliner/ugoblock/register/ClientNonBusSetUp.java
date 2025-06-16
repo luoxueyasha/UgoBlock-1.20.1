@@ -463,7 +463,7 @@ public class ClientNonBusSetUp {
             Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.obserber_display_text1"), centerWidth - 160, centerHeight + 78, 0.8F, 16777215);
             Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.obserber_display_text2"), centerWidth - 160, centerHeight + 90, 0.8F, 16777215);
             Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.seat_display_text"), centerWidth - 160, centerHeight + 119, 0.8F, 16777215);
-            Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.oneway_display_text"), centerWidth - 192, centerHeight + 145, 0.8F, 8587492);
+            Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.oneway_display_text"), centerWidth - 192, centerHeight + 145, 0.8F, 16766976);
             Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.obtain_card_display_text1"), centerWidth - 80, centerHeight - 78, 0.8F, 16777215);
             Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.obtain_card_display_text2"), centerWidth - 80, centerHeight - 68, 0.8F, 16777215);
             Utils.displayString(guiGraphics, Component.translatable("info.ugoblock.obtain_card_display_text1"), centerWidth - 80, centerHeight + 3, 0.8F, 16777215);

@@ -17,10 +17,11 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     private final ContainerData startTickData;
     private final ContainerData speedData;
     private final ContainerData onewayData;
+    private final ContainerData collisionShapeData;
     public SlideControllerMenu(int s, Inventory inventory) {
-        this( s, inventory, new SimpleContainer(2), new SimpleContainerData(1), new SimpleContainerData(1), new SimpleContainerData(1));
+        this( s, inventory, new SimpleContainer(2), new SimpleContainerData(1), new SimpleContainerData(1), new SimpleContainerData(1), new SimpleContainerData(1));
     }
-    public SlideControllerMenu(int s, Inventory inventory,Container c,ContainerData startTickData,ContainerData speedData,ContainerData onewayData) {
+    public SlideControllerMenu(int s, Inventory inventory,Container c,ContainerData startTickData,ContainerData speedData,ContainerData onewayData,ContainerData collisionShapeData) {
         super(Register.SlideControllerMenu.get(), s);
         checkContainerSize(c, 2);
         checkContainerDataCount(startTickData, 1);
@@ -29,6 +30,7 @@ public class SlideControllerMenu extends AbstractContainerMenu {
         this.startTickData=startTickData;
         this.speedData=speedData;
         this.onewayData=onewayData;
+        this.collisionShapeData=collisionShapeData;
         container.startOpen(inventory.player);
         this.addSlot(new ShapeCardSlot(c, 0, 18, 41));
         this.addSlot(new VectorCardSlot(c,  1, 36, 41));
@@ -43,6 +45,7 @@ public class SlideControllerMenu extends AbstractContainerMenu {
         this.addDataSlots(startTickData);
         this.addDataSlots(speedData);
         this.addDataSlots(onewayData);
+        this.addDataSlots(collisionShapeData);
     }
     public ItemStack quickMoveStack(Player player, int i) {
         ItemStack itemstack = ItemStack.EMPTY;
@@ -91,6 +94,16 @@ public class SlideControllerMenu extends AbstractContainerMenu {
     }
     public boolean isOneway(){
         return onewayData.get(0)==1;
+    }
+    public void setCollisionShape(boolean b){
+        if(b){
+            collisionShapeData.set(0,0);
+        }else{
+            collisionShapeData.set(0,1);
+        }
+    }
+    public boolean hasCollisionShape(){
+        return collisionShapeData.get(0)==0;
     }
     public int getSpeed(){
         return Math.round((float) speedData.get(0)/10F);
@@ -157,6 +170,9 @@ public class SlideControllerMenu extends AbstractContainerMenu {
             return true;
         }else if(variable==8){
             setOneway(!isOneway());
+            return true;
+        }else if(variable==9){
+            setCollisionShape(!hasCollisionShape());
             return true;
         }
         return false;

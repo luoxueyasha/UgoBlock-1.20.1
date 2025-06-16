@@ -3,6 +3,7 @@ package com.iwaliner.ugoblock.object.moving_block;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.mojang.math.Transformation;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -110,6 +111,9 @@ import java.util.List;
         List<BlockState> stateList = movingBlock.getStateList();
         Level level = movingBlock.level();
         BlockState placedState=level.getBlockState(movingBlock.blockPosition());
+        i0=15728880;
+        BlockPos lightPos=movingBlock.getPosList().get(0).offset(movingBlock.blockPosition().getX(),movingBlock.blockPosition().getY(),movingBlock.blockPosition().getZ());
+        int light=LightTexture.pack(this.getBlockLightLevel((T) movingBlock, lightPos), this.getSkyLightLevel((T) movingBlock, lightPos));
         if(placedState.isAir()){
             movingBlock.setPreBlockLightLevel(i0);
         }
@@ -199,7 +203,8 @@ import java.util.List;
                     }*/
                 if (!(block instanceof BedBlock && eachState.getValue(BedBlock.PART) == BedPart.FOOT)) {
                     poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
-                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,movingBlock.getPreBlockLightLevel(), OverlayTexture.NO_OVERLAY);
+                    this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,light, OverlayTexture.NO_OVERLAY);
+                   // this.blockRenderer.renderSingleBlock(eachState, poseStack, multiBufferSource,movingBlock.getPreBlockLightLevel(), OverlayTexture.NO_OVERLAY);
                 }
                 poseStack.popPose();
 
@@ -234,7 +239,7 @@ import java.util.List;
                    }
                 poseStack.translate(-0.4999D, -0.4999D, -0.4999D);
                 poseStack.translate(eachBasketOffset.getX(), eachBasketOffset.getY(), eachBasketOffset.getZ());
-                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, movingBlock.getPreBlockLightLevel(), OverlayTexture.NO_OVERLAY);
+                this.blockRenderer.renderSingleBlock(eachBasketState, poseStack, multiBufferSource, light, OverlayTexture.NO_OVERLAY);
             }
             poseStack.popPose();
         }

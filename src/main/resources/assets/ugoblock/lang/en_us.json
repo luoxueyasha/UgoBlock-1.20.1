@@ -92,5 +92,7 @@
    "info.ugoblock.reset_setting_text": "Also, setting can be reset by single crafting.",
    "info.ugoblock.obtain_card_display_text1": "Place",
    "info.ugoblock.obtain_card_display_text2": "to obtain",
-   "entity.ugoblock.standing_seat": "Moving Block"
+   "entity.ugoblock.standing_seat": "Moving Block",
+   "info.ugoblock.has_collision_shape": "☑Collidable",
+   "info.ugoblock.not_has_collision_shape": "☐Collidable"
 }

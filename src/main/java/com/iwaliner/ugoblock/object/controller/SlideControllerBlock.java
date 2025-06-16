@@ -104,7 +104,7 @@ public class SlideControllerBlock extends BaseEntityBlock {
                                 /**↓移動の変位。座標ではないことに注意。*/
                                BlockPos transitionPos = blockEntity.getTransition();
                                /**ブロックをエンティティ化*/
-                              makingEntitySuccess= Utils.makeMoveableBlock(level,pos, firstPos, start, duration,null,0,posList,0,false, transitionPos,0);
+                              makingEntitySuccess= Utils.makeMoveableBlock(level,pos, firstPos, start, duration,null,0,posList,0,false, transitionPos,0,blockEntity.hasCollisionShape());
                               if(makingEntitySuccess) {
                                   blockEntity.setMoving(true);
                                   level.setBlock(pos, state.cycle(POWERED), 2);

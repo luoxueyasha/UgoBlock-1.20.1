@@ -94,6 +94,12 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
                 this.minecraft.gameMode.handleInventoryButtonClick((this.menu).containerId, 8);
                 return true;
             }
+        }else if(isButtonCollisionShape(x,y)) {
+            if (this.menu.clickMenuButton(this.minecraft.player, 9)) {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
+                this.minecraft.gameMode.handleInventoryButtonClick((this.menu).containerId, 9);
+                return true;
+            }
         }
         return super.mouseClicked(x, y, ii);
     }
@@ -128,6 +134,9 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
     private boolean isButtonOneway(double x, double y) {
         return x < this.leftPos + 60&& x > this.leftPos + 5 && y > this.topPos +12 && y < this.topPos + 23;
     }
+    private boolean isButtonCollisionShape(double x, double y) {
+        return x < this.leftPos + 139&& x > this.leftPos + 79 && y > this.topPos +71&& y <this.topPos +84;
+    }
     public void render(GuiGraphics p_282573_, int p_97859_, int p_97860_, float p_97861_) {
         this.renderBackground(p_282573_);
         this.renderBg(p_282573_, p_97861_, p_97859_, p_97860_);
@@ -151,9 +160,14 @@ public class SlideControllerScreen extends AbstractContainerScreen<SlideControll
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 16766976, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 16766976, false);
         if (menu.isOneway()){
-            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.is_oneway"), 34, 17, 8587492);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.is_oneway"), 34, 17, 16766976);
         }else{
-            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.is_not_oneway"), 34, 17, 8587492);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.is_not_oneway"), 34, 17, 16766976);
+        }
+        if (menu.hasCollisionShape()){
+            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.has_collision_shape"), 109, 74, 16766976);
+        }else{
+            guiGraphics.drawCenteredString(this.font, Component.translatable("info.ugoblock.not_has_collision_shape"), 109, 74, 16766976);
         }
     }
 }

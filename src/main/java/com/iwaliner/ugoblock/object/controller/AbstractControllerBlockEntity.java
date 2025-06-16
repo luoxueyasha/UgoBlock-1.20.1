@@ -13,6 +13,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -31,8 +32,15 @@ public abstract class AbstractControllerBlockEntity extends BaseContainerBlockEn
     protected int tickCount;
     protected int startTime;
     protected BlockState imitatingState;
+    private boolean disableCollision;
     protected AbstractControllerBlockEntity(BlockEntityType<?> p_155076_, BlockPos p_155077_, BlockState p_155078_) {
         super(p_155076_, p_155077_, p_155078_);
+    }
+    public void setCollisionShape(boolean hasCollisionShape) {
+        this.disableCollision = !hasCollisionShape;
+    }
+    public boolean hasCollisionShape() {
+        return !disableCollision;
     }
     public boolean isMoving(){
         return isMoving;
@@ -151,5 +159,21 @@ public abstract class AbstractControllerBlockEntity extends BaseContainerBlockEn
             tag.put("imitatingState", NbtUtils.writeBlockState(imitatingState));
         }
     }
+    protected final ContainerData collisionShapeDataAccess = new ContainerData() {
+        @Override
+        public int get(int i) {
+            if(hasCollisionShape()){
+                return 0;
+            }else{
+                return 1;
+            }
+        }
+        public void set(int i, int j) {
+            setCollisionShape(j == 0);
+        }
+        public int getCount() {
+            return 1;
+        }
+    };
 
 }

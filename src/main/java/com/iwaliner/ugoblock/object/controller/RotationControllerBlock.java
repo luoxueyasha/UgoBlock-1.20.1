@@ -161,7 +161,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
                             blockEntity.setMoving(true);
                             /**ブロックをエンティティ化*/
-                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0);
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0,blockEntity.hasCollisionShape());
                             if(makingEntitySuccess) {
                                 //removeBlocks(level,startPos,blockEntity,state);
                                 blockEntity.setMoving(true);
@@ -203,7 +203,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
 
                             blockEntity.setMoving(true);
                             /**ブロックをエンティティ化*/
-                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0);
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), getDegreeAngle(state,blockEntity),blockEntity.getPositionList(),0,false,BlockPos.ZERO,0,blockEntity.hasCollisionShape());
 
                         }
                     }
@@ -228,7 +228,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
                         rotatedPosList.addAll(rotatedBasketPosList);
                         if(!blockEntity.isLoop()){
                             /**ブロックをエンティティ化*/
-                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, blockEntity.getVisualDegree(),true,BlockPos.ZERO,0);
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),rotatedPosList, blockEntity.getVisualDegree(),true,BlockPos.ZERO,0,blockEntity.hasCollisionShape());
                             if(makingEntitySuccess) {
                                 blockEntity.setMoving(true);
                                 level.setBlock(pos, state.cycle(POWERED).setValue(MOVING, true), 2);
@@ -236,7 +236,7 @@ public class RotationControllerBlock extends BaseEntityBlock {
                             }
                         }else{
                             removeBlocks(level,startPos,blockEntity,state);
-                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), 0,true,BlockPos.ZERO,0);
+                            makingEntitySuccess= Utils.makeMoveableBlock(level, pos, startPos, start, duration, getAxis(state), -getDegreeAngle(state,blockEntity),blockEntity.isNotFirstTime()? rotatedPosList: blockEntity.getPositionList(), 0,true,BlockPos.ZERO,0,blockEntity.hasCollisionShape());
                         }
                     }else{
                         blockEntity.setMoving(true);

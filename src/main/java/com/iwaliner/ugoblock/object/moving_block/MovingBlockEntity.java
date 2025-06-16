@@ -110,6 +110,10 @@ public class MovingBlockEntity extends Display.BlockDisplay {
     public static final EntityDataAccessor<CompoundTag> DATA_STATE_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DATA_BLOCKENTITY_TAG_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<Integer> DATA_PRE_BLOCK_LIGHT_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.INT);
+    /**
+     * 当たり判定をONにするか
+     */
+    public static final EntityDataAccessor<Boolean> DATA_HAS_COLLISION_SHAPE_ID = SynchedEntityData.defineId(MovingBlockEntity.class, EntityDataSerializers.BOOLEAN);
 
     @Nullable
     private MovingBlockEntity.PosRotInterpolationTarget posRotInterpolationTarget;
@@ -190,7 +194,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.blocksBuilding = true;
     }
 
-    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag posNBT, CompoundTag stateNBT, CompoundTag blockentityNBT, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState, BlockPos endPos) {
+    public MovingBlockEntity(Level level, BlockPos startPos, BlockState state, int startTick, int duration, Direction.Axis axis, int degree, CompoundTag posNBT, CompoundTag stateNBT, CompoundTag blockentityNBT, CompoundTag tag, int visualDegree, boolean isLoop, boolean rotateState, BlockPos endPos,boolean hasCollisionShape) {
         super(Register.MoveableBlock.get(), level);
         this.setPos(startPos.getX() + 0.5D, startPos.getY() + 0.5D, startPos.getZ() + 0.5D);
         this.entityData.set(DATA_START_LOCATION_ID, startPos);
@@ -198,6 +202,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.set(DisplayMixin.getDataDuration(), duration);
         this.entityData.set(DATA_COMPOUND_TAG_ID, tag);
         this.entityData.set(DATA_TIME_COUNT_ID, 0);
+        this.entityData.set(DATA_HAS_COLLISION_SHAPE_ID, hasCollisionShape);
         if (axis == null) {
             this.entityData.set(DATA_TRANSITION_POSITION_ID, endPos);
             this.entityData.set(DATA_AXIS_ID, AxisType.NONE.getID());
@@ -245,6 +250,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         this.entityData.define(DATA_STATE_TAG_ID, new CompoundTag());
         this.entityData.define(DATA_BLOCKENTITY_TAG_ID, new CompoundTag());
         this.entityData.define(DATA_PRE_BLOCK_LIGHT_ID, 0);
+        this.entityData.define(DATA_HAS_COLLISION_SHAPE_ID, true);
     }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
@@ -311,6 +317,9 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         if (tag.contains("blockLightLevel")) {
             this.entityData.set(DATA_PRE_BLOCK_LIGHT_ID, tag.getInt("blockLightLevel"));
         }
+        if (tag.contains("hasCollisionShape")) {
+            this.entityData.set(DATA_HAS_COLLISION_SHAPE_ID, tag.getBoolean("hasCollisionShape"));
+        }
     }
 
     @Override
@@ -334,6 +343,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
         tag.put("blockEntityList", entityData.get(DATA_BLOCKENTITY_TAG_ID));
         tag.putInt("teleport_duration", entityData.get(DATA_POS_ROT_INTERPOLATION_DURATION_ID));
         tag.putInt("blockLightLevel", entityData.get(DATA_PRE_BLOCK_LIGHT_ID));
+        tag.putBoolean("hasCollisionShape", entityData.get(DATA_HAS_COLLISION_SHAPE_ID));
     }
 
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
@@ -792,7 +802,7 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     private void makeCollisionEntity() { /**当たり判定用のエンティティを召喚する*/
         int duration = getDuration();
-        if (duration <= 0) {
+        if (duration <= 0||!hasCollisionShape()) {
             return;
         }
         int startTick = getStartTick();
@@ -1045,6 +1055,13 @@ public class MovingBlockEntity extends Display.BlockDisplay {
 
     public void setLoopRotation(boolean isLoop) {
         entityData.set(DATA_IS_LOOP_ROTATION_ID, isLoop);
+    }
+    public boolean hasCollisionShape() {
+        return entityData.get(DATA_HAS_COLLISION_SHAPE_ID);
+    }
+
+    public void setCollisionShape(boolean hasCollisionShape) {
+        entityData.set(DATA_HAS_COLLISION_SHAPE_ID, hasCollisionShape);
     }
 
     private List<BlockPos> getPosListFirst() {
