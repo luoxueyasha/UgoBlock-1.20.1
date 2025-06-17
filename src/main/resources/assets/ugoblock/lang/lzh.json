@@ -98,5 +98,7 @@
    "info.ugoblock.reset_setting_text": "自生合成更迭以歸貞。",
    "info.ugoblock.obtain_card_display_text1": "置",
    "info.ugoblock.obtain_card_display_text2": "而後得",
-   "entity.ugoblock.standing_seat": "移之塊"
+   "entity.ugoblock.standing_seat": "移之塊",
+   "info.ugoblock.has_collision_shape": "☑碰撞箱",
+   "info.ugoblock.not_has_collision_shape": "☐碰撞箱"
 }

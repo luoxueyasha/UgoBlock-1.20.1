@@ -92,5 +92,7 @@
    "info.ugoblock.reset_setting_text": "合成其本身以重置。",
    "info.ugoblock.obtain_card_display_text1": "放置",
    "info.ugoblock.obtain_card_display_text2": "以获得",
-   "entity.ugoblock.standing_seat": "移动的方块"
+   "entity.ugoblock.standing_seat": "移动的方块",
+   "info.ugoblock.has_collision_shape": "☑碰撞箱",
+   "info.ugoblock.not_has_collision_shape": "☐碰撞箱"
 }
