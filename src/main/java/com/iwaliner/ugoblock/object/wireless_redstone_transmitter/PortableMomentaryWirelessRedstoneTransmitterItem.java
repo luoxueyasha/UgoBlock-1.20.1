@@ -91,41 +91,30 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
         }
         return !tag.contains("color3");
     }
-    public static DyeColor getColor1(ItemStack stack){
+
+    private static DyeColor getColor(ItemStack stack, String tagID){
+        if(stack == null || stack.isEmpty() || tagID == null || tagID.isEmpty()){
+            return DyeColor.byId(0);
+        }
         CompoundTag tag=stack.getTag();
         if(tag==null){
             tag=new CompoundTag();
             stack.setTag(new CompoundTag());
         }
-        if(!tag.contains("color1")){
-           return DyeColor.byId(0);
-        }else{
-           return DyeColor.byId((int) tag.getByte("color1"));
+        if(!tag.contains(tagID)){
+            return DyeColor.byId(0);
         }
+        return DyeColor.byId(tag.getByte(tagID));
+    }
+
+    public static DyeColor getColor1(ItemStack stack){
+        return getColor(stack, "color1");
     }
     public static DyeColor getColor2(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
-        if(!tag.contains("color2")){
-            return DyeColor.byId(0);
-        }else{
-            return DyeColor.byId((int)tag.getByte("color2"));
-        }
+        return getColor(stack, "color2");
     }
     public static DyeColor getColor3(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
-        if(!tag.contains("color3")){
-            return DyeColor.byId(0);
-        }else{
-            return DyeColor.byId((int)tag.getByte("color3"));
-        }
+        return getColor(stack, "color3");
     }
 
     public static void setPowered(ItemStack stack,boolean power){

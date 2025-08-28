@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.locks.Condition;
 
 public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
     public PortableAlternateWirelessRedstoneTransmitterItem(Properties p_41383_) {
@@ -25,8 +26,9 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
       ItemStack stack=player.getItemInHand(hand);
         if(stack.getItem() instanceof PortableAlternateWirelessRedstoneTransmitterItem) {
             if (!isColor1Null(stack) && !isColor2Null(stack) && !isColor3Null(stack)) {
+                CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
                 level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-                    data.setSignal(getColor1(stack), getColor2(stack), getColor3(stack), !isPowered(stack));
+                    data.setSignal(getColor1(stackTag), getColor2(stackTag), getColor3(stackTag), !isPowered(stack));
                 });
                 setPowered(stack, !isPowered(stack));
                 level.playSound(player, player.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
@@ -69,49 +71,47 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
         return !tag.contains("color3");
     }
     public static boolean isPowered(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
-            return tag.getBoolean("signal");
+        return Utils.getCompoundTagOrNewTag(stack).getBoolean("signal");
     }
+
+    private static DyeColor getColor(ItemStack stack, String tagID){
+        if(stack == null || stack.isEmpty() || tagID == null || tagID.isEmpty()){
+            return DyeColor.byId(0);
+        }
+        return getColor(Utils.getCompoundTagOrNewTag(stack), tagID);
+    }
+
+    private static DyeColor getColor(CompoundTag tag, String tagID){
+        // tag should not be null at this point.
+        if(tag == null || tag.isEmpty() || tagID == null || tagID.isEmpty()){
+            return DyeColor.byId(0);
+        }
+        if(!tag.contains(tagID)){
+            return DyeColor.byId(0);
+        }
+        return DyeColor.byId(tag.getByte(tagID));
+    }
+
+    // @debug, we should extract Utils.genNewCompoundTag(stack) from getColor. Do this process before getcolor and input tag itself
     public static DyeColor getColor1(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
-        if(!tag.contains("color1")){
-           return DyeColor.byId(0);
-        }else{
-           return DyeColor.byId((int) tag.getByte("color1"));
-        }
+        return getColor(stack, "color1");
     }
     public static DyeColor getColor2(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
-        if(!tag.contains("color2")){
-            return DyeColor.byId(0);
-        }else{
-            return DyeColor.byId((int)tag.getByte("color2"));
-        }
+        return getColor(stack, "color2");
     }
     public static DyeColor getColor3(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
-        if(!tag.contains("color3")){
-            return DyeColor.byId(0);
-        }else{
-            return DyeColor.byId((int)tag.getByte("color3"));
-        }
+        return getColor(stack, "color3");
     }
+    public static DyeColor getColor1(CompoundTag tag){
+        return getColor(tag, "color1");
+    }
+    public static DyeColor getColor2(CompoundTag tag){
+        return getColor(tag, "color2");
+    }
+    public static DyeColor getColor3(CompoundTag tag){
+        return getColor(tag, "color3");
+    }
+
     public static void setPowered(ItemStack stack,boolean power){
         if(stack.getTag()!=null) {
             stack.getTag().putBoolean("signal", power);
@@ -121,7 +121,7 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
         if(stack.getTag()==null) {
             stack.setTag(new CompoundTag());
         }
-            stack.getTag().putByte("color1", (byte) color1.getId());
+        stack.getTag().putByte("color1", (byte) color1.getId());
     }
     public static void setColor2(ItemStack stack,DyeColor color2){
         if(stack.getTag()==null) {
@@ -140,7 +140,8 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
        list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter2").withStyle(ChatFormatting.GREEN));
         if(!isColor1Null(stack)&&!isColor2Null(stack)&&!isColor3Null(stack)){
-            list.add(Utils.getComponentFrequencyColors(getColor1(stack),getColor2(stack),getColor3(stack)));
+            CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
+            list.add(Utils.getComponentFrequencyColors(getColor1(stackTag),getColor2(stackTag),getColor3(stackTag)));
         }
 
     }

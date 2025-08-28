@@ -95,10 +95,11 @@ public class ModCoreUgoBlock {
             }else if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(transmitterStack)) {
                 level.playSound(player,player.blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
                 PortableAlternateWirelessRedstoneTransmitterItem.setColor3(transmitterStack,dyeColor);
+                CompoundTag transmitterStackTag = Utils.getCompoundTagOrNewTag(transmitterStack);
                 level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-                    boolean alreadyExist=!data.isSignalNull(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStack));
+                    boolean alreadyExist=!data.isSignalNull(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStackTag), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStackTag), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStackTag));
                     if(alreadyExist&& level.isClientSide){
-                        event.getPlayer().displayClientMessage(Utils.getComponentFrequencyAlreadyExists(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStack), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStack)), false);
+                        event.getPlayer().displayClientMessage(Utils.getComponentFrequencyAlreadyExists(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStackTag), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStackTag), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStackTag)), false);
                     }
                 });
                 event.setCanceled(true);

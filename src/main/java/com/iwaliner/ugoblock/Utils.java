@@ -75,6 +75,20 @@ public class Utils {
         return list;
     }
 
+    // @debug, todo: replace all code like this
+    public static CompoundTag getCompoundTagOrNewTag(ItemStack stack){
+        if(stack == null || stack.isEmpty()){
+            return null;
+        }
+
+        CompoundTag tag=stack.getTag();
+        if(tag==null){
+            tag=new CompoundTag();
+            stack.setTag(new CompoundTag());
+        }
+        return tag;
+    }
+
     public static void setPositionList(ItemStack stack, List<BlockPos> list) {
         CompoundTag tag = stack.getTag();
         if (tag != null) {

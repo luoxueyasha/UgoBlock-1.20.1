@@ -1,6 +1,7 @@
 package com.iwaliner.ugoblock.register;
 
 import com.iwaliner.ugoblock.ModCoreUgoBlock;
+import com.iwaliner.ugoblock.Utils;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerRenderer;
 import com.iwaliner.ugoblock.object.basket_maker.BasketMakerScreen;
 import com.iwaliner.ugoblock.object.controller.RotationControllerRenderer;
@@ -16,6 +17,7 @@ import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.FallingBlockRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -52,6 +54,7 @@ public class ClientSetUp {
         MenuScreens.register(Register.SlideControllerMenu.get(), SlideControllerScreen::new);
         MenuScreens.register(Register.RotationControllerMenu.get(), RotationControllerScreen::new);
         MenuScreens.register(Register.BasketMakerMenu.get(), BasketMakerScreen::new);
+
             event.enqueueWork(() -> {
                 ItemProperties.register(Register.portable_alternate_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color1"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor1(itemStack).getId());
                 ItemProperties.register(Register.portable_alternate_wireless_redstone_transmitter.get(), new ResourceLocation(ModCoreUgoBlock.MODID, "color2"), (itemStack, clientWorld, livingEntity, i) -> PortableAlternateWirelessRedstoneTransmitterItem.getColor2(itemStack).getId());
@@ -69,20 +72,40 @@ public class ClientSetUp {
         event.register(ClientSetUp::getColorPortableWirelessRedstoneTransmitter,Register.portable_alternate_wireless_redstone_transmitter.get());
         event.register(ClientSetUp::getColorPortableWirelessRedstoneTransmitter,Register.portable_momentary_wireless_redstone_transmitter.get());
     }
+    // @debug
+    private static final int NO_COLOR = 2378057;
     private static int getColorPortableWirelessRedstoneTransmitter(ItemStack stack,int index){
-        if(stack.is(Register.portable_alternate_wireless_redstone_transmitter.get())||stack.is(Register.portable_momentary_wireless_redstone_transmitter.get())){
-            int color1 = PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(stack)? -1 : PortableAlternateWirelessRedstoneTransmitterItem.getColor1(stack).getId();
-            int color2 = PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(stack)? -1 : PortableAlternateWirelessRedstoneTransmitterItem.getColor2(stack).getId();
-            int color3 = PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(stack)? -1 : PortableAlternateWirelessRedstoneTransmitterItem.getColor3(stack).getId();
-            if(index==0){
-               return getColor(color1);
-            }else if(index==1){
-                return getColor(color2);
-            }else if(index==2){
-                return getColor(color3);
-            }
+
+        if(index < 0 || index > 2){
+            return NO_COLOR;
         }
-        return 2378057;
+        if(!stack.is(Register.portable_alternate_wireless_redstone_transmitter.get()) && !stack.is(Register.portable_momentary_wireless_redstone_transmitter.get())){
+            return NO_COLOR;
+        }
+        CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
+
+        return switch (index) {
+            case 0 -> {
+                if (PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(stack)) {
+                    yield NO_COLOR;
+                }
+                yield getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(stackTag).getId());
+            }
+            case 1 -> {
+                if (PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(stack)) {
+                    yield NO_COLOR;
+                }
+                yield getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor2(stackTag).getId());
+            }
+            case 2 -> {
+                if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(stack)) {
+                    yield NO_COLOR;
+                }
+                yield getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor3(stackTag).getId());
+            }
+            default -> NO_COLOR;
+        };
+
     }
     private static int getColor( int i){
         if(i==-1){
