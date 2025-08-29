@@ -37,7 +37,7 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
                 if(coolTime==1){
                     if (!isColor1Null(stack) && !isColor2Null(stack) && !isColor3Null(stack)) {
                         level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-                            data.setSignal(getColor1(stack), getColor2(stack), getColor3(stack), false);
+                            data.setSignal(getColor1(tag), getColor2(tag), getColor3(tag), false);
                         });
                         setPowered(stack, false);
                     }
@@ -52,11 +52,11 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
       ItemStack stack=player.getItemInHand(hand);
         if(stack.getItem() instanceof PortableMomentaryWirelessRedstoneTransmitterItem) {
             if (!isColor1Null(stack) && !isColor2Null(stack) && !isColor3Null(stack)) {
+                CompoundTag tag = Utils.getCompoundTagOrNewTag(stack);
                 level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-                    data.setSignal(getColor1(stack), getColor2(stack), getColor3(stack), true);
+                    data.setSignal(getColor1(tag), getColor2(tag), getColor3(tag), true);
                 });
                 setPowered(stack, true);
-                CompoundTag tag=stack.getTag();
                 tag.putInt("coolTime",4);
                 stack.setTag(tag);
                 level.playSound(player, player.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
@@ -68,27 +68,15 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
         return InteractionResultHolder.fail(stack);
     }
     public static boolean isColor1Null(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
+        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
         return !tag.contains("color1");
     }
     public static boolean isColor2Null(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
+        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
         return !tag.contains("color2");
     }
     public static boolean isColor3Null(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
+        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
         return !tag.contains("color3");
     }
 
@@ -96,10 +84,13 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
         if(stack == null || stack.isEmpty() || tagID == null || tagID.isEmpty()){
             return DyeColor.byId(0);
         }
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
+        return getColor(Utils.getCompoundTagOrNewTag(stack), tagID);
+    }
+
+    private static DyeColor getColor(CompoundTag tag, String tagID){
+        // tag should not be null at this point.
+        if(tag == null || tag.isEmpty() || tagID == null || tagID.isEmpty()){
+            return DyeColor.byId(0);
         }
         if(!tag.contains(tagID)){
             return DyeColor.byId(0);
@@ -117,9 +108,20 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
         return getColor(stack, "color3");
     }
 
+    public static DyeColor getColor1(CompoundTag tag){
+        return getColor(tag, "color1");
+    }
+    public static DyeColor getColor2(CompoundTag tag){
+        return getColor(tag, "color2");
+    }
+    public static DyeColor getColor3(CompoundTag tag){
+        return getColor(tag, "color3");
+    }
+
     public static void setPowered(ItemStack stack,boolean power){
-        if(stack.getTag()!=null) {
-            stack.getTag().putBoolean("signal", power);
+        CompoundTag tag = stack.getTag();
+        if(tag!=null) {
+            tag.putBoolean("signal", power);
         }
     }
     @Override

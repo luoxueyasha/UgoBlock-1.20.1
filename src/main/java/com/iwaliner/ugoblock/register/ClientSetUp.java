@@ -75,36 +75,43 @@ public class ClientSetUp {
     // @debug
     private static final int NO_COLOR = 2378057;
     private static int getColorPortableWirelessRedstoneTransmitter(ItemStack stack,int index){
-
+        if(stack == null){
+            return NO_COLOR;
+        }
         if(index < 0 || index > 2){
             return NO_COLOR;
         }
         if(!stack.is(Register.portable_alternate_wireless_redstone_transmitter.get()) && !stack.is(Register.portable_momentary_wireless_redstone_transmitter.get())){
             return NO_COLOR;
         }
-        CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
 
-        return switch (index) {
-            case 0 -> {
-                if (PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(stack)) {
-                    yield NO_COLOR;
-                }
-                yield getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(stackTag).getId());
-            }
-            case 1 -> {
-                if (PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(stack)) {
-                    yield NO_COLOR;
-                }
-                yield getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor2(stackTag).getId());
-            }
-            case 2 -> {
-                if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(stack)) {
-                    yield NO_COLOR;
-                }
-                yield getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor3(stackTag).getId());
-            }
-            default -> NO_COLOR;
-        };
+        // case index == 0,1,2:
+        boolean isColor1Null = PortableAlternateWirelessRedstoneTransmitterItem.isColor1Null(stack);
+        // if index 0 is null, then 1 and 2 are also null.
+        if(isColor1Null){
+            return NO_COLOR;
+        }
+        CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
+        if(index == 0){
+            return getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(stackTag).getId());
+        }
+
+        // case index == 1,2:
+        boolean isColor2Null = PortableAlternateWirelessRedstoneTransmitterItem.isColor2Null(stack);
+        // if index 1 is null, then 2 is also null.
+        if(isColor2Null){
+            return NO_COLOR;
+        }
+
+        if(index == 1){
+            return getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor2(stackTag).getId());
+        }
+
+        // case index == 2:
+        if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(stack)) {
+            return NO_COLOR;
+        }
+        return getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor3(stackTag).getId());
 
     }
     private static int getColor( int i){

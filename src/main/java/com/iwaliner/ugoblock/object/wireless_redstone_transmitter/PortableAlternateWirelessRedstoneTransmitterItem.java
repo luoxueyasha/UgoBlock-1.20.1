@@ -47,33 +47,22 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends Item {
         tag.putBoolean(name,power);
     }
     public static boolean isColor1Null(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
+        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
         return !tag.contains("color1");
     }
     public static boolean isColor2Null(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
+        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
         return !tag.contains("color2");
     }
     public static boolean isColor3Null(ItemStack stack){
-        CompoundTag tag=stack.getTag();
-        if(tag==null){
-            tag=new CompoundTag();
-            stack.setTag(new CompoundTag());
-        }
+        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
         return !tag.contains("color3");
     }
     public static boolean isPowered(ItemStack stack){
         return Utils.getCompoundTagOrNewTag(stack).getBoolean("signal");
     }
 
+    // @debug, todo: add class/interface AbstractPortableTransmitter
     private static DyeColor getColor(ItemStack stack, String tagID){
         if(stack == null || stack.isEmpty() || tagID == null || tagID.isEmpty()){
             return DyeColor.byId(0);
