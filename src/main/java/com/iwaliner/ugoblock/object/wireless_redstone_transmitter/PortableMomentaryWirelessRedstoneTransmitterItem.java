@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
+public class PortableMomentaryWirelessRedstoneTransmitterItem extends AbstractPortableTransmitterItem {
     public PortableMomentaryWirelessRedstoneTransmitterItem(Properties p_41383_) {
         super(p_41383_);
     }
@@ -48,88 +48,23 @@ public class PortableMomentaryWirelessRedstoneTransmitterItem extends Item {
         }
     }
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-      ItemStack stack=player.getItemInHand(hand);
-        if(stack.getItem() instanceof PortableMomentaryWirelessRedstoneTransmitterItem) {
-            if (!isColor1Null(stack) && !isColor2Null(stack) && !isColor3Null(stack)) {
-                CompoundTag tag = Utils.getCompoundTagOrNewTag(stack);
-                level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
-                    data.setSignal(getColor1(tag), getColor2(tag), getColor3(tag), true);
-                });
-                setPowered(stack, true);
-                tag.putInt("coolTime",4);
-                stack.setTag(tag);
-                level.playSound(player, player.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
-                return InteractionResultHolder.fail(stack);
-            }else{
-                player.displayClientMessage(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter_color_not_set").withStyle(ChatFormatting.YELLOW), true);
-            }
-        }
-        return InteractionResultHolder.fail(stack);
-    }
-    public static boolean isColor1Null(ItemStack stack){
-        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
-        return !tag.contains("color1");
-    }
-    public static boolean isColor2Null(ItemStack stack){
-        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
-        return !tag.contains("color2");
-    }
-    public static boolean isColor3Null(ItemStack stack){
-        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
-        return !tag.contains("color3");
+    protected void handleSignalSetting(Level level, ItemStack stack, CompoundTag tag) {
+        level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
+            data.setSignal(getColor1(tag), getColor2(tag), getColor3(tag), true);
+        });
+
+        setPowered(stack, true);
+        tag.putInt("coolTime", 4);
+        stack.setTag(tag);
     }
 
-    private static DyeColor getColor(ItemStack stack, String tagID){
-        if(stack == null || stack.isEmpty() || tagID == null || tagID.isEmpty()){
-            return DyeColor.byId(0);
-        }
-        return getColor(Utils.getCompoundTagOrNewTag(stack), tagID);
-    }
-
-    private static DyeColor getColor(CompoundTag tag, String tagID){
-        // tag should not be null at this point.
-        if(tag == null || tag.isEmpty() || tagID == null || tagID.isEmpty()){
-            return DyeColor.byId(0);
-        }
-        if(!tag.contains(tagID)){
-            return DyeColor.byId(0);
-        }
-        return DyeColor.byId(tag.getByte(tagID));
-    }
-
-    public static DyeColor getColor1(ItemStack stack){
-        return getColor(stack, "color1");
-    }
-    public static DyeColor getColor2(ItemStack stack){
-        return getColor(stack, "color2");
-    }
-    public static DyeColor getColor3(ItemStack stack){
-        return getColor(stack, "color3");
-    }
-
-    public static DyeColor getColor1(CompoundTag tag){
-        return getColor(tag, "color1");
-    }
-    public static DyeColor getColor2(CompoundTag tag){
-        return getColor(tag, "color2");
-    }
-    public static DyeColor getColor3(CompoundTag tag){
-        return getColor(tag, "color3");
-    }
-
-    public static void setPowered(ItemStack stack,boolean power){
-        CompoundTag tag = stack.getTag();
-        if(tag!=null) {
-            tag.putBoolean("signal", power);
-        }
-    }
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
        list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter2").withStyle(ChatFormatting.GREEN));
-        if(!isColor1Null(stack)&&!isColor2Null(stack)&&!isColor3Null(stack)){
-            list.add(Utils.getComponentFrequencyColors(getColor1(stack),getColor2(stack),getColor3(stack)));
+        CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
+        if(isAllColorNotNull(stackTag)){
+            list.add(Utils.getComponentFrequencyColors(getColor1(stackTag),getColor2(stackTag),getColor3(stackTag)));
         }
     }
 }
