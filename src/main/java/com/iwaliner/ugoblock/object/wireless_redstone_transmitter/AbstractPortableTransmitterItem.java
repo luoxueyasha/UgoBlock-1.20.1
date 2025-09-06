@@ -1,7 +1,6 @@
 package com.iwaliner.ugoblock.object.wireless_redstone_transmitter;
 
 import com.iwaliner.ugoblock.Utils;
-import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -14,8 +13,6 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-
-import java.util.Properties;
 
 public abstract class AbstractPortableTransmitterItem extends Item {
     public AbstractPortableTransmitterItem(Properties properties){
@@ -35,17 +32,13 @@ public abstract class AbstractPortableTransmitterItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        CompoundTag tag = Utils.getCompoundTagOrNewTag(stack);
+        CompoundTag tag = stack.getOrCreateTag();
 
         handleSignalSetting(level, stack, tag);
 
         level.playSound(player, player.blockPosition(), SoundEvents.UI_STONECUTTER_SELECT_RECIPE, SoundSource.BLOCKS, 1F, 1F);
         return InteractionResultHolder.fail(stack);
     }
-
-    /**
-     * 抽象方法，由子类实现具体的信号设置逻辑
-     */
     protected abstract void handleSignalSetting(Level level, ItemStack stack, CompoundTag tag);
 
     private static boolean isColorNull(CompoundTag tag, String tagID){
@@ -56,15 +49,15 @@ public abstract class AbstractPortableTransmitterItem extends Item {
     }
 
     public static boolean isColor1Null(ItemStack stack){
-        CompoundTag tag= Utils.getCompoundTagOrNewTag(stack);
+        CompoundTag tag= stack.getOrCreateTag();
         return isColor1Null(tag);
     }
     public static boolean isColor2Null(ItemStack stack){
-        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
+        CompoundTag tag=stack.getOrCreateTag();
         return isColor2Null(tag);
     }
     public static boolean isColor3Null(ItemStack stack){
-        CompoundTag tag=Utils.getCompoundTagOrNewTag(stack);
+        CompoundTag tag=stack.getOrCreateTag();
         return isColor3Null(tag);
     }
 
@@ -83,7 +76,7 @@ public abstract class AbstractPortableTransmitterItem extends Item {
         if(stack == null){
             throw new IllegalArgumentException();
         }
-        return isAllColorNotNull(Utils.getCompoundTagOrNewTag(stack));
+        return isAllColorNotNull(stack.getOrCreateTag());
     }
     public static boolean isAllColorNotNull(CompoundTag tag){
         // tag should not be null.
@@ -97,7 +90,7 @@ public abstract class AbstractPortableTransmitterItem extends Item {
         if(stack == null || stack.isEmpty() || tagID == null || tagID.isEmpty()){
             return DyeColor.byId(0);
         }
-        return getColor(Utils.getCompoundTagOrNewTag(stack), tagID);
+        return getColor(stack.getOrCreateTag(), tagID);
     }
 
     private static DyeColor getColor(CompoundTag tag, String tagID){
@@ -135,11 +128,7 @@ public abstract class AbstractPortableTransmitterItem extends Item {
         if(color == null || tagID.isEmpty()){
             return false;
         }
-        CompoundTag tag = stack.getTag();
-        if(tag == null){
-            stack.setTag(new CompoundTag());
-            tag = stack.getTag();
-        }
+        CompoundTag tag = stack.getOrCreateTag();
         tag.putByte(tagID, (byte) color.getId());
         return true;
     }
@@ -169,7 +158,7 @@ public abstract class AbstractPortableTransmitterItem extends Item {
     }
 
     public static boolean isPowered(ItemStack stack){
-        return Utils.getCompoundTagOrNewTag(stack).getBoolean("signal");
+        return stack.getOrCreateTag().getBoolean("signal");
     }
 
 

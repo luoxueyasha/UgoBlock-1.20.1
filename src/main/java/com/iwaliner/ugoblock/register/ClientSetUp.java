@@ -72,16 +72,22 @@ public class ClientSetUp {
         event.register(ClientSetUp::getColorPortableWirelessRedstoneTransmitter,Register.portable_alternate_wireless_redstone_transmitter.get());
         event.register(ClientSetUp::getColorPortableWirelessRedstoneTransmitter,Register.portable_momentary_wireless_redstone_transmitter.get());
     }
-    // @debug
+
     private static final int NO_COLOR = 2378057;
     private static int getColorPortableWirelessRedstoneTransmitter(ItemStack stack,int index){
-        if(stack == null){
+        /*
+            For Portable Wireless Redstone Transmitter, we could only apply 3 colors one by one.
+            So if 1st color is null, then 2nd and 3rd colors are also null.
+            If 2nd color is null, then 3rd color is also null.
+            As every tick would do this query, we should do the best to optimize this rendering function.
+            This would NOT apply to Receivers or Non-portable Transmitters.
+            Roseyasa, 20250906
+         */
+        if(stack == null || index < 0 || index > 2){
             return NO_COLOR;
         }
-        if(index < 0 || index > 2){
-            return NO_COLOR;
-        }
-        if(!stack.is(Register.portable_alternate_wireless_redstone_transmitter.get()) && !stack.is(Register.portable_momentary_wireless_redstone_transmitter.get())){
+        if(!stack.is(Register.portable_alternate_wireless_redstone_transmitter.get()) &&
+            !stack.is(Register.portable_momentary_wireless_redstone_transmitter.get())){
             return NO_COLOR;
         }
 
@@ -91,7 +97,7 @@ public class ClientSetUp {
         if(isColor1Null){
             return NO_COLOR;
         }
-        CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
+        CompoundTag stackTag = stack.getOrCreateTag();
         if(index == 0){
             return getColor(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(stackTag).getId());
         }
@@ -116,26 +122,26 @@ public class ClientSetUp {
     }
     private static int getColor( int i){
         if(i==-1){
-            return 2378057;
+            return NO_COLOR;
         }
-        switch (DyeColor.byId(i)){
-            case WHITE : return 16448250;
-            case BLACK:  return 0;
-            case BLUE : return 3883174;
-            case BROWN : return 8278063;
-            case CYAN : return 1480344;
-            case GRAY : return 4541519;
-            case GREEN : return 6060054;
-            case LIGHT_BLUE : return 4834020;
-            case LIGHT_GRAY : return 10066323;
-            case LIME : return 8176411;
-            case MAGENTA : return 13259457;
-            case ORANGE : return 16351261;
-            case PINK: return 16033728;
-            case PURPLE : return 8794293;
-            case RED : return 11283492;
-            case YELLOW : return 16634933;
-        }
-        return 2378057;
+        return switch (DyeColor.byId(i)) {
+            case WHITE -> 16448250;
+            case BLACK -> 0;
+            case BLUE -> 3883174;
+            case BROWN -> 8278063;
+            case CYAN -> 1480344;
+            case GRAY -> 4541519;
+            case GREEN -> 6060054;
+            case LIGHT_BLUE -> 4834020;
+            case LIGHT_GRAY -> 10066323;
+            case LIME -> 8176411;
+            case MAGENTA -> 13259457;
+            case ORANGE -> 16351261;
+            case PINK -> 16033728;
+            case PURPLE -> 8794293;
+            case RED -> 11283492;
+            case YELLOW -> 16634933;
+            default -> NO_COLOR;
+        };
     }
 }

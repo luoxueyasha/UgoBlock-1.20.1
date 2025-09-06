@@ -5,17 +5,11 @@ import com.iwaliner.ugoblock.network.WirelessRedstoneProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.locks.Condition;
 
 public class PortableAlternateWirelessRedstoneTransmitterItem extends AbstractPortableTransmitterItem {
     public PortableAlternateWirelessRedstoneTransmitterItem(Properties p_41383_) {
@@ -46,7 +40,7 @@ public class PortableAlternateWirelessRedstoneTransmitterItem extends AbstractPo
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag flag) {
        list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter").withStyle(ChatFormatting.GREEN));
         list.add(Component.translatable("info.ugoblock.portable_wireless_redstone_transmitter2").withStyle(ChatFormatting.GREEN));
-        CompoundTag stackTag = Utils.getCompoundTagOrNewTag(stack);
+        CompoundTag stackTag = stack.getOrCreateTag();
         if(isAllColorNotNull(stackTag)){
             list.add(Utils.getComponentFrequencyColors(getColor1(stackTag),getColor2(stackTag),getColor3(stackTag)));
         }

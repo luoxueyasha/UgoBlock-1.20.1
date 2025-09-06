@@ -37,9 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 
@@ -95,7 +93,7 @@ public class ModCoreUgoBlock {
             }else if (PortableAlternateWirelessRedstoneTransmitterItem.isColor3Null(transmitterStack)) {
                 level.playSound(player,player.blockPosition(), SoundEvents.DYE_USE, SoundSource.BLOCKS,1F,1F);
                 PortableAlternateWirelessRedstoneTransmitterItem.setColor3(transmitterStack,dyeColor);
-                CompoundTag transmitterStackTag = Utils.getCompoundTagOrNewTag(transmitterStack);
+                CompoundTag transmitterStackTag = transmitterStack.getOrCreateTag();
                 level.getCapability(WirelessRedstoneProvider.WIRELESS_REDSTONE).ifPresent(data -> {
                     boolean alreadyExist=!data.isSignalNull(PortableAlternateWirelessRedstoneTransmitterItem.getColor1(transmitterStackTag), PortableAlternateWirelessRedstoneTransmitterItem.getColor2(transmitterStackTag), PortableAlternateWirelessRedstoneTransmitterItem.getColor3(transmitterStackTag));
                     if(alreadyExist&& level.isClientSide){
